@@ -1,1 +1,9 @@
 // scss  混合宏文件
+@use "./variables.scss" as *;
+@mixin card {
+  padding: 20px;
+  background-color: $color-cream;
+  border-radius: $radius-12;
+  border: 1px solid $color-brown;
+  box-shadow: 0 2px 4px $gray-3;
+}

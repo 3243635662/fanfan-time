@@ -7,6 +7,12 @@ declare module '*.vue' {
   export default component
 }
 
+// 视频文件模块声明
+declare module '*.mp4' {
+  const src: string
+  export default src
+}
+
 // 环境变量类型声明
 interface ImportMetaEnv {
   readonly VITE_USE_MOCK: string
