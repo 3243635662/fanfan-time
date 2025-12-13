@@ -3,58 +3,54 @@
     <!-- 顶部导航栏 -->
     <TopBar />
 
-    <!-- 背景视频 -->
-    <video class="background-video" autoplay muted loop playsinline>
-      <source :src="backVideoPath" type="video/mp4" />
-    </video>
-
-    <!-- 全局鼠标动效层 -->
-    <div class="cursor-effects">
-      <TextCursor
-        text="💚"
-        :delay="0.5"
-        :spacing="60"
-        :follow-mouse-direction="true"
-        :random-float="true"
-        :exit-duration="0.8"
-        :removal-interval="500"
-        :max-points="10"
-      />
-    </div>
-
-    <!-- 点击特效层 -->
+    <!-- 背景视频 (双层淡入淡出) -->
+    <video
+      class="background-video"
+      :class="{ visible: !isDark }"
+      src="/video/daytime.mp4"
+      autoplay
+      muted
+      loop
+      playsinline
+    ></video>
+    <video
+      class="background-video"
+      :class="{ visible: isDark }"
+      src="/video/night.mp4"
+      autoplay
+      muted
+      loop
+      playsinline
+    ></video>
 
     <!-- 页面内容 -->
     <div class="content-overlay">
+      <div class="cursor-effects"></div>
       <router-view />
     </div>
+    <!-- 底部导航栏 -->
+    <FooterBar />
   </div>
 </template>
 
 <script setup lang="ts">
 import { storeToRefs } from "pinia";
 import { useSettingStore } from "../store/setting";
-import TopBar from "@/components/TopBar.vue";
-import TextCursor from "@/components/Text-Cursor.vue";
-import { computed } from "vue";
+import TopBar from "@/layout/components/TopBar.vue";
+import FooterBar from "@/layout/components/FooterBar.vue";
 
 const settingStore = useSettingStore();
 const { isDark } = storeToRefs(settingStore);
-
-// 使用正确的视频路径 - 从public目录访问
-const backVideoPath = computed(() => {
-  return isDark.value ? "/video/night.mp4" : "/video/daytime.mp4";
-});
 </script>
 
 <style scoped lang="scss">
 .layout {
-  pointer-events: none;
-  user-select: none;
   position: relative;
   width: 100%;
   height: 100vh;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 
   .background-video {
     position: fixed;
@@ -64,6 +60,12 @@ const backVideoPath = computed(() => {
     height: 100%;
     object-fit: cover;
     z-index: -1;
+    opacity: 0;
+    transition: opacity 1.5s ease-in-out;
+
+    &.visible {
+      opacity: 1;
+    }
   }
 
   .cursor-effects {
@@ -80,8 +82,21 @@ const backVideoPath = computed(() => {
     position: relative;
     z-index: 2; // 确保内容在最上层
     width: 100%;
-    min-height: 100vh;
+    flex: 1;
+    overflow-y: auto;
     padding-top: 20px; // 为TopBar留出空间
+
+    // 隐藏滚动条但保留滚动功能
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 3px;
+    }
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
   }
 }
 

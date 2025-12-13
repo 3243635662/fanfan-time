@@ -45,9 +45,8 @@ let removalIntervalId: number | null = null;
 const handleMouseMove = (e: MouseEvent) => {
   if (!containerRef.value) return;
 
-  const rect = containerRef.value.getBoundingClientRect();
-  const mouseX = e.clientX - rect.left;
-  const mouseY = e.clientY - rect.top;
+  const mouseX = e.clientX;
+  const mouseY = e.clientY;
 
   let newTrail = [...trail.value];
 
@@ -82,11 +81,11 @@ const handleMouseMove = (e: MouseEvent) => {
         const t = (props.spacing * i) / distance;
         const newX = last!.x + dx * t;
         const newY = last!.y + dy * t;
-        
+
         // 计算透明度（越老的点越透明）
         const newOpacity = Math.max(0.2, 1 - (i / props.maxPoints) * 0.8);
         const newScale = Math.max(0.5, 1 - (i / props.maxPoints) * 0.5);
-        
+
         newTrail.push({
           id: idCounter.value++,
           x: newX,
@@ -163,10 +162,14 @@ onUnmounted(() => {
 
 <style scoped lang="scss">
 .cursor-container {
-  width: 100%;
-  height: 100%;
-  position: relative;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
   pointer-events: none;
+  z-index: 9999;
+  overflow: hidden;
 
   .cursor-overlay {
     position: absolute;
@@ -183,21 +186,26 @@ onUnmounted(() => {
       font-size: 1.8rem;
       pointer-events: none;
       color: #4ade80;
-      text-shadow: 0 0 15px rgba(74, 222, 128, 0.8), 0 0 25px rgba(74, 222, 128, 0.4);
+      text-shadow: 0 0 15px rgba(74, 222, 128, 0.8),
+        0 0 25px rgba(74, 222, 128, 0.4);
       font-weight: 600;
       transition: opacity 0.3s ease-out, transform 0.3s ease-out;
       transform-origin: center center;
       z-index: 10;
-      
+
       // 发光效果
       &::before {
-        content: '';
+        content: "";
         position: absolute;
         top: 50%;
         left: 50%;
         width: 100%;
         height: 100%;
-        background: radial-gradient(circle, rgba(74, 222, 128, 0.3) 0%, transparent 70%);
+        background: radial-gradient(
+          circle,
+          rgba(74, 222, 128, 0.3) 0%,
+          transparent 70%
+        );
         border-radius: 50%;
         transform: translate(-50%, -50%);
         z-index: -1;

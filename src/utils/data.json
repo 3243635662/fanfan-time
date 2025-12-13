@@ -1,0 +1,29 @@
+{
+  "tabsDataJSON":[
+    {
+      "key": 1,
+      "title": "全部",
+      "tag": "'all'"
+    },
+    {
+      "key": 2,
+      "title": "理想",
+      "tag": "'ideal'"
+    },
+    {
+      "key": 3,
+      "title": "学业",
+      "tag": "'academic'"
+    },
+    {
+      "key": 4,
+      "title": "生活",
+      "tag": "'life'"
+    },
+    {
+      "key": 5,
+      "title": "其他",
+      "tag": "'other'"
+    }
+  ]
+}
