@@ -3,8 +3,8 @@ import { ref } from "vue";
 
 export const useSettingStore = defineStore("setting", () => {
   const isDark = ref(false);
-  const showTextCursor=ref(false)
-
+  const isShowTextCursor=ref(false)
+  const isShowMessageDrawer = ref(false)
   const DockTitle = ref("欢迎来到fan时光");
 
   const toggleDarkMode = () => {
@@ -15,11 +15,17 @@ export const useSettingStore = defineStore("setting", () => {
     DockTitle.value = title;
   };
 
+  const toggleMessageDrawer = () => {
+    isShowMessageDrawer.value = !isShowMessageDrawer.value;
+  };
+
   return {
     isDark,
+    isShowMessageDrawer,
     DockTitle,
-    showTextCursor,
+    isShowTextCursor,
     toggleDarkMode,
     setDockTitle,
+    toggleMessageDrawer
   };
 });

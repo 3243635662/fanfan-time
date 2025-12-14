@@ -20,15 +20,17 @@
         :set-dock-title="setDockTitle"
       />
     </div>
-    <div class="email">
+    <div class="add">
       <AppIcon
-        class="email-icon"
-        name="streamline-color:send-email-flat"
+        class="add-icon"
+        name="icon-park:add-one"
         size="28"
-        @click="sendEmail"
+        @click="add"
       />
     </div>
   </div>
+
+
 </template>
 
 <script setup lang="ts">
@@ -84,8 +86,11 @@ const items = [
   },
 ];
 
-const sendEmail = () => {
-  window.open("mailto:fanfan_0521@163.com");
+
+const add = () => {
+  console.log("Add clicked!");
+  settingStore.toggleMessageDrawer()
+  
 };
 </script>
 
@@ -121,10 +126,21 @@ const sendEmail = () => {
     justify-content: center;
     align-items: center;
   }
-  .email {
-    flex-shrink: 0; // 防止被压缩
-    padding: 0 24px; // 添加左右内边距
+  .add {
+    flex-shrink: 0;
+    height: $font-size-28;
+    width: $font-size-28;
+    padding: 0 $padding-24;
     cursor: pointer;
+    .add-icon{
+    &:hover{
+      transform: rotate(180deg);
+      transition: transform 0.5s ease-in-out;
+    }
+    &:active {
+    transform: rotate(180deg) scale(0.6); // 点击时缩放反馈
+  }
+  }
   }
 }
 </style>

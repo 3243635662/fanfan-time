@@ -42,10 +42,11 @@
               <div v-if="loading" class="loading">加载中...</div>
               <div v-else-if="error" class="error">{{ error }}</div>
               <div v-else class="cards-grid">
-                <Card 
-                  v-for="msg in messagesList" 
+                <Card
+                  v-for="msg in messagesList"
                   :key="msg.id"
                   :item="msg"
+                  @click="showDetail(msg.id)"
                 />
               </div>
             </div>
@@ -54,6 +55,16 @@
       </div>
     </div>
   </div>
+
+    <!-- 详情抽屉 -->
+    <a-drawer :width="340" :visible="isShowMessageDrawer" @ok="handleOk" @cancel="handleCancel" unmountOnClose>
+    <template #title>
+      详情
+    </template>
+    <div>You can customize modal body text by the current situation. This modal will be closed immediately once you
+      press the OK button.
+    </div>
+  </a-drawer>
 </template>
 
 <script setup lang="ts">
@@ -66,8 +77,8 @@ import { storeToRefs } from "pinia";
 import { tabsDataJSON } from "@/utils/data.json";
 import Card from "./components/card.vue";
 import { getMessageListAPI } from "@/api/home";
-
-const { DockTitle } = storeToRefs(useSettingStore());
+const settingStore = useSettingStore();
+const { DockTitle, isShowMessageDrawer} = storeToRefs(useSettingStore());
 // 使用 TabsDataItem[] 表示这是一个对象数组
 const tabsData = ref<TabsDataItem[]>(
   tabsDataJSON
@@ -78,13 +89,26 @@ const messagesList = ref<messageType[]>([]);
 const loading = ref(false);
 const error = ref('');
 
+const handleOk = () => {
+  settingStore.toggleMessageDrawer()
+  
+  };
+const handleCancel = () => {
+    settingStore.toggleMessageDrawer()
+  };
+
+const showDetail = (id: number|undefined) => {
+  console.log(id);
+  settingStore.toggleMessageDrawer()
+
+
+}
 // 获取消息列表
 const fetchMessageList = async () => {
   try {
     loading.value = true;
     error.value = '';
     const response = await getMessageListAPI();
-    
     if (response.code === 0) {
       messagesList.value = response.data.list;
     } else {

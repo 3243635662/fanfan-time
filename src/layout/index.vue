@@ -2,7 +2,6 @@
   <div class="layout">
     <!-- 顶部导航栏 -->
     <TopBar />
-
     <!-- 背景视频 (双层淡入淡出) -->
     <video
       class="background-video"
@@ -38,7 +37,6 @@ import { storeToRefs } from "pinia";
 import { useSettingStore } from "../store/setting";
 import TopBar from "@/layout/components/TopBar.vue";
 import FooterBar from "@/layout/components/FooterBar.vue";
-
 const settingStore = useSettingStore();
 const { isDark } = storeToRefs(settingStore);
 </script>

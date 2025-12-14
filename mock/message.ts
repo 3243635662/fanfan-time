@@ -15,7 +15,7 @@ export default [
         code: 0,
         message: 'success',
         data: {
-          'list|5-10': [ // 生成5-10条数据
+          'list|10-20': [ // 生成5-10条数据
             {
               id: '@increment',
               tag: '@pick(["留言", "日记", "随想", "感悟", "生活"])', // 随机标签
