@@ -23,13 +23,13 @@
       playsinline
     ></video>
 
-    <!-- 页面内容 -->
-    <div class="content-overlay">
+    <!-- 页面内容区域 -->
+    <div class="main-content">
       <div class="cursor-effects"></div>
       <router-view />
+      <!-- 页脚自然跟随内容 -->
+      <FooterBar class="footer-wrapper" />
     </div>
-    <!-- 底部导航栏 -->
-    <FooterBar />
   </div>
 </template>
 
@@ -47,8 +47,8 @@ const { isDark } = storeToRefs(settingStore);
 .layout {
   position: relative;
   width: 100%;
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh; // 使用min-height而不是height，让内容可以撑开
+  overflow-x: hidden; // 只隐藏横向溢出，允许纵向滚动
   display: flex;
   flex-direction: column;
 
@@ -78,25 +78,23 @@ const { isDark } = storeToRefs(settingStore);
     pointer-events: none;
   }
 
-  .content-overlay {
+  .main-content {
     position: relative;
     z-index: 2; // 确保内容在最上层
     width: 100%;
     flex: 1;
-    overflow-y: auto;
-    padding-top: 20px; // 为TopBar留出空间
+    padding-top: 106px; // 增加padding-top为TopBar高度(86px) + 额外间距(20px)
+    
+    // 让内容可以自然流动和滚动
+    overflow: visible;
+    min-height: calc(100vh - 106px); // 调整最小高度计算，减去TopBar高度和padding
+  }
 
-    // 隐藏滚动条但保留滚动功能
-    &::-webkit-scrollbar {
-      width: 6px;
-    }
-    &::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 3px;
-    }
-    &::-webkit-scrollbar-track {
-      background: transparent;
-    }
+  .footer-wrapper {
+    position: relative;
+    z-index: 3; // 确保页脚在内容之上
+    width: 100%;
+    margin-top: auto; // 让页脚自然跟随内容，但在内容不足时仍然保持在底部
   }
 }
 

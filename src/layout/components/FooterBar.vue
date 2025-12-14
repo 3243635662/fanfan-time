@@ -78,13 +78,11 @@ import { Icon } from "@iconify/vue";
 
 .footer-bar {
   width: 100%;
-  background: rgba($gray-9, 0.7); // 使用 gray-9
-  backdrop-filter: blur(12px);
-  border-top: 1px solid rgba($gray-0, 0.08); // 使用 gray-0
-  color: $gray-3; // 使用 gray-3
+  position: relative;
+  background: rgba($gray-9, 0.78); // 提高背景透明度
+  color: $gray-3;
   padding: 0.8rem 1rem;
-  font-size: $font-size-12; // 使用 font-size-12
-  z-index: 100;
+  font-size: $font-size-12;
   flex-shrink: 0;
 
   .footer-content {

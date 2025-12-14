@@ -39,12 +39,13 @@
           <a-tab-pane v-for="item in tabsData" :key="item.key" :title="item.title" >
             <!-- 内容区域 -->
             <div class="tab-content">
-              <div class="cards-grid">
+              <div v-if="loading" class="loading">加载中...</div>
+              <div v-else-if="error" class="error">{{ error }}</div>
+              <div v-else class="cards-grid">
                 <Card 
-                  v-for="(msg, index) in messages" 
-                  :key="index"
+                  v-for="msg in messagesList" 
+                  :key="msg.id"
                   :item="msg"
-                  :background-color="getCardColor(index)"
                 />
               </div>
             </div>
@@ -53,20 +54,18 @@
       </div>
     </div>
   </div>
-  
-
-   
 </template>
 
 <script setup lang="ts">
-import type { TabsDataItem } from "@/types/home"; // 引入类型
-  import { ref } from "vue";
+import type { TabsDataItem, messageType } from "@/types/home"; // 引入类型
+import { ref, onMounted } from "vue";
 import { useSettingStore } from "@/store/setting";
 import Magnet from "@/components/MotionEffect/Magnet.vue";
 import TextCursor from "@/components/MotionEffect/TextCursor.vue";
 import { storeToRefs } from "pinia";
 import { tabsDataJSON } from "@/utils/data.json";
 import Card from "./components/card.vue";
+import { getMessageListAPI } from "@/api/home";
 
 const { DockTitle } = storeToRefs(useSettingStore());
 // 使用 TabsDataItem[] 表示这是一个对象数组
@@ -74,24 +73,37 @@ const tabsData = ref<TabsDataItem[]>(
   tabsDataJSON
 )
 
-const messages = [
-  { time: '11/23 16:50', tag: '留言', content: 'jiayi udhwuida', likedCount: 2, commentCount: 3, username: '2769566671' },
-  { time: '11/22 11:36', tag: '留言', content: 'UI设计地像是一个商业网站', likedCount: 1, commentCount: 0, username: '友迪' },
-  { time: '11/20 22:55', tag: '留言', content: '感谢分享！已经在学习博主的项目啦~', likedCount: 1, commentCount: 0, username: '匿名' },
-  { time: '11/19 21:13', tag: '留言', content: '学习', likedCount: 2, commentCount: 1, username: '匿名' },
-  { time: '11/18 10:34', tag: '门标', content: '确实很好看，已经在模仿学习了', likedCount: 2, commentCount: 0, username: '匿名' },
-  { time: '11/15 13:11', tag: '留言', content: '细节做得真好', likedCount: 1, commentCount: 0, username: 'lq' },
-];
+// 消息列表数据
+const messagesList = ref<messageType[]>([]);
+const loading = ref(false);
+const error = ref('');
 
-const cardColors = [
-  '#ebd4d0', '#efe4fd', '#efe4fd', // rose, lavender
-  '#cbe4e9', '#fef6de', '#e2f7d9', // sky, cream, mint
-  '#cbe4e9', '#ebd4d0'
-];
-
-const getCardColor = (index: number) => {
-  return cardColors[index % cardColors.length];
+// 获取消息列表
+const fetchMessageList = async () => {
+  try {
+    loading.value = true;
+    error.value = '';
+    const response = await getMessageListAPI();
+    
+    if (response.code === 0) {
+      messagesList.value = response.data.list;
+    } else {
+      error.value = response.message || '获取数据失败';
+    }
+  } catch (err) {
+    console.error('获取消息列表失败:', err);
+    error.value = '网络请求失败，请稍后重试';
+  } finally {
+    loading.value = false;
+  }
 };
+
+// 组件挂载时获取数据
+onMounted(() => {
+  fetchMessageList();
+});
+
+
 
 </script>
 
@@ -163,9 +175,9 @@ const getCardColor = (index: number) => {
     .tab-content {
       padding: 24px;
       min-height: 200px;
-       display: flex; // This was centering content, we want grid
-       align-items: center;
-       justify-content: center;
+      display: flex; // This was centering content, we want grid
+      align-items: center;
+      justify-content: center;
       font-size: 16px;
       
       .cards-grid {
@@ -178,5 +190,19 @@ const getCardColor = (index: number) => {
       }
     }
   }
+}
+
+.loading, .error {
+  text-align: center;
+  padding: 40px;
+  font-size: 16px;
+}
+
+.error {
+  color: #f56565;
+}
+
+.loading {
+  color: #666;
 }
 </style>

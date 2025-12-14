@@ -3,6 +3,7 @@ import { ref } from "vue";
 
 export const useSettingStore = defineStore("setting", () => {
   const isDark = ref(false);
+  const showTextCursor=ref(false)
 
   const DockTitle = ref("欢迎来到fan时光");
 
@@ -17,6 +18,7 @@ export const useSettingStore = defineStore("setting", () => {
   return {
     isDark,
     DockTitle,
+    showTextCursor,
     toggleDarkMode,
     setDockTitle,
   };

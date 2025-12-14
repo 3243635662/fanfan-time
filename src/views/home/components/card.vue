@@ -28,13 +28,10 @@ import AppIcon from "@/components/AppIcon.vue";
 import { computed } from "vue";
 
 const props = defineProps({
-  backgroundColor: {
-    type: String,
-    default: '#efe4fd'
-  },
   item: {
     type: Object as () => messageType,
     default: () => ({
+      backgroundColor:'#efe4fd',
       time: '2025-12-11',
       tag: '留言',
       content: 'jiayi udhwuida',
@@ -60,28 +57,47 @@ const hexToRgba = (hex: string, alpha: number) => {
 
 const backgroundStyle = computed(() => {
   return {
-    backgroundColor: hexToRgba(props.backgroundColor, 0.45), // More transparent
-    backdropFilter: 'blur(20px)', // Increased blur for better readability with higher transparency
-    WebkitBackdropFilter: 'blur(20px)',
+    backgroundColor: hexToRgba(props.item.backgroundColor, 0.45), 
+    backdropFilter: 'blur(1px)', // 增加模糊效果
+    WebkitBackdropFilter: 'blur(1px)', // Safari兼容
   }
 });
 </script>
 
 <style lang="scss" scoped>
+// 引入iconfont字体
+@font-face {
+  font-family: '清韵文楷';
+  src: url('@/assets/font/清韵文楷.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap; // 提高加载性能
+}
 .container {
+  cursor: pointer;
   padding: 24px;
-  border-radius: 12px;
-  transition: all 0.3s ease;
+  border-radius: 16px;
+  transition: transform 0.3s ease;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   min-height: 200px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  overflow: hidden;
+  position: relative;
+  
 
   &:hover {
     transform: translateY(-4px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  }
+
+
+  > * {
+    position: relative;
+    z-index: 2;
   }
 
   .head {
@@ -92,12 +108,12 @@ const backgroundStyle = computed(() => {
 
     .time {
       font-size: 12px;
-      color: #666;
+      font-family: '清韵文楷', system-ui, -apple-system, sans-serif;
     }
 
     .tag {
       font-size: 12px;
-      color: #888;
+      font-family: '清韵文楷', system-ui, -apple-system, sans-serif;
     }
   }
 
@@ -108,7 +124,7 @@ const backgroundStyle = computed(() => {
     line-height: 1.6;
     margin-bottom: 24px;
     font-weight: 500;
-    font-family: system-ui, -apple-system, sans-serif;
+    font-family: '清韵文楷', system-ui, -apple-system, sans-serif;
   }
 
   .footer {
@@ -126,6 +142,7 @@ const backgroundStyle = computed(() => {
         gap: 4px;
         font-size: 13px;
         color: #666;
+        font-family: '清韵文楷', system-ui, -apple-system, sans-serif;
         
         :deep(svg) {
           opacity: 0.5;
@@ -136,7 +153,8 @@ const backgroundStyle = computed(() => {
     .username {
       font-size: 14px;
       font-weight: 700;
-      color: #333;
+      color: rgba(51, 51, 51, 0.95); // 稍微降低文字不透明度
+      font-family: '清韵文楷', system-ui, -apple-system, sans-serif;
     }
   }
 }

@@ -93,6 +93,10 @@ const sendEmail = () => {
 @import "@/styles/_variables.scss";
 
 .top-bar {
+  position: fixed; // 添加固定定位
+  top: 0; // 固定在顶部
+  left: 0; // 从左边开始
+  z-index: 1000; // 确保在其他元素之上
   width: 100%;
   height: 86px;
   background: #ffffffcc;
@@ -101,7 +105,6 @@ const sendEmail = () => {
   display: flex;
   align-items: center;
   justify-content: space-between; // 左中右布局
-
   .logo {
     .logo-icon {
       padding: $padding-16;
