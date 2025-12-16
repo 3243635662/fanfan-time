@@ -5,9 +5,9 @@ import axios from 'axios'
 const instance = axios.create({
   baseURL: import.meta.env.VITE_GLOB_API_URL || '',
   timeout: 4000,
-  headers: { 
+  headers: {
     'Content-Type': 'application/json',
-    'X-Custom-Header': 'foobar' 
+    'X-Custom-Header': 'foobar'
   }
 })
 

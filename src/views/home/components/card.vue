@@ -23,13 +23,13 @@
 </template>
 
 <script setup lang="ts">
-import type { messageType } from "@/types/home";
+import type { MessageType } from "@/types";
 import AppIcon from "@/components/AppIcon.vue";
 import { computed } from "vue";
 
 const props = defineProps({
   item: {
-    type: Object as () => messageType,
+    type: Object as () => MessageType,
     default: () => ({
       backgroundColor:'#efe4fd',
       time: '2025-12-11',

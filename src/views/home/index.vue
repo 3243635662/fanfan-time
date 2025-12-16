@@ -61,14 +61,13 @@
     <template #title>
       详情
     </template>
-    <div>You can customize modal body text by the current situation. This modal will be closed immediately once you
-      press the OK button.
+    <div>{{ messageDetail?.content }}
     </div>
   </a-drawer>
 </template>
 
 <script setup lang="ts">
-import type { TabsDataItem, messageType } from "@/types/home"; // 引入类型
+import type { TabsDataItem, MessageType,MessageDetailResponse } from "@/types"; // 引入类型
 import { ref, onMounted } from "vue";
 import { useSettingStore } from "@/store/setting";
 import Magnet from "@/components/MotionEffect/Magnet.vue";
@@ -76,19 +75,20 @@ import TextCursor from "@/components/MotionEffect/TextCursor.vue";
 import { storeToRefs } from "pinia";
 import { tabsDataJSON } from "@/utils/data.json";
 import Card from "./components/card.vue";
-import { getMessageListAPI } from "@/api/home";
+import { getMessageListAPI,getMessageDetailByIdAPI } from "@/api/home";
 const settingStore = useSettingStore();
-const { DockTitle, isShowMessageDrawer} = storeToRefs(useSettingStore());
-// 使用 TabsDataItem[] 表示这是一个对象数组
+const { DockTitle, isShowMessageDrawer } = storeToRefs(useSettingStore());
+// tabs数据
 const tabsData = ref<TabsDataItem[]>(
   tabsDataJSON
 )
 
 // 消息列表数据
-const messagesList = ref<messageType[]>([]);
+const messagesList = ref<MessageType[]>([]);
 const loading = ref(false);
 const error = ref('');
 
+const messageDetail = ref<MessageDetailResponse>()
 const handleOk = () => {
   settingStore.toggleMessageDrawer()
   
@@ -97,22 +97,30 @@ const handleCancel = () => {
     settingStore.toggleMessageDrawer()
   };
 
-const showDetail = (id: number|undefined) => {
-  console.log(id);
-  settingStore.toggleMessageDrawer()
-
-
+const  showDetail = async (id: number | undefined) => {
+  if (id) {
+    try {
+      const res = await getMessageDetailByIdAPI(id)
+      if (res.message === 'success') {
+        messageDetail.value=res.data
+      }
+      settingStore.toggleMessageDrawer()
+    }
+    catch (error) {
+      console.error('获取消息详情失败:', error);
+    }
+  }
 }
 // 获取消息列表
 const fetchMessageList = async () => {
   try {
     loading.value = true;
     error.value = '';
-    const response = await getMessageListAPI();
-    if (response.code === 0) {
-      messagesList.value = response.data.list;
+    const res = await getMessageListAPI();
+    if (res.code === 0) {
+      messagesList.value = res.data.list;
     } else {
-      error.value = response.message || '获取数据失败';
+      error.value = res.message || '获取数据失败';
     }
   } catch (err) {
     console.error('获取消息列表失败:', err);

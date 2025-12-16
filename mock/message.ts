@@ -15,7 +15,7 @@ export default [
         code: 0,
         message: 'success',
         data: {
-          'list|10-20': [ // 生成5-10条数据
+          'list|10-20': [ // 生成10-20条数据
             {
               id: '@increment',
               tag: '@pick(["留言", "日记", "随想", "感悟", "生活"])', // 随机标签
@@ -31,4 +31,34 @@ export default [
       })
     },
   },
+
+  {
+    url: '/api/message/detail',
+    method: 'post',
+    response: ({ body }) => {
+      const { id } = body; // 修复语法错误：移除多余的逗号
+      return Mock.mock({
+        code: 0,
+        message: 'success',
+        data: {
+          id: id,
+          content: '@cparagraph(1, 5)',
+          time: '@datetime("yyyy-MM-dd HH:mm:ss")',
+          likedCount: '@integer(0, 100)',
+          commentCount: '@integer(0, 50)',
+          username: '@cname',
+          tag: '@pick(["留言", "日记", "随想", "感悟", "生活"])',
+          // 添加评论数据
+          'comments|5-10': [
+            {
+              username: '@cname',
+              time: '@datetime("yyyy-MM-dd HH:mm:ss")',
+              text: '@csentence(10, 50)', // 随机生成10-50个字符的中文句子
+              avatar: '@image("40x40", "@color", "#FFF", "@first")' // 生成40x40的头像图片
+            }
+          ]
+        }
+      })
+    },
+  }
 ] as MockMethod[]
