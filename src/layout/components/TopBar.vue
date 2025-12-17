@@ -1,32 +1,15 @@
 <template>
   <div class="top-bar">
     <div class="logo">
-      <AppIcon
-        class="logo-icon"
-        name="streamline-freehand-color:messages-bubble-smile"
-        size="30"
-      />
+      <AppIcon class="logo-icon" name="streamline-freehand-color:messages-bubble-smile" size="30" />
       <p>fan时光</p>
     </div>
     <div class="menu">
-      <Dock
-        :items="items"
-        :panel-height="50"
-        :base-item-size="38"
-        :magnification="70"
-        :distance="90"
-        :dock-height="100"
-        :spring="{ mass: 0.03, stiffness: 150, damping: 12 }"
-        :set-dock-title="setDockTitle"
-      />
+      <Dock :items="items" :panel-height="50" :base-item-size="38" :magnification="70" :distance="90" :dock-height="100"
+        :spring="{ mass: 0.03, stiffness: 150, damping: 12 }" :set-dock-title="setDockTitle" />
     </div>
     <div class="add">
-      <AppIcon
-        class="add-icon"
-        name="icon-park:add-one"
-        size="28"
-        @click="add"
-      />
+      <AppIcon class="add-icon" name="icon-park:add-one" size="28" @click="add" />
     </div>
   </div>
 
@@ -77,11 +60,11 @@ const items = [
   {
     icon: () =>
       h(AppIcon, {
-        name: "mdi:cog",
+        name: "icon-park:user",
         size: "22",
         color: "#d4a5a0",
       }),
-    title: "设置",
+    title: "个人中心",
     onClick: () => console.log("Settings clicked!"),
   },
 ];
@@ -109,37 +92,44 @@ const add = () => {
   display: flex;
   align-items: center;
   justify-content: space-between; // 左中右布局
+
   .logo {
     .logo-icon {
       padding: $padding-16;
     }
+
     p {
       font-weight: 600;
       font-size: $font-size-24;
     }
+
     display: flex;
     align-items: center;
   }
+
   .menu {
     display: flex;
     justify-content: center;
     align-items: center;
   }
+
   .add {
     flex-shrink: 0;
     height: $font-size-28;
     width: $font-size-28;
     padding: 0 $padding-24;
     cursor: pointer;
-    .add-icon{
-    &:hover{
-      transform: rotate(180deg);
-      transition: transform 0.5s ease-in-out;
+
+    .add-icon {
+      &:hover {
+        transform: rotate(180deg);
+        transition: transform 0.5s ease-in-out;
+      }
+
+      &:active {
+        transform: rotate(180deg) scale(0.6); // 点击时缩放反馈
+      }
     }
-    &:active {
-    transform: rotate(180deg) scale(0.6); // 点击时缩放反馈
-  }
-  }
   }
 }
 </style>

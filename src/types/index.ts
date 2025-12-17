@@ -23,7 +23,7 @@ export interface MessageType {
   commentCount: number;
   username: string;
 }
-// 留言的响应
+// 获取留言的响应
 export interface MessageListAPIResponse<T> {
   code: number;
   message: string;

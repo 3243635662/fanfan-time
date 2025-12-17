@@ -1,11 +1,14 @@
 import { MockMethod } from 'vite-plugin-mock'
 import Mock from 'mockjs'
 
-// const cardColors = [
-//   '#ebd4d0', '#efe4fd', '#efe4fd', // rose, lavender
-//   '#cbe4e9', '#fef6de', '#e2f7d9', // sky, cream, mint
-//   '#cbe4e9', '#ebd4d0'
-// ];
+// 标签选项
+const tagOptions = [
+  { label: '留言', id: 1 },
+  { label: '日记', id: 2 },
+  { label: '随想', id: 3 },
+  { label: '感悟', id: 4 },
+  { label: '生活', id: 5 }
+]
 export default [
   {
     url: '/api/message/list', // 修改为与API调用匹配的路径
@@ -61,6 +64,44 @@ export default [
           ]
         }
       })
+    },
+  },
+
+
+  {
+    url: '/api/message/create',
+    method: 'post',
+    response: ({ body }) => {
+      const { content, tag, backgroundColor } = body;
+
+      // 根据tag ID查找对应的标签名称
+      const tagInfo = tagOptions.find(t => t.id === tag);
+      const tagLabel = tagInfo ? tagInfo.label : '留言';
+
+      // 生成随机用户信息
+      const mockUser = Mock.mock({
+        username: '@cname',
+        avatar: '@image("100x100", "@color", "#FFF", "@first")'
+      });
+
+      // 模拟创建的新留言
+      const newMessage = Mock.mock({
+        id: '@increment',
+        content: content,
+        tag: tagLabel,
+        backgroundColor: backgroundColor,
+        time: '@datetime("yyyy-MM-dd HH:mm:ss")',
+        username: mockUser.username,
+        avatar: mockUser.avatar,
+        likedCount: 0,
+        commentCount: 0
+      });
+
+      return {
+        code: 0,
+        message: 'success',
+        data: newMessage
+      };
     },
   }
 ] as MockMethod[]

@@ -31,7 +31,7 @@
     </div>
   </div>
 
-  <!-- 详情抽屉 -->
+  <!-- 抽屉 -->
   <a-drawer :width="560" :visible="isShowMessageDrawer" @ok="handleOk" @cancel="handleCancel" unmountOnClose
     :footer="false">
     <template #title>
@@ -45,8 +45,8 @@
       <a-form :model="addForm" layout="vertical" class="add-form">
         <a-form-item label="内容" required>
           <div class="content-input-wrapper" :style="{ backgroundColor: addForm.backgroundColor }">
-            <a-textarea v-model:value="addForm.content" placeholder="分享你的想法..." :rows="12" :max-length="500"
-              show-word-limit class="content-textarea" />
+            <a-textarea v-model="addForm.content" placeholder="分享你的想法..." :rows="12" :max-length="500" show-word-limit
+              class="content-textarea" />
           </div>
         </a-form-item>
 
@@ -155,9 +155,11 @@
       <a-empty description="暂无数据" />
     </div>
   </a-drawer>
+
 </template>
 
 <script setup lang="ts">
+import { $message } from "@/hooks/useMessage";
 import AppIcon from "@/components/AppIcon.vue";
 import type { TabsDataItem, MessageType, MessageDetailResponse } from "@/types"; // 引入类型
 import { ref, onMounted } from "vue";
@@ -167,7 +169,7 @@ import TextCursor from "@/components/MotionEffect/TextCursor.vue";
 import { storeToRefs } from "pinia";
 import { tabsDataJSON } from "@/utils/data.json";
 import Card from "./components/card.vue";
-import { getMessageListAPI, getMessageDetailByIdAPI } from "@/api/home";
+import { getMessageListAPI, getMessageDetailByIdAPI, createMessageAPI } from "@/api/home";
 const settingStore = useSettingStore();
 const { DockTitle, isShowMessageDrawer, isAddMode } = storeToRefs(useSettingStore());
 // tabs数据
@@ -186,10 +188,20 @@ const newComment = ref('')
 // 新增表单数据
 const addForm = ref({
   content: '',
-  tag: '留言',
+  tag: 1, // 改为数字ID，对应标签选项的ID
   backgroundColor: '#ebd4d0'
 })
-
+// 重置以及关闭
+const resetAndClose = () => {
+  messageDetail.value = {}
+  newComment.value = ''
+  addForm.value = {
+    content: '',
+    tag: 1, // 重置为默认ID
+    backgroundColor: '#ebd4d0'
+  }
+  settingStore.closeDrawer()
+}
 // 标签选项
 const tagOptions = [
   { label: '留言', id: 1 },
@@ -222,30 +234,34 @@ const handleCancel = () => {
   resetAndClose()
 };
 
-const resetAndClose = () => {
-  messageDetail.value = {}
-  newComment.value = ''
-  addForm.value = {
-    content: '',
-    tag: '留言',
-    backgroundColor: '#ebd4d0'
-  }
-  settingStore.closeDrawer()
-}
+
 
 // 提交新增留言
-const submitNewMessage = () => {
+const submitNewMessage = async () => {
   if (!addForm.value.content.trim()) {
     console.warn('请输入内容')
     return
   }
 
-  // 这里可以调用API提交数据
-  console.log('提交新增留言:', addForm.value)
+  try {
+    // 调用API提交数据
+    const res = await createMessageAPI({
+      content: addForm.value.content,
+      tag: addForm.value.tag,
+      backgroundColor: addForm.value.backgroundColor
+    })
 
-  // 模拟添加成功后刷新列表
-  fetchMessageList()
-  resetAndClose()
+    if (res.code === 0) {
+      $message.success(res.message)
+      // 刷新列表
+      await fetchMessageList()
+      resetAndClose()
+    } else {
+      $message.error(res.message)
+    }
+  } catch {
+    $message.error('发布留言失败')
+  }
 }
 
 // 添加评论功能
@@ -578,7 +594,6 @@ onMounted(() => {
   height: 200px;
 }
 
-/* 新增表单样式 */
 .add-container {
   padding: 24px 0;
   width: 100%;
@@ -588,10 +603,10 @@ onMounted(() => {
   width: 100%;
 
   .arco-form-item {
-    margin-bottom: 24px;
+    margin-bottom: 10px;
 
-    .arco-form-item-label {
-      font-size: 16px;
+    :deep(.arco-form-item-label) {
+      font-size: $font-size-20;
       font-weight: 600;
       color: #333;
       margin-bottom: 12px;
@@ -629,21 +644,15 @@ onMounted(() => {
         background: transparent !important;
         border: none !important;
         box-shadow: none !important;
-        font-size: 16px;
+        font-size: $font-size-16;
         line-height: 1.8;
         padding: 0;
         min-height: 320px;
         width: 100%;
 
-        &:focus {
-          background: transparent !important;
-          border: none !important;
-          box-shadow: none !important;
-        }
-
         &::placeholder {
           color: rgba(0, 0, 0, 0.45);
-          font-size: 16px;
+          font-size: $font-size-20;
         }
       }
 
@@ -665,17 +674,16 @@ onMounted(() => {
 
   .color-picker {
     display: flex;
-    gap: 16px;
+    gap: $length-22;
     flex-wrap: wrap;
-    margin-top: 8px;
   }
 
   .color-option {
     width: 40px;
     height: 40px;
-    border-radius: 12px;
+    border-radius: 50%;
     cursor: pointer;
-    border: 3px solid transparent;
+    border: 0.5px solid transparent;
     transition: all 0.3s ease;
     position: relative;
 
@@ -694,7 +702,7 @@ onMounted(() => {
     }
 
     &:hover {
-      transform: scale(1.15);
+      transform: scale(1.05);
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 
     }
@@ -711,7 +719,7 @@ onMounted(() => {
     display: flex;
     gap: 16px;
     justify-content: flex-end;
-    margin-top: 32px;
+    margin-top: $length-20;
 
     .arco-btn {
       height: 40px;
