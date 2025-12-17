@@ -89,8 +89,7 @@ const items = [
 
 const add = () => {
   console.log("Add clicked!");
-  settingStore.toggleMessageDrawer()
-  
+  settingStore.openAddMode()
 };
 </script>
 

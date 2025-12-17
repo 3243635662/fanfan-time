@@ -42,6 +42,8 @@ export default [
         message: 'success',
         data: {
           id: id,
+          avatar: '@image("100x100", "@color", "#FFF", "@first")',
+          backgroundColor: '@pick(["#ebd4d0", "#efe4fd", "#cbe4e9", "#fef6de", "#e2f7d9"])', // 随机十六进制颜色
           content: '@cparagraph(1, 5)',
           time: '@datetime("yyyy-MM-dd HH:mm:ss")',
           likedCount: '@integer(0, 100)',

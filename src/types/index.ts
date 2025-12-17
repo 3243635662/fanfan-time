@@ -27,24 +27,25 @@ export interface MessageType {
 export interface MessageListAPIResponse<T> {
   code: number;
   message: string;
-  data: {"list":T};
+  data: { "list": T };
 }
 
 
 // 单个详情的格式
 export interface MessageDetailResponse {
-    id: number;
-    content: string;
-    time: string;
-    likedCount: number;
-    commentCount: number;
+  id?: number;
+  avatar?: string,
+  backgroundColor?: string;
+  content?: string;
+  time?: string;
+  likedCount?: number;
+  commentCount?: number;
+  username?: string;
+  tag?: string;
+  comments?: {
     username: string;
-    tag: string;
-    comments: {
-      username: string;
-      time: string;
-      text: string;
-      avatar: string;
-    }[];
+    time: string;
+    text: string;
+    avatar: string;
+  }[];
 }
-
