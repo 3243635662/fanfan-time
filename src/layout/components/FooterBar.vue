@@ -9,30 +9,15 @@
         </div>
 
         <div class="links-section">
-          <a
-            href="https://github.com/3243635662"
-            target="_blank"
-            title="GitHub"
-            class="link-item github"
-          >
+          <a href="https://github.com/3243635662" target="_blank" title="GitHub" class="link-item github">
             <Icon icon="mdi:github" width="20" />
             <span>GitHub</span>
           </a>
-          <a
-            href="https://gitee.com/Fan_Fan_Fan8"
-            target="_blank"
-            title="Gitee"
-            class="link-item gitee"
-          >
+          <a href="https://gitee.com/Fan_Fan_Fan8" target="_blank" title="Gitee" class="link-item gitee">
             <Icon icon="simple-icons:gitee" width="20" />
             <span>Gitee</span>
           </a>
-          <a
-            href="https://fanblog.top"
-            target="_blank"
-            title="个人站点"
-            class="link-item blog"
-          >
+          <a href="https://fanblog.top" target="_blank" title="个人站点" class="link-item blog">
             <Icon icon="mdi:web" width="20" />
             <span>个人站点</span>
           </a>
@@ -44,21 +29,12 @@
         <div class="copyright-row">
           <span>Copyright ©2025 @fanfan</span>
           <span class="divider">|</span>
-          <a href="https://beian.miit.gov.cn/" target="_blank"
-            >赣ICP备2025074747号-1</a
-          >
+          <a href="https://beian.miit.gov.cn/" target="_blank">赣ICP备2025074747号-1</a>
         </div>
         <div class="beian-row">
-          <a
-            href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=36048202000129"
-            target="_blank"
-            class="beian-link"
-          >
-            <img
-              src="@/assets/images/beian.png"
-              alt="备案图标"
-              class="beian-icon"
-            />
+          <a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=36048202000129" target="_blank"
+            class="beian-link">
+            <img src="@/assets/images/beian.png" alt="备案图标" class="beian-icon" />
             <span>赣公网安备36048202000129号</span>
           </a>
           <span class="divider">|</span>
@@ -84,6 +60,8 @@ import { Icon } from "@iconify/vue";
   padding: 0.8rem 1rem;
   font-size: $font-size-12;
   flex-shrink: 0;
+  height: 135px; // 添加固定高度
+  box-sizing: border-box;
 
   .footer-content {
     max-width: 1000px;

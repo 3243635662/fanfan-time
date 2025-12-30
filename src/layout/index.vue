@@ -3,42 +3,55 @@
     <!-- 顶部导航栏 -->
     <TopBar />
     <!-- 背景视频 (双层淡入淡出) -->
-    <video
-      class="background-video"
-      :class="{ visible: !isDark }"
-      src="/video/daytime.mp4"
-      autoplay
-      muted
-      loop
-      playsinline
-    ></video>
-    <video
-      class="background-video"
-      :class="{ visible: isDark }"
-      src="/video/night.mp4"
-      autoplay
-      muted
-      loop
-      playsinline
-    ></video>
+    <video class="background-video" :class="{ visible: !isDark }" src="/video/daytime.mp4" autoplay muted loop
+      playsinline></video>
+    <video class="background-video" :class="{ visible: isDark }" src="/video/night.mp4" autoplay muted loop
+      playsinline></video>
 
     <!-- 页面内容区域 -->
     <div class="main-content">
       <div class="cursor-effects"></div>
       <router-view />
       <!-- 页脚自然跟随内容 -->
-      <FooterBar class="footer-wrapper" />
+      <FooterBar class="footer-wrapper" @click="console.log('click footer')" />
     </div>
+      <FloatingAddBtn :bottom="bottom" @click="add" />
   </div>
 </template>
 
 <script setup lang="ts">
+import FloatingAddBtn from "./components/FloatingAddBtn.vue";
 import { storeToRefs } from "pinia";
 import { useSettingStore } from "../store/setting";
 import TopBar from "@/layout/components/TopBar.vue";
 import FooterBar from "@/layout/components/FooterBar.vue";
+import { ref } from "vue";
 const settingStore = useSettingStore();
 const { isDark } = storeToRefs(settingStore);
+const bottom = ref(30)
+const add = () => {
+  console.log("Add clicked!");
+  settingStore.openAddMode()
+};
+// 监听页面滚动变化 实现底部bottom的变化
+const scrollBottom = () => {
+  // 距离顶部的高度(滚动高度)
+  let scrollTop=document.documentElement.scrollTop
+  // 屏幕高度(浏览器窗口高度)
+  let clientHeight = document.documentElement.clientHeight
+  // 内容高度(是文档实际内容的高度， 不随滚动变化)
+  let scrollHeight = document.documentElement.scrollHeight
+
+  if (scrollTop + clientHeight + 165 >= scrollHeight) {
+    // 当视口底部接近文档底部还有 165px 时就开始上浮
+    bottom.value=scrollTop+clientHeight+165-scrollHeight
+  }else{
+    bottom.value=30
+  }
+}
+ // 监听滚动事件
+window.addEventListener('scroll', scrollBottom)
+
 </script>
 
 <style scoped lang="scss">
@@ -82,7 +95,7 @@ const { isDark } = storeToRefs(settingStore);
     width: 100%;
     flex: 1;
     padding-top: 106px; // 增加padding-top为TopBar高度(86px) + 额外间距(20px)
-    
+
     // 让内容可以自然流动和滚动
     overflow: visible;
     min-height: calc(100vh - 106px); // 调整最小高度计算，减去TopBar高度和padding

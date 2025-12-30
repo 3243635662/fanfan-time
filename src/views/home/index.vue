@@ -102,13 +102,22 @@
 
       <!-- 统计信息 -->
       <div class="detail-stats">
-        <div class="stat-item">
-          <AppIcon name="mdi:heart" :size="16" />
+        <div class="stat-item like-item" :class="{ liked: isLiked }" @click="handleLike">
+          <AppIcon name="mdi:heart" :size="26" :color="isLiked ? '#ff6b6b' : '#666'" />
           <span>{{ messageDetail.likedCount || 0 }}</span>
         </div>
         <div class="stat-item">
-          <AppIcon name="mdi:message-text" :size="16" color="#666" />
+          <AppIcon name="mdi:message-text" :size="26" color="#666" />
           <span>{{ messageDetail.commentCount || 0 }}</span>
+        </div>
+        <div class="stat-item">
+          <a-popconfirm content="举报后将提交给管理员审核" ok-text="确定" cancel-text="取消" @ok="handleReport">
+            <div class="report-item">
+              <a-badge :count="9" :offset="[2, -2]">
+                <AppIcon name="icon-park:report" :size="26" />
+              </a-badge>
+            </div>
+          </a-popconfirm>
         </div>
       </div>
 
@@ -184,6 +193,9 @@ const error = ref('');
 
 const messageDetail = ref<MessageDetailResponse>({})
 const newComment = ref('')
+
+// 点赞状态
+const isLiked = ref(false)
 
 // 新增表单数据
 const addForm = ref({
@@ -287,12 +299,42 @@ const addComment = () => {
   console.log('评论已添加:', comment)
 };
 
+// 点赞功能
+const handleLike = () => {
+  isLiked.value = !isLiked.value
+
+  if (isLiked.value) {
+    // 点赞
+    if (messageDetail.value.likedCount !== undefined) {
+      messageDetail.value.likedCount++
+    }
+    console.log('点赞成功')
+    // TODO: 调用点赞API
+  } else {
+    // 取消点赞
+    if (messageDetail.value.likedCount !== undefined && messageDetail.value.likedCount > 0) {
+      messageDetail.value.likedCount--
+    }
+    console.log('取消点赞')
+    // TODO: 调用取消点赞API
+  }
+}
+
+// 举报功能
+const handleReport = () => {
+  console.log('举报留言:', messageDetail.value.id)
+  // TODO: 调用举报API
+  // 这里可以添加举报成功的提示
+}
+
 const showDetail = async (id: number | undefined) => {
   if (id) {
     try {
       const res = await getMessageDetailByIdAPI(id)
       if (res.message === 'success') {
         messageDetail.value = res.data
+        // 重置点赞状态
+        isLiked.value = false
       }
       settingStore.openDetailMode()
     }
@@ -524,6 +566,11 @@ onMounted(() => {
   gap: 6px;
   color: #666;
   font-size: 14px;
+
+  :hover {
+    cursor: pointer;
+  }
+
 }
 
 .stat-item .anticon {
