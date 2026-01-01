@@ -53,13 +53,12 @@ export default [
           commentCount: '@integer(0, 50)',
           username: '@cname',
           tag: '@pick(["留言", "日记", "随想", "感悟", "生活"])',
-          // 添加评论数据
           'comments|5-10': [
             {
               username: '@cname',
               time: '@datetime("yyyy-MM-dd HH:mm:ss")',
               text: '@csentence(10, 50)', // 随机生成10-50个字符的中文句子
-              avatar: '@image("40x40", "@color", "#FFF", "@first")' // 生成40x40的头像图片
+              avatar: '@image("40x40", "@color", "#FFF", "@first")' //
             }
           ]
         }
@@ -74,11 +73,9 @@ export default [
     response: ({ body }) => {
       const { content, tag, backgroundColor } = body;
 
-      // 根据tag ID查找对应的标签名称
       const tagInfo = tagOptions.find(t => t.id === tag);
       const tagLabel = tagInfo ? tagInfo.label : '留言';
 
-      // 生成随机用户信息
       const mockUser = Mock.mock({
         username: '@cname',
         avatar: '@image("100x100", "@color", "#FFF", "@first")'

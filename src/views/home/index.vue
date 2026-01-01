@@ -200,7 +200,7 @@ const isLiked = ref(false)
 // 新增表单数据
 const addForm = ref({
   content: '',
-  tag: 1, // 改为数字ID，对应标签选项的ID
+  tag: 1,
   backgroundColor: '#ebd4d0'
 })
 // 重置以及关闭

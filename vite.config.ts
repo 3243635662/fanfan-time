@@ -4,7 +4,7 @@ import { resolve } from "path";
 import { viteMockServe } from 'vite-plugin-mock'
 import { vitePluginForArco } from "@arco-plugins/vite-vue";
 // https://vite.dev/config/
-export default defineConfig(({ command, mode }) => {
+export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   
   return {

@@ -65,7 +65,7 @@ const items = [
         color: "#d4a5a0",
       }),
     title: "个人中心",
-    onClick: () => console.log("Settings clicked!"),
+    onClick: () => router.push({ name: "setting" }),
   },
 ];
 

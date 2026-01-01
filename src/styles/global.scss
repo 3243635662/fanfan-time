@@ -2,22 +2,69 @@
 @use "./_mixins.scss" as *;
 @use "./_variables.scss" as *;
 
+:root {
+  // 字体设置
+  --font-family: "Inter", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-size-base: 16px;
+
+  // 浅色模式颜色
+  --color-bg-primary: #ffffff;
+  --color-bg-secondary: #f8f8f8;
+  --color-bg-tertiary: #f0f0f0;
+  --color-bg-card: #ffffff;
+  --color-text-primary: #1a1a1a;
+  --color-text-secondary: #4a4a4a;
+  --color-text-tertiary: #8c8c8c;
+  --color-text-inverse: #ffffff;
+  --color-border: #e8e8e8;
+  --color-border-light: #f0f0f0;
+  --color-shadow: rgba(0, 0, 0, 0.08);
+  --color-shadow-hover: rgba(0, 0, 0, 0.12);
+  --color-icon: #666666;
+  --color-icon-hover: #333333;
+
+  // 卡片背景固定颜色（不随主题变化）
+  --card-bg-start: rgba(239, 228, 253, 0.85);
+  --card-bg-end: rgba(203, 228, 233, 0.85);
+
+  // 过渡动画
+  --transition-duration: 0.3s;
+}
+
+body.dark-mode {
+  --color-bg-primary: #0d0d0d;
+  --color-bg-secondary: #1a1a1a;
+  --color-bg-tertiary: #262626;
+  --color-bg-card: #1f1f1f;
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #d9d9d9;
+  --color-text-tertiary: #8c8c8c;
+  --color-text-inverse: #ffffff;
+  --color-border: #333333;
+  --color-border-light: #262626;
+  --color-shadow: rgba(0, 0, 0, 0.4);
+  --color-shadow-hover: rgba(0, 0, 0, 0.6);
+  --color-icon: #999999;
+  --color-icon-hover: #ffffff;
+}
+
 body {
   margin: 0;
   padding: 0;
-  font-family: $font-main;
+  font-family: var(--font-family);
   line-height: 1.5;
-  font-size: $font-size-16;
-  color: $gray-8;
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  transition: all 0.3s ease-in-out;
-  --webkit-font-smoothing: antialiased;
-  --moz-osx-font-smoothing: grayscale;
+  font-size: var(--font-size-base);
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-primary);
+  transition: all var(--transition-duration) ease-in-out;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 p {
   padding: 0;
   margin: 0;
+  color: var(--color-text-secondary);
 }
 
 li {
@@ -33,4 +80,61 @@ img {
 a {
   color: $primary;
   text-decoration: none;
+  transition: color var(--transition-duration) ease;
+
+  &:hover {
+    color: darken($primary, 10%);
+  }
+}
+
+body.dark-mode a {
+  &:hover {
+    color: lighten($primary, 10%);
+  }
+}
+
+// 通用卡片样式
+.card {
+  background-color: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: $radius-12;
+  box-shadow: 0 2px 8px var(--color-shadow);
+  transition: all var(--transition-duration) ease;
+}
+
+// 通用按钮样式
+.btn {
+  border-radius: $radius-8;
+  transition: all var(--transition-duration) ease;
+}
+
+// 输入框样式
+input,
+textarea {
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-primary);
+  border-color: var(--color-border);
+
+  &::placeholder {
+    color: var(--color-text-tertiary);
+  }
+}
+
+// 滚动条样式
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 4px;
+
+  &:hover {
+    background: var(--color-text-tertiary);
+  }
 }

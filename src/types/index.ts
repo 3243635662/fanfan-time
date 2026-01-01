@@ -49,3 +49,45 @@ export interface MessageDetailResponse {
     avatar: string;
   }[];
 }
+
+// 用户信息
+export interface UserInfo {
+  id: number;
+  username: string;
+  email: string;
+  avatar?: string;
+  createdAt: string;
+}
+
+// 登录请求参数
+export interface LoginParams {
+  username: string;
+  password: string;
+}
+
+// 注册请求参数
+export interface RegisterParams {
+  username: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+}
+
+// 登录响应
+export interface LoginResponse {
+  token: string;
+  user: UserInfo;
+}
+
+// 注册响应
+export interface RegisterResponse {
+  message: string;
+  user?: UserInfo;
+}
+
+// 字体设置选项
+export interface FontOption {
+  value: string;
+  label: string;
+  family: string;
+}

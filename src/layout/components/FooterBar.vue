@@ -55,13 +55,16 @@ import { Icon } from "@iconify/vue";
 .footer-bar {
   width: 100%;
   position: relative;
-  background: rgba($gray-9, 0.78); // 提高背景透明度
-  color: $gray-3;
+  background: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
   padding: 0.8rem 1rem;
   font-size: $font-size-12;
   flex-shrink: 0;
-  height: 135px; // 添加固定高度
+  height: auto;
+  min-height: 135px;
   box-sizing: border-box;
+  transition: all var(--transition-duration) ease;
+  border-top: 1px solid var(--color-border);
 
   .footer-content {
     max-width: 1000px;
@@ -71,13 +74,12 @@ import { Icon } from "@iconify/vue";
     gap: 0.8rem;
   }
 
-  // 上半部分：左右布局
   .main-info {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding-bottom: 0.8rem;
-    border-bottom: 1px solid rgba($gray-0, 0.05);
+    border-bottom: 1px solid var(--color-border);
 
     .brand-section {
       text-align: left;
@@ -86,15 +88,15 @@ import { Icon } from "@iconify/vue";
         font-size: 1.1rem;
         font-weight: 700;
         margin-bottom: 0.2rem;
-        // 保持渐变色，因为 scss 变量中没有渐变色定义
         background: linear-gradient(90deg, #a18cd1 0%, #fbc2eb 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
+        background-clip: text;
       }
 
       .desc {
         font-size: $font-size-12;
-        color: rgba($gray-0, 0.5);
+        color: var(--color-text-tertiary);
         max-width: 400px;
         white-space: nowrap;
         overflow: hidden;
@@ -104,7 +106,7 @@ import { Icon } from "@iconify/vue";
 
     .links-section {
       display: flex;
-      gap: 1.5rem;
+      gap: 1rem;
       align-items: center;
 
       .link-item {
@@ -115,67 +117,67 @@ import { Icon } from "@iconify/vue";
         font-size: $font-size-12;
         font-weight: 500;
         transition: all 0.3s ease;
-        padding: 0.3rem 0.6rem;
+        padding: 0.4rem 0.8rem;
         border-radius: $radius-6;
-        background: rgba($gray-0, 0.05);
+        background: var(--color-bg-tertiary);
+        color: var(--color-text-secondary);
 
         &:hover {
           transform: translateY(-2px);
-          background: rgba($gray-0, 0.1);
+          background: var(--color-bg-secondary);
+          color: var(--color-text-primary);
         }
 
-        // 品牌色
         &.github {
-          color: $gray-1; // 接近白色
+          color: var(--color-text-secondary);
 
           &:hover {
-            color: $gray-0;
+            color: #ffffff;
           }
         }
 
         &.gitee {
-          color: #e6a23c; // 橙色保留
+          color: #e6a23c;
 
           &:hover {
-            color: $danger; // 使用 danger 红色
+            color: #ffc53d;
           }
         }
 
         &.blog {
-          color: $primary; // 使用 primary 蓝色
+          color: $primary;
 
           &:hover {
-            filter: brightness(1.2);
+            color: #69c0ff;
           }
         }
       }
     }
   }
 
-  // 下半部分：居中紧凑
   .bottom-info {
     display: flex;
     justify-content: center;
     align-items: center;
     flex-wrap: wrap;
     gap: 1.5rem;
-    font-size: 12px; // 稍微小一点
-    color: rgba($gray-0, 0.4);
+    font-size: 12px;
+    color: var(--color-text-tertiary);
 
     a {
-      color: inherit;
+      color: var(--color-text-tertiary);
       text-decoration: none;
       transition: color 0.2s;
 
       &:hover {
-        color: rgba($gray-0, 0.8);
+        color: var(--color-text-primary);
         text-decoration: underline;
       }
     }
 
     .divider {
       margin: 0 0.5rem;
-      color: rgba($gray-0, 0.2);
+      color: var(--color-border);
     }
 
     .copyright-row,
@@ -192,12 +194,12 @@ import { Icon } from "@iconify/vue";
       .beian-icon {
         width: 14px;
         height: 14px;
+        filter: brightness(0.8);
       }
     }
   }
 }
 
-// 移动端适配
 @media (max-width: $mobile) {
   .footer-bar {
     padding: 1rem;
@@ -218,6 +220,7 @@ import { Icon } from "@iconify/vue";
       .links-section {
         width: 100%;
         justify-content: center;
+        flex-wrap: wrap;
       }
     }
 
