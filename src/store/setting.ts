@@ -1,16 +1,23 @@
 import { defineStore } from "pinia";
-import { ref } from "vue";
+import { ref, watch } from "vue";
 
 export const useSettingStore = defineStore("setting", () => {
   const isDark = ref(false);
   const isShowTextCursor=ref(false)
   const isShowMessageDrawer = ref(false)
   const isAddMode = ref(false) // 新增模式状态
-  const DockTitle = ref("欢迎来到fan时光");
-
+  const DockTitle = ref("");
   const toggleDarkMode = () => {
     isDark.value = !isDark.value;
   };
+
+  watch(isDark, (newValue) => {
+    if (newValue) {
+      document.body.classList.add("dark-mode");
+    } else {
+      document.body.classList.remove("dark-mode");
+    }
+  }, { immediate: true });
 
   const setDockTitle = (title: string) => {
     DockTitle.value = title;

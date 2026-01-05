@@ -8,14 +8,31 @@
 
       <a-tabs default-active-key="appearance" class="setting-tabs">
         <a-tab-pane key="appearance" title="外观">
+
+<div class="setting-section">
+  <h3>标题设置</h3>
+  <div class="setting-item">
+    <div class="item-info">
+      <AppIcon name="fluent:slide-text-title-16-regular" size="22" />
+      <div class="item-text">
+        <span class="item-title">自定义首页Dock名称</span>
+        <span class="item-desc">按Enter键即可设置</span>
+      </div>
+    </div>
+    <div class="item-input">
+      <a-input v-model="newDockTitle" placeholder="输入首页Dock名称"  @keyup.enter="handleDockTitleChange" />
+    </div>
+  </div>
+</div>
+
           <div class="setting-section">
             <h3>主题设置</h3>
             <div class="setting-item">
               <div class="item-info">
-                <AppIcon name="mdi:weather-sunny" size="22" />
+                <AppIcon :name="isDark ? 'line-md:moon-rising-twotone-loop' : 'line-md:moon-filled-to-sunny-filled-loop-transition' " size="22" />
                 <div class="item-text">
-                  <span class="item-title">深色模式</span>
-                  <span class="item-desc">切换深色和浅色主题</span>
+                  <span class="item-title">{{isDark ? '深色主题' : '浅色主题'}}</span>
+                  <span class="item-desc">切换主题</span>
                 </div>
               </div>
               <a-switch v-model="isDark" @change="handleDarkModeChange" />
@@ -96,7 +113,7 @@
                 </div>
               </div>
               <a-input
-                v-model="dockTitle"
+                v-model="newDockTitle"
                 placeholder="输入标题"
                 style="width: 200px"
                 @blur="handleDockTitleChange"
@@ -174,8 +191,9 @@ import { storeToRefs } from "pinia";
 import { useRouter } from "vue-router";
 import { useSettingStore } from "@/store/setting";
 import { useAuthStore } from "@/store/auth";
+import { $message } from "@/hooks/useMessage";
 import AppIcon from "@/components/AppIcon.vue";
-
+const newDockTitle = ref("");
 const router = useRouter();
 const settingStore = useSettingStore();
 const authStore = useAuthStore();
@@ -193,7 +211,6 @@ const fontOptions = [
 
 const currentFont = ref("default");
 const fontSize = ref(16);
-const dockTitle = ref(DockTitle.value);
 
 const currentFontFamily = computed(() => {
   const selected = fontOptions.find((opt) => opt.value === currentFont.value);
@@ -255,10 +272,12 @@ const handleTextCursorChange = (value: string | number | boolean) => {
   localStorage.setItem("isShowTextCursor", String(value));
 };
 
+// 处理首页Dock名称变化
 const handleDockTitleChange = () => {
-  if (dockTitle.value.trim()) {
-    settingStore.setDockTitle(dockTitle.value.trim());
-    localStorage.setItem("dockTitle", dockTitle.value.trim());
+  if (newDockTitle.value.trim()) {
+    settingStore.setDockTitle(newDockTitle.value.trim());
+    newDockTitle.value = "";
+    $message.success("首页Dock名称已更新");
   }
 };
 
@@ -297,8 +316,7 @@ const formatDate = (dateString: string) => {
 @import "@/styles/_variables.scss";
 
 .setting-page {
-  min-height: calc(100vh - 20px);
-  padding: $padding-24;
+  padding: 0 $padding-24 $padding-24;
   background: var(--color-bg-primary);
   transition: background-color var(--transition-duration) ease;
 }
@@ -309,7 +327,7 @@ const formatDate = (dateString: string) => {
 
   .page-header {
     text-align: center;
-    margin-bottom: $padding-24;
+    margin: $padding-24 0;
 
     h1 {
       font-size: $font-size-28;

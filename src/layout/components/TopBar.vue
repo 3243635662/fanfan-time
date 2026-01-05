@@ -85,22 +85,25 @@ const add = () => {
   left: 0; // 从左边开始
   z-index: 1000; // 确保在其他元素之上
   width: 100%;
-  height: 86px;
-  background: #ffffffcc;
-  box-shadow: 0 0 4px 0 #0000001a;
+  height: 100px;
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 0 4px 0 rgba(0, 0, 0, 0.1);
   backdrop-filter: blur(20px);
   display: flex;
   align-items: center;
   justify-content: space-between; // 左中右布局
+  transition: all var(--transition-duration) ease;
 
   .logo {
     .logo-icon {
       padding: $padding-16;
+      color: var(--color-text-primary);
     }
 
     p {
       font-weight: 600;
       font-size: $font-size-24;
+      color: var(--color-text-primary);
     }
 
     display: flex;
@@ -121,6 +124,7 @@ const add = () => {
     cursor: pointer;
 
     .add-icon {
+      color: var(--color-text-primary);
       &:hover {
         transform: rotate(180deg);
         transition: transform 0.5s ease-in-out;
@@ -130,6 +134,14 @@ const add = () => {
         transform: rotate(180deg) scale(0.6); // 点击时缩放反馈
       }
     }
+  }
+}
+
+// 深色模式样式
+body.dark-mode {
+  .top-bar {
+    background: rgba(13, 13, 13, 0.8);
+    box-shadow: 0 0 4px 0 rgba(255, 255, 255, 0.1);
   }
 }
 </style>

@@ -1,22 +1,22 @@
 <template>
-  <div class="container" :style="backgroundStyle">
+  <div class="container" :class="containerClass">
     <div class="head">
-      <span class="time" :style="textColorStyle">{{ item.time }}</span>
-      <span class="tag" :style="tagColorStyle">{{ item.tag }}</span>
+      <span class="time">{{ item.time }}</span>
+      <span class="tag">{{ item.tag }}</span>
     </div>
-    <div class="content" :style="contentColorStyle">{{ item.content }}</div>
+    <div class="content">{{ item.content }}</div>
     <div class="footer">
       <div class="left-stats">
-        <span class="liked-count" :style="textColorStyle">
+        <span class="liked-count">
           <AppIcon name="mdi:cards-heart" size="18" />
           {{ item.likedCount }}
         </span>
-        <span class="comment-count" :style="textColorStyle">
+        <span class="comment-count">
           <AppIcon name="mdi:comment-processing" size="18" />
           {{ item.commentCount }}
         </span>
       </div>
-      <span class="username" :style="usernameColorStyle">{{ item.username }}</span>
+      <span class="username">{{ item.username }}</span>
     </div>
   </div>
 </template>
@@ -25,8 +25,6 @@
 import type { MessageType } from "@/types";
 import AppIcon from "@/components/AppIcon.vue";
 import { computed } from "vue";
-import { useSettingStore } from "@/store/setting";
-import { storeToRefs } from "pinia";
 
 const props = defineProps({
   item: {
@@ -43,78 +41,23 @@ const props = defineProps({
   }
 })
 
-const settingStore = useSettingStore();
-const { isDark } = storeToRefs(settingStore);
-
-// 深色模式颜色映射
-const darkModeColorMap: Record<string, string> = {
-  '#ebd4d0': '#8b6f67', // 玫瑰粉 → 深棕粉
-  '#efe4fd': '#6b5d9e', // 淡紫 → 深紫
-  '#cbe4e9': '#5a8c94', // 天蓝 → 深蓝绿
-  '#fef6de': '#9e8f5f', // 奶油 → 深黄褐
-  '#e2f7d9': '#638f57', // 薄荷绿 → 深绿
-  '#ffffff': '#333333'  // 默认白色 → 深灰
-};
-
-// 获取主题颜色
-const getThemeColor = (color: string) => {
-  if (isDark.value && darkModeColorMap[color]) {
-    return darkModeColorMap[color];
-  }
-  return color;
-};
-
-const hexToRgba = (hex: string, alpha: number) => {
-  let c: any;
-  if (/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)) {
-    c = hex.substring(1).split('');
-    if (c.length === 3) {
-      c = [c[0], c[0], c[1], c[1], c[2], c[2]];
-    }
-    c = '0x' + c.join('');
-    return 'rgba(' + [(c >> 16) & 255, (c >> 8) & 255, c & 255].join(',') + ',' + alpha + ')';
-  }
-  return hex;
-}
-
-const backgroundStyle = computed(() => {
-  const themeColor = getThemeColor(props.item.backgroundColor);
-  return {
-    backgroundColor: hexToRgba(themeColor, isDark.value ? 0.85 : 0.75),
-    backdropFilter: 'blur(8px)',
-    WebkitBackdropFilter: 'blur(8px)',
-    color: isDark.value ? '#ffffff' : '#1a1a1a',
-  }
-});
-
-const textColorStyle = computed(() => {
-  return {
-    color: isDark.value ? '#ffffff' : 'rgba(0, 0, 0, 0.6)',
+// 根据背景色生成对应的 CSS 类名
+const containerClass = computed(() => {
+  const colorMap: Record<string, string> = {
+    '#ebd4d0': 'card-rose',
+    '#efe4fd': 'card-lavender',
+    '#cbe4e9': 'card-sky',
+    '#fef6de': 'card-cream',
+    '#e2f7d9': 'card-mint',
+    '#ffffff': 'card-white'
   };
-});
-
-const contentColorStyle = computed(() => {
-  return {
-    color: isDark.value ? '#ffffff' : '#1a1a1a',
-    textShadow: isDark.value ? '0 1px 2px rgba(0, 0, 0, 0.3)' : '0 1px 2px rgba(255, 255, 255, 0.3)',
-  };
-});
-
-const tagColorStyle = computed(() => {
-  return {
-    color: isDark.value ? '#ffffff' : 'rgba(0, 0, 0, 0.7)',
-    background: isDark.value ? 'rgba(255, 255, 255, 0.15)' : 'rgba(255, 255, 255, 0.3)',
-  };
-});
-
-const usernameColorStyle = computed(() => {
-  return {
-    color: isDark.value ? '#ffffff' : 'rgba(0, 0, 0, 0.85)',
-  };
+  return colorMap[props.item.backgroundColor] || 'card-default';
 });
 </script>
 
 <style lang="scss" scoped>
+@use "@/styles/_mixins.scss" as *;
+
 @font-face {
   font-family: '清韵文楷';
   src: url('@/assets/font/清韵文楷.ttf') format('truetype');
@@ -127,7 +70,7 @@ const usernameColorStyle = computed(() => {
   cursor: pointer;
   padding: 24px;
   border-radius: 16px;
-  transition: all 0.3s ease;
+  transition: all var(--transition-duration) ease;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -160,29 +103,27 @@ const usernameColorStyle = computed(() => {
     .time {
       font-size: 12px;
       font-family: '清韵文楷', system-ui, -apple-system, sans-serif;
-      color: rgba(0, 0, 0, 0.6);
+      color: var(--card-text-color);
     }
 
     .tag {
       font-size: 12px;
       font-family: '清韵文楷', system-ui, -apple-system, sans-serif;
       padding: 4px 12px;
-      background: rgba(255, 255, 255, 0.3);
       border-radius: 12px;
-      color: rgba(0, 0, 0, 0.7);
       font-weight: 500;
+      @include card-tag;
     }
   }
 
   .content {
     flex: 1;
     font-size: 16px;
-    color: #1a1a1a;
     line-height: 1.7;
     margin-bottom: 24px;
     font-weight: 500;
     font-family: '清韵文楷', system-ui, -apple-system, sans-serif;
-    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.3);
+    @include card-content;
   }
 
   .footer {
@@ -199,11 +140,12 @@ const usernameColorStyle = computed(() => {
         align-items: center;
         gap: 4px;
         font-size: 13px;
-        color: rgba(0, 0, 0, 0.6);
         font-family: '清韵文楷', system-ui, -apple-system, sans-serif;
+        @include card-text;
 
         :deep(svg) {
           opacity: 0.7;
+          color: var(--card-text-color);
         }
       }
     }
@@ -211,9 +153,52 @@ const usernameColorStyle = computed(() => {
     .username {
       font-size: 14px;
       font-weight: 700;
-      color: rgba(0, 0, 0, 0.85);
       font-family: '清韵文楷', system-ui, -apple-system, sans-serif;
+      @include card-username;
     }
   }
+}
+
+// 卡片主题颜色样式
+.card-rose {
+  background-color: var(--card-bg-rose);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.card-lavender {
+  background-color: var(--card-bg-lavender);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.card-sky {
+  background-color: var(--card-bg-sky);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.card-cream {
+  background-color: var(--card-bg-cream);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.card-mint {
+  background-color: var(--card-bg-mint);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.card-white {
+  background-color: var(--card-bg-white);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.card-default {
+  background-color: var(--card-bg-white);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 </style>

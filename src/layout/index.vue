@@ -9,12 +9,12 @@
       playsinline></video>
 
     <!-- 页面内容区域 -->
-    <div class="main-content">
+    <div class="main-content" :style="{ paddingTop: $route.name === '404'||$route.name==='setting' ? '76px' : '100px' }">
       <div class="cursor-effects"></div>
       <router-view />
       <!-- 页脚自然跟随内容 -->
        <!-- 当页脚是404的时候默认不显示 -->
-      <FooterBar v-if="$route.name !== '404'" class="footer-wrapper" @click="console.log('click footer')"  />
+      <FooterBar v-if="$route.name !== '404'" class="footer-wrapper"/>
     </div>
       <FloatingAddBtn :bottom="bottom" @click="add" />
   </div>
@@ -104,11 +104,11 @@ window.addEventListener('scroll', scrollBottom)
     z-index: 2; // 确保内容在最上层
     width: 100%;
     flex: 1;
-    padding-top: 106px;
+ // 为固定定位的TopBar让出空间
 
     // 让内容可以自然流动和滚动
     overflow: visible;
-    min-height: calc(100vh - 106px); // 调整最小高度计算，减去TopBar高度和padding
+    min-height: calc(100vh - 86px); // 调整最小高度计算，减去TopBar高度和padding
   }
 
   .footer-wrapper {

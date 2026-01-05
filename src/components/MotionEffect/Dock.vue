@@ -1,13 +1,21 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, defineComponent, h } from "vue";
+import {
+  ref,
+  computed,
+  onMounted,
+  onUnmounted,
+  defineComponent,
+  h,
+  type PropType,
+} from "vue";
 import {
   useMotionValue,
   useSpring,
   useTransform,
   type SpringOptions,
 } from "motion-v";
-import type { PropType } from "vue";
 
+// Types
 export type DockItemData = {
   icon: unknown;
   onClick: () => void;
@@ -27,88 +35,29 @@ export type DockProps = {
   setDockTitle?: (title: string) => void;
 };
 
-const props = withDefaults(defineProps<DockProps>(), {
-  className: "",
-  distance: 200,
-  panelHeight: 64,
-  baseItemSize: 50,
-  dockHeight: 256,
-  magnification: 70,
-  spring: () => ({ mass: 0.1, stiffness: 150, damping: 12 }),
+// ----------------------------------------------------------------------
+// Sub-Components Definitions (Defined internally for single-file usage)
+// ----------------------------------------------------------------------
+
+const DockIcon = defineComponent({
+  name: "DockIcon",
+  props: {
+    className: {
+      type: String,
+      default: "",
+    },
+  },
+  render() {
+    return h(
+      "div",
+      {
+        class: `dock-icon ${this.className}`,
+      },
+      this.$slots.default?.()
+    );
+  },
 });
 
-const mouseX = useMotionValue(Infinity);
-const isHovered = useMotionValue(0);
-const currentHeight = ref(props.panelHeight);
-
-const maxHeight = computed(() =>
-  Math.max(props.dockHeight, props.magnification + props.magnification / 2 + 4)
-);
-
-const heightRow = useTransform(
-  isHovered,
-  [0, 1],
-  [props.panelHeight, maxHeight.value]
-);
-const height = useSpring(heightRow, props.spring);
-
-let unsubscribeHeight: (() => void) | null = null;
-
-onMounted(() => {
-  unsubscribeHeight = height.on("change", (latest: number) => {
-    currentHeight.value = latest;
-  });
-});
-
-onUnmounted(() => {
-  if (unsubscribeHeight) {
-    unsubscribeHeight();
-  }
-});
-
-const handleMouseMove = (event: MouseEvent) => {
-  isHovered.set(1);
-  mouseX.set(event.pageX);
-};
-
-const handleMouseLeave = () => {
-  isHovered.set(0);
-  mouseX.set(Infinity);
-};
-</script>
-
-<template>
-  <div
-    :style="{ height: currentHeight + 'px', scrollbarWidth: 'none' }"
-    class="dock-container"
-  >
-    <div
-      @mousemove="handleMouseMove"
-      @mouseleave="handleMouseLeave"
-      :class="`${props.className} dock-panel`"
-      :style="{ height: props.panelHeight + 'px' }"
-      role="toolbar"
-      aria-="Application dock"
-    >
-      <DockItem
-        v-for="(item, index) in props.items"
-        :key="index"
-        :onClick="item.onClick"
-        :className="item.className"
-        :mouseX="mouseX"
-        :spring="props.spring"
-        :distance="props.distance"
-        :magnification="props.magnification"
-        :baseItemSize="props.baseItemSize"
-        :item="item"
-        :title="item.title"
-        :setDockTitle="props.setDockTitle"
-      />
-    </div>
-  </div>
-</template>
-
-<script lang="ts">
 const DockItem = defineComponent({
   name: "DockItem",
   props: {
@@ -117,7 +66,7 @@ const DockItem = defineComponent({
       default: "",
     },
     onClick: {
-      type: Function,
+      type: Function as PropType<(e: MouseEvent) => void>,
       default: () => {},
     },
     mouseX: {
@@ -141,7 +90,7 @@ const DockItem = defineComponent({
       required: true,
     },
     item: {
-      type: Object as () => DockItemData,
+      type: Object as PropType<DockItemData>,
       required: true,
     },
     title: {
@@ -240,32 +189,97 @@ const DockItem = defineComponent({
   },
 });
 
-const DockIcon = defineComponent({
-  name: "DockIcon",
-  props: {
-    className: {
-      type: String,
-      default: "",
-    },
-  },
-  render() {
-    return h(
-      "div",
-      {
-        class: `dock-icon ${this.className}`,
-      },
-      this.$slots.default?.()
-    );
-  },
+// ----------------------------------------------------------------------
+// Main Component Logic
+// ----------------------------------------------------------------------
+
+const props = withDefaults(defineProps<DockProps>(), {
+  className: "",
+  distance: 200,
+  panelHeight: 64,
+  baseItemSize: 50,
+  dockHeight: 256,
+  magnification: 70,
+  spring: () => ({ mass: 0.1, stiffness: 150, damping: 12 }),
 });
 
-export default defineComponent({
-  name: "Dock",
-  components: {
-    DockItem,
-  },
+// 初始化默认标题
+onMounted(() => {
+  if (props.setDockTitle) {
+    props.setDockTitle("欢迎来到fan时光");
+  }
 });
+
+const mouseX = useMotionValue(Infinity);
+const isHovered = useMotionValue(0);
+const currentHeight = ref(props.panelHeight);
+
+const maxHeight = computed(() =>
+  Math.max(props.dockHeight, props.magnification + props.magnification / 2 + 4)
+);
+
+const heightRow = useTransform(
+  isHovered,
+  [0, 1],
+  [props.panelHeight, maxHeight.value]
+);
+const height = useSpring(heightRow, props.spring);
+
+let unsubscribeHeight: (() => void) | null = null;
+
+onMounted(() => {
+  unsubscribeHeight = height.on("change", (latest: number) => {
+    currentHeight.value = latest;
+  });
+});
+
+onUnmounted(() => {
+  if (unsubscribeHeight) {
+    unsubscribeHeight();
+  }
+});
+
+const handleMouseMove = (event: MouseEvent) => {
+  isHovered.set(1);
+  mouseX.set(event.pageX);
+};
+
+const handleMouseLeave = () => {
+  isHovered.set(0);
+  mouseX.set(Infinity);
+};
 </script>
+
+<template>
+  <div
+    :style="{ height: currentHeight + 'px', scrollbarWidth: 'none' }"
+    class="dock-container"
+  >
+    <div
+      @mousemove="handleMouseMove"
+      @mouseleave="handleMouseLeave"
+      :class="`${props.className} dock-panel`"
+      :style="{ height: props.panelHeight + 'px' }"
+      role="toolbar"
+      aria-label="Application dock"
+    >
+      <DockItem
+        v-for="(item, index) in props.items"
+        :key="index"
+        :onClick="item.onClick"
+        :className="item.className"
+        :mouseX="mouseX"
+        :spring="props.spring"
+        :distance="props.distance"
+        :magnification="props.magnification"
+        :baseItemSize="props.baseItemSize"
+        :item="item"
+        :title="item.title"
+        :setDockTitle="props.setDockTitle"
+      />
+    </div>
+  </div>
+</template>
 
 <style scoped lang="scss">
 .dock-container {
@@ -309,7 +323,8 @@ export default defineComponent({
   &:hover {
     transform: translateY(-3px);
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08),
-      0 4px 6px -2px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+      0 4px 6px -2px rgba(0, 0, 0, 0.04),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9);
     background: rgba(255, 250, 245, 0.98);
     border-color: rgba(255, 182, 108, 0.6);
   }

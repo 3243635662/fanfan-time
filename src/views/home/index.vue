@@ -180,7 +180,7 @@ import { tabsDataJSON } from "@/utils/data.json";
 import Card from "./components/card.vue";
 import { getMessageListAPI, getMessageDetailByIdAPI, createMessageAPI } from "@/api/home";
 const settingStore = useSettingStore();
-const { DockTitle, isShowMessageDrawer, isAddMode } = storeToRefs(useSettingStore());
+const { DockTitle, isShowMessageDrawer, isAddMode } = storeToRefs(settingStore);
 // tabs数据
 const tabsData = ref<TabsDataItem[]>(
   tabsDataJSON

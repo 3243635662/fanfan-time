@@ -23,9 +23,21 @@
   --color-icon: #666666;
   --color-icon-hover: #333333;
 
-  // 卡片背景固定颜色（不随主题变化）
-  --card-bg-start: rgba(239, 228, 253, 0.85);
-  --card-bg-end: rgba(203, 228, 233, 0.85);
+  // 卡片主题颜色 - 带透明度的背景色
+  --card-bg-rose: rgba(235, 212, 208, 0.75);
+  --card-bg-lavender: rgba(239, 228, 253, 0.75);
+  --card-bg-sky: rgba(203, 228, 233, 0.75);
+  --card-bg-cream: rgba(254, 246, 222, 0.75);
+  --card-bg-mint: rgba(226, 247, 217, 0.75);
+  --card-bg-white: rgba(255, 255, 255, 0.75);
+
+  // 卡片文字颜色
+  --card-text-color: rgba(0, 0, 0, 0.6);
+  --card-content-color: #1a1a1a;
+  --card-tag-bg: rgba(255, 255, 255, 0.3);
+  --card-tag-color: rgba(0, 0, 0, 0.7);
+  --card-username-color: rgba(0, 0, 0, 0.85);
+  --card-text-shadow: 0 1px 2px rgba(255, 255, 255, 0.3);
 
   // 过渡动画
   --transition-duration: 0.3s;
@@ -46,6 +58,22 @@ body.dark-mode {
   --color-shadow-hover: rgba(0, 0, 0, 0.6);
   --color-icon: #999999;
   --color-icon-hover: #ffffff;
+  
+  // 卡片主题颜色 - 深色模式（带透明度）
+  --card-bg-rose: rgba(139, 111, 103, 0.85);
+  --card-bg-lavender: rgba(107, 93, 158, 0.85);
+  --card-bg-sky: rgba(90, 140, 148, 0.85);
+  --card-bg-cream: rgba(158, 143, 95, 0.85);
+  --card-bg-mint: rgba(99, 143, 87, 0.85);
+  --card-bg-white: rgba(51, 51, 51, 0.85);
+  
+  // 卡片文字颜色 - 深色模式
+  --card-text-color: rgba(255, 255, 255, 1);
+  --card-content-color: #ffffff;
+  --card-tag-bg: rgba(255, 255, 255, 0.15);
+  --card-tag-color: rgba(255, 255, 255, 1);
+  --card-username-color: rgba(255, 255, 255, 1);
+  --card-text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 body {

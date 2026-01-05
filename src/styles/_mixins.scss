@@ -1,9 +1,58 @@
 // scss  混合宏文件
 @use "./variables.scss" as *;
+
+// 卡片基础样式混合宏
 @mixin card {
   padding: 20px;
   background-color: $color-cream;
   border-radius: $radius-12;
   border: 1px solid $color-brown;
   box-shadow: 0 2px 4px $gray-3;
+}
+
+
+
+// 卡片主题背景色混合宏
+@mixin card-background($color) {
+  // 定义颜色映射
+  $color-map: (
+    #ebd4d0: var(--card-color-rose),
+    #efe4fd: var(--card-color-lavender),
+    #cbe4e9: var(--card-color-sky),
+    #fef6de: var(--card-color-cream),
+    #e2f7d9: var(--card-color-mint),
+    #ffffff: var(--card-color-white)
+  );
+  
+  $theme-color: map-get($color-map, $color);
+  @if $theme-color == null {
+    $theme-color: $color;
+  }
+  
+  background-color: rgba($theme-color, var(--card-bg-opacity));
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: var(--card-content-color);
+}
+
+// 卡片文字颜色混合宏
+@mixin card-text {
+  color: var(--card-text-color);
+}
+
+// 卡片内容颜色混合宏
+@mixin card-content {
+  color: var(--card-content-color);
+  text-shadow: var(--card-text-shadow);
+}
+
+// 卡片标签样式混合宏
+@mixin card-tag {
+  color: var(--card-tag-color);
+  background-color: var(--card-tag-bg);
+}
+
+// 卡片用户名样式混合宏
+@mixin card-username {
+  color: var(--card-username-color);
 }
