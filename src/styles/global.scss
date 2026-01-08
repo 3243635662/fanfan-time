@@ -43,6 +43,11 @@
   --transition-duration: 0.3s;
 }
 
+// 浅色模式基础样式
+body.light-mode {
+  background-color: #ffffff;
+}
+
 body.dark-mode {
   --color-bg-primary: #0d0d0d;
   --color-bg-secondary: #1a1a1a;

@@ -1,7 +1,7 @@
 <template>
   <div class="home-page">
-    <TextCursor text="💚" :delay="0.5" :spacing="60" :follow-mouse-direction="true" :random-float="true"
-      :exit-duration="0.8" :removal-interval="500" :max-points="10" />
+    <TextCursor v-if="isShowTextCursor" text="💚" :delay="0.5" :spacing="60" :follow-mouse-direction="true"
+      :random-float="true" :exit-duration="0.8" :removal-interval="500" :max-points="10" />
     <!-- 内容层 -->
     <div class="title">
       <Magnet :padding="120" :disabled="false" :magnet-strength="3" active-transition="transform 0.2s ease-out"
@@ -180,7 +180,7 @@ import { tabsDataJSON } from "@/utils/data.json";
 import Card from "./components/card.vue";
 import { getMessageListAPI, getMessageDetailByIdAPI, createMessageAPI } from "@/api/home";
 const settingStore = useSettingStore();
-const { DockTitle, isShowMessageDrawer, isAddMode } = storeToRefs(settingStore);
+const { DockTitle, isShowMessageDrawer, isAddMode, isShowTextCursor } = storeToRefs(settingStore);
 // tabs数据
 const tabsData = ref<TabsDataItem[]>(
   tabsDataJSON

@@ -132,7 +132,7 @@ import { Icon } from "@iconify/vue";
           color: var(--color-text-secondary);
 
           &:hover {
-            color: #ffffff;
+            color: #888383;
           }
         }
 

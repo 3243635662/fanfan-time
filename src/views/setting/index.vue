@@ -9,29 +9,17 @@
       <a-tabs default-active-key="appearance" class="setting-tabs">
         <a-tab-pane key="appearance" title="外观">
 
-<div class="setting-section">
-  <h3>标题设置</h3>
-  <div class="setting-item">
-    <div class="item-info">
-      <AppIcon name="fluent:slide-text-title-16-regular" size="22" />
-      <div class="item-text">
-        <span class="item-title">自定义首页Dock名称</span>
-        <span class="item-desc">按Enter键即可设置</span>
-      </div>
-    </div>
-    <div class="item-input">
-      <a-input v-model="newDockTitle" placeholder="输入首页Dock名称"  @keyup.enter="handleDockTitleChange" />
-    </div>
-  </div>
-</div>
+
 
           <div class="setting-section">
             <h3>主题设置</h3>
             <div class="setting-item">
               <div class="item-info">
-                <AppIcon :name="isDark ? 'line-md:moon-rising-twotone-loop' : 'line-md:moon-filled-to-sunny-filled-loop-transition' " size="22" />
+                <AppIcon
+                  :name="isDark ? 'line-md:moon-rising-twotone-loop' : 'line-md:moon-filled-to-sunny-filled-loop-transition'"
+                  size="22" />
                 <div class="item-text">
-                  <span class="item-title">{{isDark ? '深色主题' : '浅色主题'}}</span>
+                  <span class="item-title">{{ isDark ? '深色主题' : '浅色主题' }}</span>
                   <span class="item-desc">切换主题</span>
                 </div>
               </div>
@@ -49,12 +37,7 @@
                   <span class="item-desc">自定义界面字体</span>
                 </div>
               </div>
-              <a-select
-                v-model="currentFont"
-                :options="fontOptions"
-                style="width: 200px"
-                @change="handleFontChange"
-              />
+              <a-select v-model="currentFont" :options="fontOptions" style="width: 200px" @change="handleFontChange" />
             </div>
 
             <div class="setting-item">
@@ -94,8 +77,8 @@
               <div class="item-info">
                 <AppIcon name="mdi:cursor-default" size="22" />
                 <div class="item-text">
-                  <span class="item-title">显示文字光标</span>
-                  <span class="item-desc">在页面显示跟随鼠标的文字光标效果</span>
+                  <span class="item-title">显示首页鼠标光标</span>
+                  <span class="item-desc">在首页显示跟随鼠标的文字光标效果</span>
                 </div>
               </div>
               <a-switch v-model="isShowTextCursor" @change="handleTextCursorChange" />
@@ -112,13 +95,8 @@
                   <span class="item-desc">设置首页显示的标题文字</span>
                 </div>
               </div>
-              <a-input
-                v-model="newDockTitle"
-                placeholder="输入标题"
-                style="width: 200px"
-                @blur="handleDockTitleChange"
-                :max-length="30"
-              />
+              <a-input v-model="newDockTitle" placeholder="输入标题" style="width: 200px" @blur="handleDockTitleChange"
+                :max-length="30" />
             </div>
           </div>
         </a-tab-pane>
@@ -198,7 +176,7 @@ const router = useRouter();
 const settingStore = useSettingStore();
 const authStore = useAuthStore();
 
-const { isDark, isShowTextCursor, DockTitle } = storeToRefs(settingStore);
+const { isDark, isShowTextCursor } = storeToRefs(settingStore);
 
 const fontOptions = [
   { value: "default", label: "系统默认", family: "'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif" },
@@ -229,8 +207,10 @@ const applyFontSizeToGlobal = () => {
 const applyThemeToGlobal = (isDarkMode: boolean) => {
   if (isDarkMode) {
     document.body.classList.add("dark-mode");
+    document.body.classList.remove("light-mode");
   } else {
     document.body.classList.remove("dark-mode");
+    document.body.classList.add("light-mode");
   }
 };
 
@@ -247,19 +227,27 @@ onMounted(() => {
     fontSize.value = parseInt(storedFontSize, 10);
     applyFontSizeToGlobal();
   }
-  if (storedIsDark === "true") {
-    const isDarkMode = true;
-    settingStore.isDark = isDarkMode;
-    applyThemeToGlobal(isDarkMode);
-  }
+  
+  // 初始化主题设置
+  const isDarkMode = storedIsDark === "true";
+  settingStore.isDark = isDarkMode;
+  applyThemeToGlobal(isDarkMode);
 
   authStore.initializeAuth();
 });
 
 const handleDarkModeChange = (value: string | number | boolean) => {
   const isDarkMode = Boolean(value);
+  settingStore.isDark = isDarkMode; // 确保store中的状态也更新
   applyThemeToGlobal(isDarkMode);
   localStorage.setItem("isDark", String(isDarkMode));
+  
+  // 强制重新应用背景样式
+  if (isDarkMode) {
+    document.body.classList.add('dark-mode');
+  } else {
+    document.body.classList.remove('dark-mode');
+  }
 };
 
 const handleFontChange = (value: string) => {
@@ -267,9 +255,8 @@ const handleFontChange = (value: string) => {
   applyFontToGlobal();
 };
 
-const handleTextCursorChange = (value: string | number | boolean) => {
-  settingStore.isShowTextCursor = value as boolean;
-  localStorage.setItem("isShowTextCursor", String(value));
+const handleTextCursorChange = () => {
+  $message.success("切换成功");
 };
 
 // 处理首页Dock名称变化
@@ -319,11 +306,24 @@ const formatDate = (dateString: string) => {
   padding: 0 $padding-24 $padding-24;
   background: var(--color-bg-primary);
   transition: background-color var(--transition-duration) ease;
+  min-height: 100vh;
+  position: relative;
+  z-index: 100; // 确保在背景视频之上
 }
+
+// 深色模式下的纯黑色背景
+body.dark-mode .setting-page {
+  background: #000000 !important;
+}
+
+
 
 .setting-container {
   max-width: 900px;
   margin: 0 auto;
+  background: var(--color-bg-card);
+  border-radius: $radius-16;
+  box-shadow: 0 8px 32px var(--color-shadow);
 
   .page-header {
     text-align: center;
@@ -344,7 +344,7 @@ const formatDate = (dateString: string) => {
   }
 
   .setting-tabs {
-    background: var(--color-bg-secondary);
+    background: transparent;
     border-radius: $radius-16;
     padding: $padding-24;
     transition: all var(--transition-duration) ease;

@@ -12,24 +12,33 @@
     <div class="main-content" :style="{ paddingTop: $route.name === '404'||$route.name==='setting' ? '76px' : '100px' }">
       <div class="cursor-effects"></div>
       <router-view />
-      <!-- 页脚自然跟随内容 -->
-       <!-- 当页脚是404的时候默认不显示 -->
-      <FooterBar v-if="$route.name !== '404'" class="footer-wrapper"/>
+      <!-- 页脚只在 home 和 photo 路由时显示 -->
+      <FooterBar v-if="showFooter" class="footer-wrapper"/>
     </div>
       <FloatingAddBtn :bottom="bottom" @click="add" />
   </div>
 </template>
 
 <script setup lang="ts">
+import { router } from "@/router";
 import FloatingAddBtn from "./components/FloatingAddBtn.vue";
 import { storeToRefs } from "pinia";
 import { useSettingStore } from "../store/setting";
 import TopBar from "@/layout/components/TopBar.vue";
 import FooterBar from "@/layout/components/FooterBar.vue";
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 const settingStore = useSettingStore();
 const { isDark } = storeToRefs(settingStore);
 const bottom = ref(30)
+
+// 显示页脚的路由名称列表
+const showFooterNameList = ['home', 'photo']
+
+// 计算是否显示页脚
+const showFooter = computed(() => {
+  const currentRouteName = router.currentRoute.value.name
+  return showFooterNameList.includes(currentRouteName as string)
+})
 
 onMounted(() => {
   const storedIsDark = localStorage.getItem("isDark");
@@ -116,6 +125,7 @@ window.addEventListener('scroll', scrollBottom)
     z-index: 3; // 确保页脚在内容之上
     width: 100%;
     margin-top: auto;
+    
   }
 }
 
