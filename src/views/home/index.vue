@@ -351,7 +351,7 @@ const fetchMessageList = async () => {
     error.value = '';
     const res = await getMessageListAPI();
     if (res.code === 0) {
-      messagesList.value = res.data.list;
+      messagesList.value = res.result.list || [];
     } else {
       error.value = res.message || '获取数据失败';
     }

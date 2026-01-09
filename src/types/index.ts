@@ -27,7 +27,14 @@ export interface MessageType {
 export interface MessageListAPIResponse<T> {
   code: number;
   message: string;
-  data: { "list": T };
+  result: {
+    list: T,
+    total: number,
+    page: number,
+    limit: number,
+    type: number;
+    links:string[]
+  };
 }
 
 
