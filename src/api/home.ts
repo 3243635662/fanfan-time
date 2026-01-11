@@ -1,12 +1,14 @@
 import request from '@/api/request'
-import type { MessageListAPIResponse, APIResponse, MessageType, MessageDetailResponse } from '@/types'
+import type { MessageListResponse, APIResponse, MessageDetailData } from '@/types'
 
-export const getMessageListAPI = (): Promise<MessageListAPIResponse<MessageType[]>> => {
-  return request.get('fanfan-time-message/getMessageList')
+export const getMessageListAPI = (type: number): Promise<MessageListResponse> => {
+  return request.get('fanfan-time-message/getMessageList', { params: { type } })
 }
 
-export const getMessageDetailByIdAPI = (id: number): Promise<APIResponse<MessageDetailResponse>> => {
-  return request.post('/api/message/detail', { id })
+
+
+export const getMessageDetailByIdAPI = (id: number): Promise<APIResponse<MessageDetailData>> => {
+  return request.get('fanfan-time-message/getMessageDetail', { params: { id } })
 }
 
 // 新增留言API

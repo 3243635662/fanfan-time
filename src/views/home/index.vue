@@ -15,8 +15,8 @@
     </div>
     <div class="tabs-container">
       <div class="tabs-wrapper">
-        <a-tabs type="rounded" :default-active-key="1" lazy-load :animation="true" class="custom-tabs">
-          <a-tab-pane v-for="item in tabsData" :key="item.key" :title="item.title">
+        <a-tabs type="rounded" :default-active-key="currentCategory" lazy-load :animation="true" class="custom-tabs" @change="handleTabChange">
+          <a-tab-pane v-for="item in categoryOptions" :key="item.type" :title="item.title">
             <!-- 内容区域 -->
             <div class="tab-content">
               <div v-if="loading" class="loading">加载中...</div>
@@ -52,8 +52,8 @@
 
         <a-form-item label="标签">
           <a-select v-model:value="addForm.tag" placeholder="选择标签">
-            <a-option v-for="option in tagOptions" :key="option.id" :value="option.id">
-              {{ option.label }}
+            <a-option v-for="option in categoryOptions" :key="option.type" :value="option.type">
+              {{ option.title }}
             </a-option>
           </a-select>
         </a-form-item>
@@ -83,12 +83,12 @@
       <div class="detail-header">
         <div class="header-content">
           <div class="user-info">
-            <a-avatar :size="40" :src="messageDetail.avatar">
-              {{ messageDetail.username?.charAt(0) }}
+            <a-avatar :size="40" :src="messageDetail.publisher?.avatar">
+              {{ messageDetail.publisher?.username?.charAt(0) }}
             </a-avatar>
             <div class="user-details">
-              <div class="username">{{ messageDetail.username }}</div>
-              <div class="time">{{ messageDetail.time }}</div>
+              <div class="username">{{ messageDetail.publisher?.nickname || messageDetail.publisher?.username }}</div>
+              <div class="time">{{ formatTime(messageDetail.time) }}</div>
             </div>
           </div>
           <a-tag color="blue" size="small">{{ messageDetail.tag }}</a-tag>
@@ -122,16 +122,16 @@
       </div>
 
       <!-- 评论区域 -->
-      <div class="comments-section" v-if="messageDetail.comments && messageDetail.comments.length > 0">
+      <div class="comments-section" v-if="messageDetail.comments && messageDetail.comments.list && messageDetail.comments.list.length > 0">
         <a-divider orientation="left">
-          <span class="comments-title">评论 {{ messageDetail.comments.length }}</span>
+          <span class="comments-title">评论 {{ messageDetail.comments.total }}</span>
         </a-divider>
 
-        <a-comment v-for="(comment, index) in messageDetail.comments" :key="index" :author="comment.username"
-          :datetime="comment.time" :content="comment.text">
+        <a-comment v-for="(comment, index) in messageDetail.comments.list" :key="index" :author="comment.nickname || comment.username"
+          :datetime="formatTime(comment.time)" :content="comment.content">
           <template #avatar>
             <a-avatar :src="comment.avatar">
-              {{ comment.username?.charAt(0) }}
+              {{ (comment.nickname || comment.username)?.charAt(0) }}
             </a-avatar>
           </template>
         </a-comment>
@@ -170,29 +170,41 @@
 <script setup lang="ts">
 import { $message } from "@/hooks/useMessage";
 import AppIcon from "@/components/AppIcon.vue";
-import type { TabsDataItem, MessageType, MessageDetailResponse } from "@/types"; // 引入类型
+import type { CategoryOption, MessageType, MessageListResponse, MessageDetailData } from "@/types"; // 引入类型
 import { ref, onMounted } from "vue";
 import { useSettingStore } from "@/store/setting";
 import Magnet from "@/components/MotionEffect/Magnet.vue";
 import TextCursor from "@/components/MotionEffect/TextCursor.vue";
 import { storeToRefs } from "pinia";
-import { tabsDataJSON } from "@/utils/data.json";
 import Card from "./components/card.vue";
 import { getMessageListAPI, getMessageDetailByIdAPI, createMessageAPI } from "@/api/home";
 const settingStore = useSettingStore();
 const { DockTitle, isShowMessageDrawer, isAddMode, isShowTextCursor } = storeToRefs(settingStore);
-// tabs数据
-const tabsData = ref<TabsDataItem[]>(
-  tabsDataJSON
-)
+// 统一的分类数据
+const categoryOptions = ref<CategoryOption[]>([
+  { type: 1, title: "全部", text: "all" },
+  { type: 2, title: "理想", text: "ideal" },
+  { type: 3, title: "学业", text: "academic" },
+  { type: 4, title: "生活", text: "life" },
+  { type: 5, title: "其他", text: "other" }
+])
+
+// 当前选中的分类
+const currentCategory = ref(1)
 
 // 消息列表数据
 const messagesList = ref<MessageType[]>([]);
 const loading = ref(false);
 const error = ref('');
 
-const messageDetail = ref<MessageDetailResponse>({})
+const messageDetail = ref<MessageDetailData | null>(null)
 const newComment = ref('')
+
+// 时间格式化函数
+const formatTime = (time: Date | string) => {
+  const date = new Date(time)
+  return date.toLocaleString('zh-CN')
+}
 
 // 点赞状态
 const isLiked = ref(false)
@@ -205,7 +217,7 @@ const addForm = ref({
 })
 // 重置以及关闭
 const resetAndClose = () => {
-  messageDetail.value = {}
+  messageDetail.value = null
   newComment.value = ''
   addForm.value = {
     content: '',
@@ -214,14 +226,6 @@ const resetAndClose = () => {
   }
   settingStore.closeDrawer()
 }
-// 标签选项
-const tagOptions = [
-  { label: '留言', id: 1 },
-  { label: '日记', id: 2 },
-  { label: '随想', id: 3 },
-  { label: '感悟', id: 4 },
-  { label: '生活', id: 5 }
-]
 
 // 背景色选项
 const backgroundColorOptions = [
@@ -246,6 +250,12 @@ const handleCancel = () => {
   resetAndClose()
 };
 
+// 切换标签时的处理
+const handleTabChange = (key: string | number) => {
+  currentCategory.value = Number(key)
+  // 根据选中的分类获取对应的数据
+  getMessageList()
+}
 
 
 // 提交新增留言
@@ -281,18 +291,30 @@ const addComment = () => {
   if (!newComment.value.trim()) return
 
   const comment = {
+    id: Date.now(), // 使用时间戳作为临时ID
     username: '当前用户', // 这里可以从用户状态获取
-    time: new Date().toLocaleString('zh-CN'),
-    text: newComment.value,
+    time: new Date(),
+    content: newComment.value,
     avatar: 'https://via.placeholder.com/40x40?text=U'
   }
+  if (!messageDetail.value) return
+  
   if (!messageDetail.value.comments) {
-    messageDetail.value.comments = []
+    messageDetail.value.comments = {
+      list: [],
+      totalPage: 0,
+      total: 0,
+      page: 1,
+      limit: 10
+    }
   }
 
-  messageDetail.value.comments.unshift(comment)
+  messageDetail.value.comments.list.unshift(comment)
   if (messageDetail.value.commentCount !== undefined) {
     messageDetail.value.commentCount++
+  }
+  if (messageDetail.value.comments.total !== undefined) {
+    messageDetail.value.comments.total++
   }
 
   newComment.value = ''
@@ -301,6 +323,8 @@ const addComment = () => {
 
 // 点赞功能
 const handleLike = () => {
+  if (!messageDetail.value) return
+  
   isLiked.value = !isLiked.value
 
   if (isLiked.value) {
@@ -322,6 +346,8 @@ const handleLike = () => {
 
 // 举报功能
 const handleReport = () => {
+  if (!messageDetail.value) return
+  
   console.log('举报留言:', messageDetail.value.id)
   // TODO: 调用举报API
   // 这里可以添加举报成功的提示
@@ -330,13 +356,18 @@ const handleReport = () => {
 const showDetail = async (id: number | undefined) => {
   if (id) {
     try {
+      console.log('获取消息详情:', id);
+      
       const res = await getMessageDetailByIdAPI(id)
-      if (res.message === 'success') {
-        messageDetail.value = res.data
+      if (res.code === 0 && res.result) {
+        messageDetail.value = res.result
         // 重置点赞状态
         isLiked.value = false
+        // 打开详情抽屉
+        isShowMessageDrawer.value = true
+      } else {
+        $message.error(res.message || '获取数据失败')
       }
-      settingStore.openDetailMode()
     }
     catch (error) {
       console.error('获取消息详情失败:', error);
@@ -344,13 +375,15 @@ const showDetail = async (id: number | undefined) => {
   }
 }
 
-// 获取消息列表
-const fetchMessageList = async () => {
+// 获取消息列表（根据分类）
+const getMessageList = async () => {
   try {
     loading.value = true;
     error.value = '';
-    const res = await getMessageListAPI();
-    if (res.code === 0) {
+    
+    // 直接传入当前选中的分类id作为type，后端数据库使用数字类型的type字段
+    const res: MessageListResponse = await getMessageListAPI(currentCategory.value);
+    if (res.code === 0 && res.result) {
       messagesList.value = res.result.list || [];
     } else {
       error.value = res.message || '获取数据失败';
@@ -361,6 +394,11 @@ const fetchMessageList = async () => {
   } finally {
     loading.value = false;
   }
+};
+
+// 获取全部消息列表（兼容原有逻辑）
+const fetchMessageList = async () => {
+  await getMessageList();
 };
 
 // 组件挂载时获取数据

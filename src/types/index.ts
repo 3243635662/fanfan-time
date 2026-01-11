@@ -2,14 +2,14 @@
 export interface APIResponse<T> {
   code: number;
   message: string;
-  data: T;
+  result: T;
 }
 
-// 单个Tabs格式
-export interface TabsDataItem {
-  key: number;
+// 分类选项格式
+export interface CategoryOption {
+  type: number;
   title: string;
-  tag: string;
+  text: string;
 }
 
 // 单个留言格式
@@ -23,38 +23,56 @@ export interface MessageType {
   commentCount: number;
   username: string;
 }
-// 获取留言的响应
-export interface MessageListAPIResponse<T> {
-  code: number;
-  message: string;
-  result: {
-    list: T,
-    total: number,
-    page: number,
-    limit: number,
-    type: number;
-    links:string[]
-  };
+
+// 留言列表响应
+export interface MessageListResponse { 
+  code: number; 
+  result: { 
+    list: any[]; 
+    total: number; 
+    page: number; 
+    limit: number; 
+    type: number; 
+    links?: { 
+      first?: string; 
+      previous?: string; 
+      next?: string; 
+      last?: string; 
+    }; 
+  } | null; 
+  message: string; 
 }
 
-
-// 单个详情的格式
-export interface MessageDetailResponse {
-  id?: number;
-  avatar?: string,
-  backgroundColor?: string;
-  content?: string;
-  time?: string;
-  likedCount?: number;
-  commentCount?: number;
-  username?: string;
-  tag?: string;
-  comments?: {
-    username: string;
-    time: string;
-    text: string;
-    avatar: string;
-  }[];
+// 留言详情数据
+export interface MessageDetailData {
+  id: number;
+  tag: string;
+  content: string;
+  time: Date;
+  likedCount: number;
+  commentCount: number;
+  username: string;
+  backgroundColor: string;
+  publisher: { 
+    id: number; 
+    username: string; 
+    avatar: string; 
+    nickname?: string; 
+  }; 
+  comments: { 
+    list: { 
+      id: number; 
+      content: string; 
+      time: Date; 
+      username: string; 
+      avatar: string; 
+      nickname?: string; 
+    }[]; 
+    totalPage: number; 
+    total: number; 
+    page: number; 
+    limit: number; 
+  }; 
 }
 
 // 用户信息

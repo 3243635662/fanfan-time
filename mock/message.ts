@@ -35,36 +35,36 @@ export default [
   //   },
   // },
 
-  {
-    url: '/api/message/detail',
-    method: 'post',
-    response: ({ body }: { body: { id: number } }) => {
-      const { id } = body; // 修复语法错误：移除多余的逗号
-      return Mock.mock({
-        code: 0,
-        message: 'success',
-        data: {
-          id: id,
-          avatar: '@image("100x100", "@color", "#FFF", "@first")',
-          backgroundColor: '@pick(["#ebd4d0", "#efe4fd", "#cbe4e9", "#fef6de", "#e2f7d9"])', // 随机十六进制颜色
-          content: '@cparagraph(1, 5)',
-          time: '@datetime("yyyy-MM-dd HH:mm:ss")',
-          likedCount: '@integer(0, 100)',
-          commentCount: '@integer(0, 50)',
-          username: '@cname',
-          tag: '@pick(["留言", "日记", "随想", "感悟", "生活"])',
-          'comments|5-10': [
-            {
-              username: '@cname',
-              time: '@datetime("yyyy-MM-dd HH:mm:ss")',
-              text: '@csentence(10, 50)', // 随机生成10-50个字符的中文句子
-              avatar: '@image("40x40", "@color", "#FFF", "@first")' //
-            }
-          ]
-        }
-      })
-    },
-  },
+  // {
+  //   url: '/api/message/detail',
+  //   method: 'post',
+  //   response: ({ body }: { body: { id: number } }) => {
+  //     const { id } = body; // 修复语法错误：移除多余的逗号
+  //     return Mock.mock({
+  //       code: 0,
+  //       message: 'success',
+  //       data: {
+  //         id: id,
+  //         avatar: '@image("100x100", "@color", "#FFF", "@first")',
+  //         backgroundColor: '@pick(["#ebd4d0", "#efe4fd", "#cbe4e9", "#fef6de", "#e2f7d9"])', // 随机十六进制颜色
+  //         content: '@cparagraph(1, 5)',
+  //         time: '@datetime("yyyy-MM-dd HH:mm:ss")',
+  //         likedCount: '@integer(0, 100)',
+  //         commentCount: '@integer(0, 50)',
+  //         username: '@cname',
+  //         tag: '@pick(["留言", "日记", "随想", "感悟", "生活"])',
+  //         'comments|5-10': [
+  //           {
+  //             username: '@cname',
+  //             time: '@datetime("yyyy-MM-dd HH:mm:ss")',
+  //             text: '@csentence(10, 50)', // 随机生成10-50个字符的中文句子
+  //             avatar: '@image("40x40", "@color", "#FFF", "@first")' //
+  //           }
+  //         ]
+  //       }
+  //     })
+  //   },
+  // },
 
 
   {

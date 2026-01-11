@@ -5,7 +5,7 @@ export const useSettingStore = defineStore("setting", () => {
   // 是否夜间
   const isDark = ref(false);
   // 是否显示鼠标光标
-  const isShowTextCursor = ref(true)
+  const isShowTextCursor = ref(false)
   // 是否显示抽屉
   const isShowMessageDrawer = ref(false)
   // 新增模式状态
