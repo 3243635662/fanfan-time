@@ -89,7 +89,8 @@ body {
   font-size: var(--font-size-base);
   color: var(--color-text-primary);
   background-color: var(--color-bg-primary);
-  transition: all var(--transition-duration) ease-in-out;
+  transition: background-color var(--transition-duration) ease-in-out, 
+              color var(--transition-duration) ease-in-out;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -97,7 +98,35 @@ body {
 p {
   padding: 0;
   margin: 0;
-  color: var(--color-text-secondary);
+}
+
+// 全局主题切换优化
+* {
+  transition: background-color var(--transition-duration) ease-in-out,
+              color var(--transition-duration) ease-in-out,
+              border-color var(--transition-duration) ease-in-out,
+              box-shadow var(--transition-duration) ease-in-out;
+}
+
+// 按钮主题切换优化
+.arco-btn {
+  transition: all var(--transition-duration) ease-in-out;
+}
+
+// 输入框主题切换优化
+.arco-input,
+.arco-input-wrapper {
+  transition: all var(--transition-duration) ease-in-out;
+}
+
+// 卡片主题切换优化
+.arco-card {
+  transition: all var(--transition-duration) ease-in-out;
+}
+
+// 链接主题切换优化
+.arco-link {
+  transition: color var(--transition-duration) ease-in-out;
 }
 
 li {

@@ -1,5 +1,30 @@
 <template>
   <div class="register-page">
+    <!-- 顶部导航栏 -->
+    <div class="top-nav">
+      <a-button 
+        type="text"
+        size="large"
+        class="home-button"
+        @click="$router.push('/')"
+      >
+        <AppIcon name="mdi:home" size="20" />
+        返回首页
+      </a-button>
+      <a-button
+        type="text"
+        size="large"
+        class="theme-toggle"
+        @click="toggleDarkMode"
+      >
+        <AppIcon 
+          :name="isDark ? 'line-md:moon-rising-twotone-loop' : 'line-md:moon-filled-to-sunny-filled-loop-transition'" 
+          size="20" 
+        />
+        {{ isDark ? '夜间' : '白天' }}
+      </a-button>
+    </div>
+    
     <div class="register-container">
       <div class="register-header">
         <AppIcon name="streamline-freehand-color:messages-bubble-smile" size="48" class="logo-icon" />
@@ -87,21 +112,32 @@
     </div>
 
     <div class="register-decoration">
-      <div class="decoration-content">
-        <h2>加入我们的社区</h2>
-        <p>与志同道合的人交流，分享生活的点滴，创造美好的回忆</p>
-        <div class="features">
-          <div class="feature-item">
-            <AppIcon name="mdi:pencil-box-outline" size="24" />
-            <span>记录生活</span>
-          </div>
-          <div class="feature-item">
-            <AppIcon name="mdi:account-group-outline" size="24" />
-            <span>结识朋友</span>
-          </div>
-          <div class="feature-item">
-            <AppIcon name="mdi:cloud-outline" size="24" />
-            <span>云端同步</span>
+      <video 
+        class="decoration-video"
+        src="@/assets/video/register.mp4"
+        autoplay
+        muted
+        loop
+        playsinline
+        preload="auto"
+      ></video>
+      <div class="decoration-overlay">
+        <div class="decoration-content">
+          <h2>加入我们的社区</h2>
+          <p>与志同道合的人交流，分享生活的点滴，创造美好的回忆</p>
+          <div class="features">
+            <div class="feature-item">
+              <AppIcon name="mdi:pencil-box-outline" size="24" />
+              <span>记录生活</span>
+            </div>
+            <div class="feature-item">
+              <AppIcon name="mdi:account-group-outline" size="24" />
+              <span>结识朋友</span>
+            </div>
+            <div class="feature-item">
+              <AppIcon name="mdi:cloud-outline" size="24" />
+              <span>云端同步</span>
+            </div>
           </div>
         </div>
       </div>
@@ -113,11 +149,19 @@
 import { reactive } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/store/auth";
+import { useSettingStore } from "@/store/setting";
+import { storeToRefs } from "pinia";
 import { $message } from "@/hooks/useMessage";
 import AppIcon from "@/components/AppIcon.vue";
 
 const router = useRouter();
 const authStore = useAuthStore();
+const settingStore = useSettingStore();
+const { isDark } = storeToRefs(settingStore);
+
+const toggleDarkMode = () => {
+  settingStore.toggleDarkMode();
+};
 
 const formData = reactive({
   username: "",
@@ -183,7 +227,48 @@ const handleRegister = async () => {
 .register-page {
   display: flex;
   min-height: 100vh;
-  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  position: relative;
+  overflow: hidden;
+  transition: all var(--transition-duration) ease-in-out;
+}
+
+:deep(body.dark-mode) .register-page {
+  // 在这里添加深色模式样式
+}
+
+// 顶部导航栏
+.top-nav {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 $padding-24;
+  backdrop-filter: blur(8px);
+  z-index: 100;
+  transition: all var(--transition-duration) ease-in-out;
+
+  .home-button,
+  .theme-toggle {
+    font-weight: 500;
+    transition: all var(--transition-duration) ease-in-out;
+  }
+
+  .home-button {
+    margin-right: auto;
+  }
+
+  .theme-toggle {
+    margin-left: 16px;
+  }
+}
+
+// 深色模式下的顶部导航栏
+:deep(body.dark-mode) .top-nav {
+  // 在这里添加深色模式样式
 }
 
 .register-container {
@@ -193,30 +278,35 @@ const handleRegister = async () => {
   justify-content: center;
   align-items: center;
   padding: $padding-24;
-  background: $gray-0;
   max-width: 500px;
+  overflow-y: auto;
+  margin-top: 60px;
+  transition: all var(--transition-duration) ease-in-out;
 
   .register-header {
     text-align: center;
-    margin-bottom: $padding-24;
+    margin-bottom: $padding-12;
+    flex-shrink: 0;
 
     .logo-icon {
-      margin-bottom: $padding-16;
-      color: $success;
+      margin-bottom: $padding-12;
     }
 
     h1 {
-      font-size: $font-size-28;
+      font-size: $font-size-24;
       font-weight: 700;
-      color: $gray-8;
-      margin: 0 0 $padding-8;
+      margin: 0 0 $padding-4;
     }
 
     .subtitle {
-      font-size: $font-size-14;
-      color: $gray-5;
+      font-size: $font-size-12;
       margin: 0;
     }
+  }
+  
+  // 深色模式下的注册容器
+  :deep(body.dark-mode) & {
+    // 在这里添加深色模式样式
   }
 
   .register-form {
@@ -224,28 +314,64 @@ const handleRegister = async () => {
     max-width: 360px;
 
     :deep(.arco-form-item) {
-      margin-bottom: $length-20;
+      margin-bottom: $length-16;
     }
 
-    :deep(.arco-input) {
+    :deep(.arco-input),
+    :deep(.arco-input-wrapper) {
       border-radius: $radius-8;
+      transition: all var(--transition-duration) ease-in-out;
+      
+      &::placeholder {
+        transition: color var(--transition-duration) ease-in-out;
+      }
+      
+      &:hover {
+        :deep(.arco-input-prefix) {
+          transition: color var(--transition-duration) ease-in-out;
+        }
+      }
+      
+      &:focus-within {
+        :deep(.arco-input-prefix) {
+          transition: color var(--transition-duration) ease-in-out;
+        }
+        
+        :deep(.arco-input-suffix) {
+          transition: color var(--transition-duration) ease-in-out;
+        }
+      }
+      
+      :deep(.arco-input-prefix) {
+        transition: color var(--transition-duration) ease-in-out;
+      }
+      
+      :deep(.arco-input-suffix) {
+        transition: color var(--transition-duration) ease-in-out;
+      }
+    }
+    
+    // 错误状态
+    :deep(.arco-input-wrapper.arco-input-error),
+    :deep(.arco-form-item-error) {
+      :deep(.arco-input),
+      :deep(.arco-input-wrapper) {
+        transition: all var(--transition-duration) ease-in-out;
+      }
     }
 
     :deep(.arco-btn-primary) {
-      background: linear-gradient(135deg, $success 0%, darken($success, 10%) 100%);
       border: none;
       border-radius: $radius-8;
-      height: 48px;
-      font-size: $font-size-16;
+      height: 44px;
+      font-size: $font-size-15;
       font-weight: 600;
-
-      &:hover {
-        background: linear-gradient(135deg, darken($success, 5%) 0%, darken($success, 15%) 100%);
-      }
-
-      &:disabled {
-        background: $gray-3;
-      }
+      transition: all var(--transition-duration) ease-in-out;
+    }
+    
+    // 深色模式下的表单样式
+    :deep(body.dark-mode) & {
+      // 在这里添加深色模式样式
     }
   }
 
@@ -254,52 +380,67 @@ const handleRegister = async () => {
     justify-content: space-between;
     align-items: center;
     width: 100%;
+    
+    :deep(.arco-checkbox) {
+      transition: color var(--transition-duration) ease-in-out;
+    }
+    
+    // 深色模式下的表单选项
+    :deep(body.dark-mode) & {
+      // 在这里添加深色模式样式
+    }
   }
 
   .divider {
-    margin: $padding-24 0;
+    margin: $padding-20 0;
     width: 100%;
     max-width: 360px;
+    transition: all var(--transition-duration) ease-in-out;
 
-    .divider-text {
+    :deep(.arco-divider-text) {
       font-size: $font-size-12;
-      color: $gray-4;
       padding: 0 $padding-16;
-      background: $gray-0;
+      transition: all var(--transition-duration) ease-in-out;
+    }
+    
+    // 深色模式下的分割线
+    :deep(body.dark-mode) & {
+      // 在这里添加深色模式样式
     }
   }
 
   .social-register {
     display: flex;
     justify-content: center;
-    gap: $length-20;
-    margin-bottom: $padding-24;
+    gap: $length-16;
+    margin-bottom: $padding-20;
 
     .social-button {
-      width: 48px;
-      height: 48px;
-      border: 1px solid $gray-2;
-      background: $gray-0;
-
-      &:hover {
-        border-color: $success;
-        background: rgba($success, 0.05);
-      }
+      width: 44px;
+      height: 44px;
+      border: 1px solid;
+      transition: all var(--transition-duration) ease-in-out;
+    }
+    
+    // 深色模式下的社交注册按钮
+    :deep(body.dark-mode) & {
+      // 在这里添加深色模式样式
     }
   }
 
   .login-link {
     font-size: $font-size-14;
-    color: $gray-5;
+    transition: color var(--transition-duration) ease-in-out;
 
     a {
-      color: $success;
       font-weight: 600;
       margin-left: 4px;
-
-      &:hover {
-        text-decoration: underline;
-      }
+      transition: color var(--transition-duration) ease-in-out;
+    }
+    
+    // 深色模式下的登录链接
+    :deep(body.dark-mode) & {
+      // 在这里添加深色模式样式
     }
   }
 }
@@ -309,54 +450,88 @@ const handleRegister = async () => {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-  padding: $padding-24;
+  position: relative;
+  overflow: hidden;
+  transition: all var(--transition-duration) ease-in-out;
+
+  .decoration-video {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    min-width: 100%;
+    min-height: 100%;
+    width: auto;
+    height: auto;
+    transform: translate(-50%, -50%);
+    object-fit: cover;
+    z-index: 1;
+  }
+
+  .decoration-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 2;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: $padding-24;
+    transition: all var(--transition-duration) ease-in-out;
+  }
 
   .decoration-content {
     text-align: center;
-    color: $gray-0;
     max-width: 400px;
+    z-index: 3;
+    transition: all var(--transition-duration) ease-in-out;
 
     h2 {
       font-size: 2.5rem;
       font-weight: 700;
       margin-bottom: $padding-16;
-      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      transition: all var(--transition-duration) ease-in-out;
     }
 
     p {
       font-size: $font-size-16;
-      opacity: 0.9;
       line-height: 1.8;
       margin-bottom: $padding-24;
+      transition: all var(--transition-duration) ease-in-out;
     }
 
     .features {
       display: flex;
       justify-content: center;
-      gap: $padding-24;
+      gap: $padding-16;
 
       .feature-item {
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: $padding-8;
-        padding: $padding-16;
-        background: rgba($gray-0, 0.1);
-        border-radius: $radius-12;
-        transition: all 0.3s ease;
+        gap: $padding-4;
+        padding: $padding-12;
+        border-radius: $radius-8;
+        transition: all var(--transition-duration) ease-in-out;
+        border: 1px solid;
+        min-width: 70px;
 
-        &:hover {
-          background: rgba($gray-0, 0.2);
-          transform: translateY(-4px);
+        :deep(.arco-icon) {
+          font-size: 20px;
         }
 
         span {
-          font-size: $font-size-14;
+          font-size: $font-size-12;
           font-weight: 500;
         }
       }
     }
+  }
+  
+  // 深色模式下的装饰区域
+  :deep(body.dark-mode) & {
+    // 在这里添加深色模式样式
   }
 }
 
@@ -367,24 +542,51 @@ const handleRegister = async () => {
 
   .register-container {
     max-width: none;
-    min-height: 65vh;
+    min-height: 60vh;
+    margin-top: 0; // 移动端不需要顶部间距
   }
 
   .register-decoration {
     min-height: 35vh;
 
+    .decoration-video {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      min-width: 100%;
+      min-height: 100%;
+      width: auto;
+      height: auto;
+      transform: translate(-50%, -50%);
+      object-fit: cover;
+    }
+
     .decoration-content {
       h2 {
-        font-size: 1.8rem;
+        font-size: 1.6rem;
+        margin-bottom: $padding-12;
+      }
+
+      p {
+        font-size: $font-size-14;
+        margin-bottom: $padding-20;
       }
 
       .features {
         flex-wrap: wrap;
-        gap: $padding-12;
+        gap: $padding-8;
 
         .feature-item {
-          padding: $padding-12;
-          min-width: 80px;
+          padding: $padding-8;
+          min-width: 70px;
+          
+          :deep(.arco-icon) {
+            font-size: 18px;
+          }
+          
+          span {
+            font-size: $font-size-12;
+          }
         }
       }
     }

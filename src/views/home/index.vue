@@ -83,9 +83,7 @@
       <div class="detail-header">
         <div class="header-content">
           <div class="user-info">
-            <a-avatar :size="40" :src="messageDetail.publisher?.avatar">
-              {{ messageDetail.publisher?.username?.charAt(0) }}
-            </a-avatar>
+            <FanAvatar :size="40" :imageUrl="messageDetail.publisher?.avatar" :username="messageDetail.publisher?.nickname || messageDetail.publisher?.username" />
             <div class="user-details">
               <div class="username">{{ messageDetail.publisher?.nickname || messageDetail.publisher?.username }}</div>
               <div class="time">{{ formatTime(messageDetail.time) }}</div>
@@ -130,9 +128,7 @@
         <a-comment v-for="(comment, index) in messageDetail.comments.list" :key="index" :author="comment.nickname || comment.username"
           :datetime="formatTime(comment.time)" :content="comment.content">
           <template #avatar>
-            <a-avatar :src="comment.avatar">
-              {{ (comment.nickname || comment.username)?.charAt(0) }}
-            </a-avatar>
+            <FanAvatar :imageUrl="comment.avatar" :username="comment.nickname || comment.username" />
           </template>
         </a-comment>
       </div>
@@ -177,6 +173,7 @@ import Magnet from "@/components/MotionEffect/Magnet.vue";
 import TextCursor from "@/components/MotionEffect/TextCursor.vue";
 import { storeToRefs } from "pinia";
 import Card from "./components/card.vue";
+import FanAvatar from "./components/Fan-Avatar.vue";
 import { getMessageListAPI, getMessageDetailByIdAPI, createMessageAPI } from "@/api/home";
 const settingStore = useSettingStore();
 const { DockTitle, isShowMessageDrawer, isAddMode, isShowTextCursor } = storeToRefs(settingStore);
@@ -353,6 +350,7 @@ const handleReport = () => {
   // 这里可以添加举报成功的提示
 }
 
+// 获取详情
 const showDetail = async (id: number | undefined) => {
   if (id) {
     try {
@@ -373,6 +371,8 @@ const showDetail = async (id: number | undefined) => {
       console.error('获取消息详情失败:', error);
     }
   }
+  console.log(messageDetail.value);
+  
 }
 
 // 获取消息列表（根据分类）
