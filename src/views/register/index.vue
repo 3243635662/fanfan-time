@@ -2,7 +2,7 @@
   <div class="register-page">
     <!-- 顶部导航栏 -->
     <div class="top-nav">
-      <a-button 
+      <a-button
         type="text"
         size="large"
         class="home-button"
@@ -19,7 +19,7 @@
       >
         <AppIcon 
           :name="isDark ? 'line-md:moon-rising-twotone-loop' : 'line-md:moon-filled-to-sunny-filled-loop-transition'" 
-          size="20" 
+          size="20"
         />
         {{ isDark ? '夜间' : '白天' }}
       </a-button>
@@ -27,7 +27,7 @@
     
     <div class="register-container">
       <div class="register-header">
-        <AppIcon name="streamline-freehand-color:messages-bubble-smile" size="48" class="logo-icon" />
+        <AppIcon name="line-md:emoji-smile" size="48" class="logo-icon" />
         <h1>创建账号</h1>
         <p class="subtitle">加入fan时光，开启精彩旅程</p>
       </div>
@@ -68,10 +68,10 @@
         <a-form-item>
           <a-checkbox v-model="formData.agreeTerms">
             我已阅读并同意
-            <a-link>服务条款</a-link>
-            和
-            <a-link>隐私政策</a-link>
           </a-checkbox>
+          <a-link>服务条款</a-link>
+          和
+          <a-link>隐私政策</a-link>
         </a-form-item>
 
         <a-form-item>
@@ -123,7 +123,9 @@
       ></video>
       <div class="decoration-overlay">
         <div class="decoration-content">
-          <h2>加入我们的社区</h2>
+          <h2 class="animated-title">
+            <span>加</span><span>入</span><span>我</span><span>们</span><span>的</span><span>社</span><span>区</span>
+          </h2>
           <p>与志同道合的人交流，分享生活的点滴，创造美好的回忆</p>
           <div class="features">
             <div class="feature-item">
@@ -248,13 +250,19 @@ const handleRegister = async () => {
   align-items: center;
   padding: 0 $padding-24;
   backdrop-filter: blur(8px);
+  background: rgba(0, 0, 0, 0.35);
   z-index: 100;
   transition: all var(--transition-duration) ease-in-out;
 
   .home-button,
   .theme-toggle {
-    font-weight: 500;
+    color: rgba(255, 255, 255, 0.95);
+    font-weight: 600;
     transition: all var(--transition-duration) ease-in-out;
+    &:hover {
+      color: $gray-0;
+      background: rgba(255, 255, 255, 0.1);
+    }
   }
 
   .home-button {
@@ -266,11 +274,6 @@ const handleRegister = async () => {
   }
 }
 
-// 深色模式下的顶部导航栏
-:deep(body.dark-mode) .top-nav {
-  // 在这里添加深色模式样式
-}
-
 .register-container {
   flex: 1;
   display: flex;
@@ -279,8 +282,6 @@ const handleRegister = async () => {
   align-items: center;
   padding: $padding-24;
   max-width: 500px;
-  overflow-y: auto;
-  margin-top: 60px;
   transition: all var(--transition-duration) ease-in-out;
 
   .register-header {
@@ -290,6 +291,7 @@ const handleRegister = async () => {
 
     .logo-icon {
       margin-bottom: $padding-12;
+      animation: bounce 2s ease-in-out infinite;
     }
 
     h1 {
@@ -303,54 +305,42 @@ const handleRegister = async () => {
       margin: 0;
     }
   }
-  
-  // 深色模式下的注册容器
-  :deep(body.dark-mode) & {
-    // 在这里添加深色模式样式
-  }
 
   .register-form {
     width: 100%;
     max-width: 360px;
 
     :deep(.arco-form-item) {
-      margin-bottom: $length-16;
+      margin-bottom: 0;
     }
 
     :deep(.arco-input),
     :deep(.arco-input-wrapper) {
       border-radius: $radius-8;
       transition: all var(--transition-duration) ease-in-out;
-      
       &::placeholder {
         transition: color var(--transition-duration) ease-in-out;
       }
-      
       &:hover {
         :deep(.arco-input-prefix) {
           transition: color var(--transition-duration) ease-in-out;
         }
       }
-      
       &:focus-within {
         :deep(.arco-input-prefix) {
           transition: color var(--transition-duration) ease-in-out;
         }
-        
         :deep(.arco-input-suffix) {
           transition: color var(--transition-duration) ease-in-out;
         }
       }
-      
       :deep(.arco-input-prefix) {
         transition: color var(--transition-duration) ease-in-out;
       }
-      
       :deep(.arco-input-suffix) {
         transition: color var(--transition-duration) ease-in-out;
       }
     }
-    
     // 错误状态
     :deep(.arco-input-wrapper.arco-input-error),
     :deep(.arco-form-item-error) {
@@ -368,26 +358,23 @@ const handleRegister = async () => {
       font-weight: 600;
       transition: all var(--transition-duration) ease-in-out;
     }
-    
-    // 深色模式下的表单样式
-    :deep(body.dark-mode) & {
-      // 在这里添加深色模式样式
-    }
   }
 
-  .form-options {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
+  :deep(.arco-form-item) {
+    margin-bottom: 16px;
     
     :deep(.arco-checkbox) {
       transition: color var(--transition-duration) ease-in-out;
+      
+      :deep(.arco-checkbox-label) {
+        transition: color var(--transition-duration) ease-in-out;
+      }
     }
     
-    // 深色模式下的表单选项
-    :deep(body.dark-mode) & {
-      // 在这里添加深色模式样式
+    .dark-mode & {
+      :deep(.arco-checkbox-label) {
+        color: rgba(255, 255, 255, 0.95) !important;
+      }
     }
   }
 
@@ -401,11 +388,6 @@ const handleRegister = async () => {
       font-size: $font-size-12;
       padding: 0 $padding-16;
       transition: all var(--transition-duration) ease-in-out;
-    }
-    
-    // 深色模式下的分割线
-    :deep(body.dark-mode) & {
-      // 在这里添加深色模式样式
     }
   }
 
@@ -421,11 +403,6 @@ const handleRegister = async () => {
       border: 1px solid;
       transition: all var(--transition-duration) ease-in-out;
     }
-    
-    // 深色模式下的社交注册按钮
-    :deep(body.dark-mode) & {
-      // 在这里添加深色模式样式
-    }
   }
 
   .login-link {
@@ -437,10 +414,12 @@ const handleRegister = async () => {
       margin-left: 4px;
       transition: color var(--transition-duration) ease-in-out;
     }
-    
-    // 深色模式下的登录链接
-    :deep(body.dark-mode) & {
-      // 在这里添加深色模式样式
+  }
+
+  // 深色模式下的文字颜色
+  .dark-mode & {
+    :deep(.arco-checkbox-label) {
+      color: rgba(255, 255, 255, 0.95) !important;
     }
   }
 }
@@ -478,6 +457,8 @@ const handleRegister = async () => {
     justify-content: center;
     align-items: center;
     padding: $padding-24;
+    background: rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(3px);
     transition: all var(--transition-duration) ease-in-out;
   }
 
@@ -485,20 +466,43 @@ const handleRegister = async () => {
     text-align: center;
     max-width: 400px;
     z-index: 3;
+    color: rgba(255, 255, 255, 0.95);
     transition: all var(--transition-duration) ease-in-out;
+    animation: fadeInUp 1s ease-out;
 
     h2 {
       font-size: 2.5rem;
       font-weight: 700;
       margin-bottom: $padding-16;
+      color: rgba(255, 255, 255, 0.95);
       transition: all var(--transition-duration) ease-in-out;
+      animation: slideIn 1s ease-out 0.3s both;
+      
+      &.animated-title {
+        display: inline-block;
+        
+        span {
+          display: inline-block;
+          animation: bounceText 2s ease-in-out infinite;
+          
+          &:nth-child(1) { animation-delay: 0s; }
+          &:nth-child(2) { animation-delay: 0.1s; }
+          &:nth-child(3) { animation-delay: 0.2s; }
+          &:nth-child(4) { animation-delay: 0.3s; }
+          &:nth-child(5) { animation-delay: 0.4s; }
+          &:nth-child(6) { animation-delay: 0.5s; }
+          &:nth-child(7) { animation-delay: 0.6s; }
+        }
+      }
     }
 
     p {
       font-size: $font-size-16;
       line-height: 1.8;
       margin-bottom: $padding-24;
+      color: rgba(255, 255, 255, 0.9);
       transition: all var(--transition-duration) ease-in-out;
+      animation: slideIn 1s ease-out 0.6s both;
     }
 
     .features {
@@ -528,10 +532,45 @@ const handleRegister = async () => {
       }
     }
   }
-  
-  // 深色模式下的装饰区域
-  :deep(body.dark-mode) & {
-    // 在这里添加深色模式样式
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateX(-30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes bounceText {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  @keyframes bounce {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
   }
 }
 
@@ -592,4 +631,5 @@ const handleRegister = async () => {
     }
   }
 }
+
 </style>

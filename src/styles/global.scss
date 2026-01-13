@@ -89,12 +89,12 @@ body {
   font-size: var(--font-size-base);
   color: var(--color-text-primary);
   background-color: var(--color-bg-primary);
-  transition: background-color var(--transition-duration) ease-in-out, 
+  transition: background-color var(--transition-duration) ease-in-out,
               color var(--transition-duration) ease-in-out;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-
+a
 p {
   padding: 0;
   margin: 0;

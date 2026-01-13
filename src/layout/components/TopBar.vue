@@ -1,7 +1,7 @@
 <template>
   <div class="top-bar">
     <div class="logo">
-      <AppIcon class="logo-icon" name="streamline-freehand-color:messages-bubble-smile" size="30" />
+      <AppIcon class="logo-icon" name="line-md:emoji-smile" size="30" />
       <p>fan时光</p>
     </div>
     <div class="menu">

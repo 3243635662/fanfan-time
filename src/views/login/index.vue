@@ -27,7 +27,12 @@
 
     <div class="login-container">
       <div class="login-header">
-        <AppIcon name="streamline-freehand-color:messages-bubble-smile" size="48" class="logo-icon" />
+        <AppIcon
+          name="line-md:emoji-smile"
+          size="48"
+          class="logo-icon"
+          :color="isDark ? '#fff' : null"
+        />
         <h1>欢迎回来</h1>
         <p class="subtitle">登录fan时光，记录美好时刻</p>
       </div>
@@ -93,18 +98,20 @@
     </div>
 
     <div class="login-decoration">
-      <video 
-        class="decoration-video" 
-        src="@/assets/video/login.mp4" 
-        autoplay 
-        muted 
-        loop 
+      <video
+        class="decoration-video"
+        src="@/assets/video/login.mp4"
+        autoplay
+        muted
+        loop
         playsinline
         preload="auto"
       ></video>
       <div class="decoration-overlay">
         <div class="decoration-content">
-          <h2>记录每一个精彩瞬间</h2>
+          <h2 class="animated-title">
+            <span>记</span><span>录</span><span>每</span><span>一</span><span>个</span><span>精</span><span>彩</span><span>瞬</span><span>间</span>
+          </h2>
           <p>分享你的想法，记录你的生活，与朋友一起创造美好的回忆</p>
         </div>
       </div>
@@ -184,13 +191,19 @@ const handleLogin = async () => {
   align-items: center;
   padding: 0 $padding-24;
   backdrop-filter: blur(8px);
+  background: rgba(0, 0, 0, 0.35);
   z-index: 100;
   transition: all var(--transition-duration) ease-in-out;
 
   .home-button,
   .theme-toggle {
-    font-weight: 500;
+    color: rgba(255, 255, 255, 0.95);
+    font-weight: 600;
     transition: all var(--transition-duration) ease-in-out;
+    &:hover {
+      color: $gray-0;
+      background: rgba(255, 255, 255, 0.1);
+    }
   }
 
   .home-button {
@@ -201,12 +214,6 @@ const handleLogin = async () => {
     margin-left: 16px;
   }
 }
-
-// 深色模式下的顶部导航栏
-.dark-mode .top-nav {
-  // 在这里添加深色模式样式
-}
-
 .login-container {
   flex: 1;
   display: flex;
@@ -215,43 +222,37 @@ const handleLogin = async () => {
   align-items: center;
   padding: $padding-24;
   max-width: 500px;
-  margin-top: 60px;
   transition: all var(--transition-duration) ease-in-out;
-
   .login-header {
     text-align: center;
     margin-bottom: $padding-24;
+    transition: color var(--transition-duration) ease-in-out;
 
     .logo-icon {
       margin-bottom: $padding-16;
-      transition: color var(--transition-duration) ease-in-out;
+      animation: bounce 2s ease-in-out infinite;
     }
 
     h1 {
       font-size: $font-size-28;
       font-weight: 700;
       margin: 0 0 $padding-8;
-      transition: color var(--transition-duration) ease-in-out;
     }
 
     .subtitle {
       font-size: $font-size-14;
       margin: 0;
-      transition: color var(--transition-duration) ease-in-out;
     }
   }
 
-  // 深色模式下的登录容器
-  :deep(body.dark-mode) & {
-    // 在这里添加深色模式样式
-  }
+
 
   .login-form {
     width: 100%;
     max-width: 360px;
 
     :deep(.arco-form-item) {
-      margin-bottom: $length-20;
+      margin-bottom: 0;
     }
 
     :deep(.arco-input),
@@ -308,18 +309,17 @@ const handleLogin = async () => {
     justify-content: space-between;
     align-items: center;
     width: 100%;
-    
     :deep(.arco-checkbox) {
       transition: color var(--transition-duration) ease-in-out;
     }
-    
     :deep(.arco-link) {
       transition: color var(--transition-duration) ease-in-out;
     }
-    
-    // 深色模式下的表单选项
-    :deep(body.dark-mode) & {
-      // 在这里添加深色模式样式
+    :deep(.arco-checkbox-label) {
+      transition: color var(--transition-duration) ease-in-out;
+      .dark-mode & {
+        color: rgba(255, 255, 255, 0.95);
+      }
     }
   }
 
@@ -333,11 +333,6 @@ const handleLogin = async () => {
       font-size: $font-size-12;
       padding: 0 $padding-16;
       transition: all var(--transition-duration) ease-in-out;
-    }
-    
-    // 深色模式下的分割线
-    :deep(body.dark-mode) & {
-      // 在这里添加深色模式样式
     }
   }
 
@@ -353,11 +348,6 @@ const handleLogin = async () => {
       border: 1px solid;
       transition: all var(--transition-duration) ease-in-out;
     }
-    
-    // 深色模式下的社交登录按钮
-    :deep(body.dark-mode) & {
-      // 在这里添加深色模式样式
-    }
   }
 
   .register-link {
@@ -369,11 +359,7 @@ const handleLogin = async () => {
       margin-left: 4px;
       transition: color var(--transition-duration) ease-in-out;
     }
-    
-    // 深色模式下的注册链接
-    :deep(body.dark-mode) & {
-      // 在这里添加深色模式样式
-    }
+
   }
 }
 
@@ -410,6 +396,8 @@ const handleLogin = async () => {
     justify-content: center;
     align-items: center;
     padding: $padding-24;
+    background: rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(3px);
     transition: all var(--transition-duration) ease-in-out;
   }
 
@@ -417,25 +405,76 @@ const handleLogin = async () => {
     text-align: center;
     max-width: 400px;
     z-index: 3;
+    color: rgba(255, 255, 255, 0.95);
     transition: all var(--transition-duration) ease-in-out;
+    animation: fadeInUp 1s ease-out;
 
     h2 {
       font-size: 2.5rem;
       font-weight: 700;
       margin-bottom: $padding-16;
+      color: rgba(255, 255, 255, 0.95);
       transition: all var(--transition-duration) ease-in-out;
+      animation: slideIn 1s ease-out 0.3s both;
+      
+      &.animated-title {
+        display: inline-block;
+        
+        span {
+          display: inline-block;
+          animation: bounceText 2s ease-in-out infinite;
+          
+          &:nth-child(1) { animation-delay: 0s; }
+          &:nth-child(2) { animation-delay: 0.1s; }
+          &:nth-child(3) { animation-delay: 0.2s; }
+          &:nth-child(4) { animation-delay: 0.3s; }
+          &:nth-child(5) { animation-delay: 0.4s; }
+          &:nth-child(6) { animation-delay: 0.5s; }
+          &:nth-child(7) { animation-delay: 0.6s; }
+          &:nth-child(8) { animation-delay: 0.7s; }
+          &:nth-child(9) { animation-delay: 0.8s; }
+        }
+      }
     }
 
     p {
       font-size: $font-size-16;
       line-height: 1.8;
+      color: rgba(255, 255, 255, 0.9);
       transition: all var(--transition-duration) ease-in-out;
+      animation: slideIn 1s ease-out 0.6s both;
     }
   }
-  
-  // 深色模式下的装饰区域
-  :deep(body.dark-mode) & {
-    // 在这里添加深色模式样式
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateX(-30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes bounceText {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
   }
 }
 
@@ -467,6 +506,15 @@ const handleLogin = async () => {
     .decoration-content h2 {
       font-size: 1.8rem;
     }
+  }
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
   }
 }
 </style>
