@@ -37,7 +37,7 @@
         <p class="subtitle">登录fan时光，记录美好时刻</p>
       </div>
 
-      <a-form :model="formData" layout="vertical" @submit.prevent="handleLogin" class="login-form">
+      <a-form :model="formData" layout="vertical" @submit="handleLogin" class="login-form">
         <a-form-item field="username" :rules="usernameRules" :validate-trigger="['blur', 'change']">
           <a-input v-model="formData.username" placeholder="用户名" size="large" allow-clear>
             <template #prefix>
@@ -66,7 +66,7 @@
             type="primary"
             html-type="submit"
             size="large"
-            :loading="authStore.loading"
+            :loading="isLoading"
             long
             class="login-button"
           >
@@ -120,18 +120,19 @@
 </template>
 
 <script setup lang="ts">
-import { reactive } from "vue";
+import { reactive, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/store/auth";
 import { useSettingStore } from "@/store/setting";
 import { storeToRefs } from "pinia";
+import { $notification } from "@/hooks/useNotification";
 import AppIcon from "@/components/AppIcon.vue";
 
 const router = useRouter();
 const authStore = useAuthStore();
 const settingStore = useSettingStore();
 const { isDark } = storeToRefs(settingStore);
-
+const { isLoading } = storeToRefs(authStore);
 const toggleDarkMode = () => {
   settingStore.toggleDarkMode();
 };
@@ -154,18 +155,50 @@ const passwordRules = [
 
 const handleLogin = async () => {
   if (!formData.username || !formData.password) {
+    $notification.warning({
+      title: '登录失败',
+      content: '请填写用户名和密码',
+    });
     return;
   }
 
-  const result = await authStore.login({
-    username: formData.username,
-    password: formData.password,
-  });
+  try {
+    const result = await authStore.login({
+      username: formData.username,
+      password: formData.password,
+      remember: formData.remember,
+    });
 
-  if (result.success) {
-    router.push("/");
+    if (result.success) {
+      $notification.success({
+        title: '登录成功',
+        content: '欢迎回来！',
+      });
+      // 登录成功后，跳转到首页
+      router.push({ name: 'home' });
+    } else {
+      $notification.error({
+        title: '登录失败',
+        content: result.message,
+      });
+    }
+  } catch (error) {
+    console.error('登录失败:', error);
+    $notification.error({
+      title: '登录失败',
+      content: error instanceof Error ? error.message : "登录错误",
+    });
   }
 };
+
+// 组件挂载时初始化认证状态
+onMounted(() => {
+  authStore.initAuth();
+  // 如果已经登录，直接跳转首页
+  if (authStore.isLogin) {
+    router.push({ name: 'home' });
+  }
+});
 </script>
 
 <style scoped lang="scss">
@@ -223,6 +256,9 @@ const handleLogin = async () => {
   padding: $padding-24;
   max-width: 500px;
   transition: all var(--transition-duration) ease-in-out;
+  .dark-mode & {
+    background: rgba(0, 0, 0, 0.86);
+  }
   .login-header {
     text-align: center;
     margin-bottom: $padding-24;

@@ -18,7 +18,7 @@
         @click="toggleDarkMode"
       >
         <AppIcon 
-          :name="isDark ? 'line-md:moon-rising-twotone-loop' : 'line-md:moon-filled-to-sunny-filled-loop-transition'" 
+          :name="isDark ? 'line-md:moon-rising-twotone-loop' : 'line-md:moon-filled-to-sunny-filled-loop-transition'"
           size="20"
         />
         {{ isDark ? '夜间' : '白天' }}
@@ -79,7 +79,7 @@
             type="primary"
             html-type="submit"
             size="large"
-            :loading="authStore.loading"
+            :loading="isLoading"
             long
             class="register-button"
             :disabled="!formData.agreeTerms"
@@ -160,7 +160,7 @@ const router = useRouter();
 const authStore = useAuthStore();
 const settingStore = useSettingStore();
 const { isDark } = storeToRefs(settingStore);
-
+const { isLoading } = storeToRefs(authStore);
 const toggleDarkMode = () => {
   settingStore.toggleDarkMode();
 };
@@ -275,6 +275,9 @@ const handleRegister = async () => {
 }
 
 .register-container {
+    .dark-mode & {
+    background: rgba(0, 0, 0, 0.86);
+  }
   flex: 1;
   display: flex;
   flex-direction: column;

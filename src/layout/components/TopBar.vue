@@ -30,7 +30,7 @@ const items = [
   {
     icon: () =>
       h(AppIcon, {
-        name: "mdi:home",
+        name: "line-md:home-alt-twotone",
         size: "22",
         color: "#6bb6c1",
       }),
@@ -60,7 +60,7 @@ const items = [
   {
     icon: () =>
       h(AppIcon, {
-        name: "icon-park:user",
+        name: "line-md:cog-loop",
         size: "22",
         color: "#d4a5a0",
       }),

@@ -1,116 +1,125 @@
+import { $notification } from '@/hooks/useNotification';
 import { defineStore } from "pinia";
-import { ref, computed } from "vue";
+import { ref } from "vue";
 import type { UserInfo, LoginParams, RegisterParams } from "@/types";
+import { getUserInfoAPI, loginAPI } from "@/api/auth";
+import { STORAGE_KEYS, APP_PREFIX, TOKEN_EXPIRY_24H } from "@/utils/constants";
+import { router } from "@/router";
 
 export const useAuthStore = defineStore("auth", () => {
-  const user = ref<UserInfo | null>(null);
+  const userInfo = ref<UserInfo | null>(null);
   const token = ref<string | null>(null);
-  const loading = ref(false);
-  const error = ref<string | null>(null);
+  const isLoading = ref(false);
+  const isLogin = ref(false);
 
-  const isAuthenticated = computed(() => !!token.value && !!user.value);
+
+  const switchLoginStatus = () => {
+    isLogin.value = !isLogin.value;
+  };
+
+  const switchIsLoadingStatus = () => {
+    isLoading.value = !isLoading.value;
+  };
+
+  const getUserInfo = async () => {
+    try {
+      const res = await getUserInfoAPI()
+      userInfo.value = res.result
+    } catch (error) {
+      $notification.error({
+        title: "获取用户信息失败",
+        content: error instanceof Error ? error.message : "未知错误",
+      });
+    }
+  }
+
 
   const login = async (params: LoginParams) => {
-    loading.value = true;
-    error.value = null;
-
+    isLoading.value = true;
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const res = await loginAPI({
+        username: params.username,
+        password: params.password,
+      })
 
-      if (params.username === "admin" && params.password === "123456") {
-        const mockUser: UserInfo = {
-          id: 1,
-          username: params.username,
-          email: "admin@example.com",
-          avatar: "",
-          createdAt: new Date().toISOString(),
-        };
+      if (res.code === 0) {
+        token.value = res.result.token;
+        isLogin.value = true;
 
-        const mockToken = "mock-jwt-token-" + Date.now();
-
-        user.value = mockUser;
-        token.value = mockToken;
-
-        localStorage.setItem("token", mockToken);
-        localStorage.setItem("user", JSON.stringify(mockUser));
-
-        return { success: true };
+        // 根据"记住我"选项决定是否持久化token
+        if (params.remember) {
+          // 记住我：存24小时
+          localStorage.setItem(`${APP_PREFIX}:${STORAGE_KEYS.TOKEN}`, res.result.token);
+          const expiryDate = new Date(Date.now() + TOKEN_EXPIRY_24H).toISOString();
+          localStorage.setItem(`${APP_PREFIX}:${STORAGE_KEYS.TOKEN_EXPIRY}`, expiryDate);
+        }
+        // 登录成功后获取用户信息
+        await getUserInfo()
+        // 
+        return { success: true, message: res.message || "登录成功" };
       } else {
-        throw new Error("用户名或密码错误");
+        return { success: false, message: res.message || "登录失败" };
       }
-    } catch (err) {
-      error.value = err instanceof Error ? err.message : "登录失败";
-      return { success: false, message: error.value };
+    } catch (error) {
+      return { success: false, message: error instanceof Error ? error.message : "登录错误" };
     } finally {
-      loading.value = false;
+      isLoading.value = false;
     }
   };
 
   const register = async (params: RegisterParams) => {
-    loading.value = true;
-    error.value = null;
+    switchIsLoadingStatus();
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      if (params.password !== params.confirmPassword) {
-        throw new Error("两次输入的密码不一致");
-      }
-
-      if (params.username.length < 3) {
-        throw new Error("用户名至少需要3个字符");
-      }
-
-      if (params.password.length < 6) {
-        throw new Error("密码至少需要6个字符");
-      }
-
-      const mockUser: UserInfo = {
-        id: Math.floor(Math.random() * 1000) + 1,
-        username: params.username,
-        email: params.email,
-        createdAt: new Date().toISOString(),
-      };
-
-      return { success: true, message: "注册成功", user: mockUser };
-    } catch (err) {
-      error.value = err instanceof Error ? err.message : "注册失败";
-      return { success: false, message: error.value };
+      // TODO: 实现真实的注册逻辑
+      // 这里暂时返回模拟的成功响应
+      return { success: true, message: "注册成功" };
     } finally {
-      loading.value = false;
+      isLoading.value = false;
     }
   };
 
   const logout = () => {
-    user.value = null;
+    isLogin.value = false;
+    userInfo.value = null;
     token.value = null;
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    // 清除localStorage中的token（只有记住我时才会存）
+    localStorage.removeItem(`${APP_PREFIX}:${STORAGE_KEYS.TOKEN}`);
+    localStorage.removeItem(`${APP_PREFIX}:${STORAGE_KEYS.USER}`);
+    localStorage.removeItem(`${APP_PREFIX}:${STORAGE_KEYS.TOKEN_EXPIRY}`);
+    router.push('/home');
   };
 
-  const initializeAuth = () => {
-    const storedToken = localStorage.getItem("token");
-    const storedUser = localStorage.getItem("user");
 
-    if (storedToken && storedUser) {
-      try {
+  // 初始化函数：检查是否有记住的token
+  const initAuth = () => {
+    const storedToken = localStorage.getItem(`${APP_PREFIX}:${STORAGE_KEYS.TOKEN}`);
+    const expiry = localStorage.getItem(`${APP_PREFIX}:${STORAGE_KEYS.TOKEN_EXPIRY}`);
+    if (storedToken && expiry) {
+      const expiryDate = new Date(expiry);
+      const now = new Date();
+
+      if (expiryDate > now) {
+        // token未过期，恢复登录状态
         token.value = storedToken;
-        user.value = JSON.parse(storedUser);
-      } catch {
+        isLogin.value = true;
+      } else {
+        // token已过期，清除存储
         logout();
       }
     }
   };
 
   return {
-    user,
+    userInfo,
     token,
-    loading,
-    error,
-    isAuthenticated,
+    isLoading,
+    isLogin,
     login,
     register,
     logout,
-    initializeAuth,
+    initAuth,
+    switchLoginStatus,
+    switchIsLoadingStatus
   };
 });

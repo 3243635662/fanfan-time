@@ -102,32 +102,57 @@
         </a-tab-pane>
 
         <a-tab-pane key="account" title="账户">
-          <div class="setting-section">
-            <h3>账户信息</h3>
-            <div class="account-info" v-if="authStore.user">
-              <a-avatar :size="64" :src="authStore.user.avatar">
-                {{ authStore.user.username?.charAt(0).toUpperCase() }}
-              </a-avatar>
-              <div class="account-details">
-                <span class="account-name">{{ authStore.user.username }}</span>
-                <span class="account-email">{{ authStore.user.email }}</span>
-                <span class="account-date">注册于 {{ formatDate(authStore.user.createdAt) }}</span>
+          <div class="account-container" v-if="isLogin">
+            <div class="setting-section account-info-section">
+              <h3>账户信息</h3>
+              <div class="account-info">
+                <FanAvatar
+                  :imageUrl="userInfo?.avatar"
+                  :size="80"
+                  :username="userInfo?.username || 'fanfan'"
+                  class="account-avatar"
+                />
+                <div class="account-details">
+                  <div class="account-name-group">
+                    <span class="account-name">{{ userInfo?.nickname || userInfo?.username || 'fanfan' }}</span>
+                    <span class="account-username" v-if="userInfo?.nickname">@{{ userInfo?.username || 'fanfan' }}</span>
+                  </div>
+                  <span class="account-email">{{ userInfo?.email || 'fanfan@fanfan-time.com' }}</span>
+                  <div class="account-meta">
+                    <span class="account-date">注册于 {{ formatDate(userInfo?.createdAt) || '2024年1月13日' }}</span>
+                    <span class="account-roles" v-if="userInfo?.roles?.length">• {{ userInfo.roles.join(', ') }}</span>
+                  </div>
+                  <div class="account-status" v-if="userInfo?.tokenStatus">
+                    <span class="status-label">状态:</span>
+                    <span class="status-value" :class="getStatusClass(userInfo.tokenStatus)">
+                      {{ getStatusText(userInfo.tokenStatus) }}
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
-            <a-empty v-else description="未登录">
+
+            <div class="setting-section account-actions-section">
+              <h3>账户操作</h3>
+              <div class="action-buttons">
+                <a-button type="primary" danger @click="handleLogout" size="large">
+                  <AppIcon name="mdi:logout" size="18" />
+                  退出登录
+                </a-button>
+              </div>
+            </div>
+          </div>
+
+          <div v-else>
+          <a-empty  description="未登录">
+        <template #image>
+                  <AppIcon name="line-md:watch-off-twotone" size="64" />
+          </template>
               <router-link to="/login">
                 <a-button type="primary">去登录</a-button>
               </router-link>
             </a-empty>
-          </div>
-
-          <div class="setting-section" v-if="authStore.isAuthenticated">
-            <h3>账户操作</h3>
-            <a-button type="primary" danger @click="handleLogout">
-              <AppIcon name="mdi:logout" size="16" />
-              退出登录
-            </a-button>
-          </div>
+            </div>
         </a-tab-pane>
 
         <a-tab-pane key="about" title="关于">
@@ -135,7 +160,7 @@
             <h3>关于fan时光</h3>
             <div class="about-info">
               <div class="about-logo">
-                <AppIcon name="streamline-freehand-color:messages-bubble-smile" size="64" />
+                <AppIcon name="line-md:emoji-smile" size="64" />
               </div>
               <div class="about-text">
                 <h4>fan时光</h4>
@@ -171,11 +196,13 @@ import { useSettingStore } from "@/store/setting";
 import { useAuthStore } from "@/store/auth";
 import { $message } from "@/hooks/useMessage";
 import AppIcon from "@/components/AppIcon.vue";
+import FanAvatar from "@/views/home/components/Fan-Avatar.vue";
+import { STORAGE_KEYS, APP_PREFIX } from "@/utils/constants";
 const newDockTitle = ref("");
 const router = useRouter();
 const settingStore = useSettingStore();
 const authStore = useAuthStore();
-
+const { isLogin, userInfo } = storeToRefs(authStore);
 const { isDark, isShowTextCursor } = storeToRefs(settingStore);
 
 const fontOptions = [
@@ -197,7 +224,7 @@ const currentFontFamily = computed(() => {
 
 const applyFontToGlobal = () => {
   document.documentElement.style.setProperty("--font-family", currentFontFamily.value);
-  localStorage.setItem("preferredFont", currentFont.value);
+  localStorage.setItem(`${APP_PREFIX}:${STORAGE_KEYS.PREFERRED_FONT}`, currentFont.value);
 };
 
 const applyFontSizeToGlobal = () => {
@@ -215,9 +242,9 @@ const applyThemeToGlobal = (isDarkMode: boolean) => {
 };
 
 onMounted(() => {
-  const storedFont = localStorage.getItem("preferredFont");
-  const storedFontSize = localStorage.getItem("preferredFontSize");
-  const storedIsDark = localStorage.getItem("isDark");
+  const storedFont = localStorage.getItem(`${APP_PREFIX}:${STORAGE_KEYS.PREFERRED_FONT}`);
+  const storedFontSize = localStorage.getItem(`${APP_PREFIX}:${STORAGE_KEYS.PREFERRED_FONT_SIZE}`);
+  const storedIsDark = localStorage.getItem(`${APP_PREFIX}:${STORAGE_KEYS.IS_DARK_MODE}`);
 
   if (storedFont) {
     currentFont.value = storedFont;
@@ -233,14 +260,13 @@ onMounted(() => {
   settingStore.isDark = isDarkMode;
   applyThemeToGlobal(isDarkMode);
 
-  authStore.initializeAuth();
 });
 
 const handleDarkModeChange = (value: string | number | boolean) => {
   const isDarkMode = Boolean(value);
   settingStore.isDark = isDarkMode; // 确保store中的状态也更新
   applyThemeToGlobal(isDarkMode);
-  localStorage.setItem("isDark", String(isDarkMode));
+  localStorage.setItem(`${APP_PREFIX}:${STORAGE_KEYS.IS_DARK_MODE}`, String(isDarkMode));
   
   // 强制重新应用背景样式
   if (isDarkMode) {
@@ -271,7 +297,7 @@ const handleDockTitleChange = () => {
 const decreaseFontSize = () => {
   if (fontSize.value > 12) {
     fontSize.value--;
-    localStorage.setItem("preferredFontSize", String(fontSize.value));
+    localStorage.setItem(`${APP_PREFIX}:${STORAGE_KEYS.PREFERRED_FONT_SIZE}`, String(fontSize.value));
     document.documentElement.style.fontSize = `${fontSize.value}px`;
   }
 };
@@ -279,23 +305,53 @@ const decreaseFontSize = () => {
 const increaseFontSize = () => {
   if (fontSize.value < 20) {
     fontSize.value++;
-    localStorage.setItem("preferredFontSize", String(fontSize.value));
+    localStorage.setItem(`${APP_PREFIX}:${STORAGE_KEYS.PREFERRED_FONT_SIZE}`, String(fontSize.value));
     document.documentElement.style.fontSize = `${fontSize.value}px`;
+  }
+};
+
+// 格式化日期
+const formatDate = (date: Date | string | undefined) => {
+  if (!date) return '';
+  const d = new Date(date);
+  return d.toLocaleDateString('zh-CN', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+};
+
+// 获取状态样式类
+const getStatusClass = (status: string) => {
+  switch (status) {
+    case 'active':
+      return 'status-active';
+    case 'inactive':
+      return 'status-inactive';
+    case 'expired':
+      return 'status-expired';
+    default:
+      return 'status-default';
+  }
+};
+
+// 获取状态文本
+const getStatusText = (status: string) => {
+  switch (status) {
+    case 'active':
+      return '活跃';
+    case 'inactive':
+      return '未激活';
+    case 'expired':
+      return '已过期';
+    default:
+      return '未知';
   }
 };
 
 const handleLogout = () => {
   authStore.logout();
   router.push("/login");
-};
-
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
-  return date.toLocaleDateString("zh-CN", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
 };
 </script>
 
@@ -455,35 +511,160 @@ body.dark-mode .setting-page {
   }
 }
 
+.account-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+  padding: 32px 0;
+  min-height: 60vh;
+}
+
+.account-info-section {
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+  
+  h3 {
+    margin-bottom: 24px;
+    font-size: 18px;
+    font-weight: 600;
+  }
+}
+
 .account-info {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: $padding-24;
-  padding: $padding-24;
-  background: var(--color-bg-tertiary);
-  border-radius: $radius-12;
-  transition: all var(--transition-duration) ease;
+  gap: 16px;
+  padding: 32px;
+  background: var(--color-bg-secondary);
+  border-radius: 16px;
+  box-shadow: 0 2px 8px var(--color-shadow);
+
+
 
   .account-details {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 12px;
+    text-align: center;
+    width: 100%;
 
-    .account-name {
-      font-size: $font-size-18;
-      font-weight: 600;
-      color: var(--color-text-primary);
+    .account-name-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+
+      .account-name {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--color-text-primary);
+      }
+
+      .account-username {
+        font-size: 14px;
+        color: var(--color-text-secondary);
+        font-weight: 500;
+      }
     }
 
     .account-email {
-      font-size: $font-size-14;
+      font-size: 14px;
       color: var(--color-text-secondary);
+      font-weight: 500;
+      padding: 8px 12px;
+      background: var(--color-bg-tertiary);
+      border-radius: 8px;
+      border: 1px solid var(--color-border-light);
     }
 
-    .account-date {
-      font-size: $font-size-12;
+    .account-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 12px;
       color: var(--color-text-tertiary);
+      
+      .account-date {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+      }
+
+      .account-roles {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        color: var(--color-primary);
+        font-weight: 500;
+      }
     }
+
+    .account-status {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: var(--color-bg-tertiary);
+      border-radius: 8px;
+      border: 1px solid var(--color-border-light);
+      font-size: 12px;
+
+      .status-label {
+        color: var(--color-text-secondary);
+        font-weight: 500;
+      }
+
+      .status-value {
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+
+        &.status-active {
+          background: rgba(34, 197, 94, 0.1);
+          color: #22c55e;
+        }
+
+        &.status-inactive {
+          background: rgba(239, 68, 68, 0.1);
+          color: #ef4444;
+        }
+
+        &.status-expired {
+          background: rgba(245, 158, 11, 0.1);
+          color: #f59e0b;
+        }
+
+        &.status-default {
+          background: rgba(107, 114, 128, 0.1);
+          color: #6b7280;
+        }
+      }
+    }
+  }
+}
+
+.account-actions-section {
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+  
+  h3 {
+    margin-bottom: 16px;
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  .action-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
   }
 }
 
@@ -497,9 +678,6 @@ body.dark-mode .setting-page {
   margin-bottom: $padding-16;
   transition: all var(--transition-duration) ease;
 
-  .about-logo {
-    color: $primary;
-  }
 
   .about-text {
     h4 {

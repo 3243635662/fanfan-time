@@ -6,7 +6,6 @@ export const getMessageListAPI = (type: number): Promise<MessageListResponse> =>
 }
 
 
-
 export const getMessageDetailByIdAPI = (id: number): Promise<APIResponse<MessageDetailData>> => {
   return request.get('fanfan-time-message/getMessageDetail', { params: { id } })
 }

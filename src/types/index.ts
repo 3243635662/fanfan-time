@@ -25,22 +25,22 @@ export interface MessageType {
 }
 
 // 留言列表响应
-export interface MessageListResponse { 
-  code: number; 
-  result: { 
-    list: any[]; 
-    total: number; 
-    page: number; 
-    limit: number; 
-    type: number; 
-    links?: { 
-      first?: string; 
-      previous?: string; 
-      next?: string; 
-      last?: string; 
-    }; 
-  } | null; 
-  message: string; 
+export interface MessageListResponse {
+  code: number;
+  result: {
+    list: any[];
+    total: number;
+    page: number;
+    limit: number;
+    type: number;
+    links?: {
+      first?: string;
+      previous?: string;
+      next?: string;
+      last?: string;
+    };
+  } | null;
+  message: string;
 }
 
 // 留言详情数据
@@ -53,41 +53,47 @@ export interface MessageDetailData {
   commentCount: number;
   username: string;
   backgroundColor: string;
-  publisher: { 
-    id: number; 
-    username: string; 
-    avatar: string; 
-    nickname?: string; 
-  }; 
-  comments: { 
-    list: { 
-      id: number; 
-      content: string; 
-      time: Date; 
-      username: string; 
-      avatar: string; 
-      nickname?: string; 
-    }[]; 
-    totalPage: number; 
-    total: number; 
-    page: number; 
-    limit: number; 
-  }; 
+  publisher: {
+    id: number;
+    username: string;
+    avatar: string;
+    nickname?: string;
+  };
+  comments: {
+    list: {
+      id: number;
+      content: string;
+      time: Date;
+      username: string;
+      avatar: string;
+      nickname?: string;
+    }[];
+    totalPage: number;
+    total: number;
+    page: number;
+    limit: number;
+  };
 }
 
 // 用户信息
 export interface UserInfo {
   id: number;
   username: string;
+  nickname: string;
+  avatar: string;
   email: string;
-  avatar?: string;
-  createdAt: string;
+  roles:any[]
+  createdAt: Date;
+  updatedAt: Date;
+  lastLoginAt: Date;
+  tokenStatus: string;
 }
 
 // 登录请求参数
 export interface LoginParams {
   username: string;
   password: string;
+  remember?: boolean; // 记住我
 }
 
 // 注册请求参数
@@ -100,8 +106,9 @@ export interface RegisterParams {
 
 // 登录响应
 export interface LoginResponse {
+  id:number
   token: string;
-  user: UserInfo;
+  timestamp: Date;
 }
 
 // 注册响应
