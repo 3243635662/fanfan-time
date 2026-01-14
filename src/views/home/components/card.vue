@@ -1,7 +1,7 @@
 <template>
   <div class="container" :class="containerClass">
     <div class="head">
-      <span class="time">{{ item.time }}</span>
+      <span class="time">{{ formatTime(item.time) }}</span>
       <span class="tag">{{ item.tag }}</span>
     </div>
     <div class="content">{{ item.content }}</div>
@@ -25,18 +25,18 @@
 import type { MessageType } from "@/types";
 import AppIcon from "@/components/AppIcon.vue";
 import { computed } from "vue";
-
+import { formatTime } from "@/utils";
 const props = defineProps({
   item: {
     type: Object as () => MessageType,
     default: () => ({
       backgroundColor: '#efe4fd',
-      time: '2025-12-11',
+      time: new Date(),
       tag: '留言',
-      content: 'jiayi udhwuida',
-      likedCount: 2,
-      commentCount: 3,
-      username: '2769566671'
+      content: '这是条默认的留言内容',
+      likedCount: 99,
+      commentCount: 99,
+      username: '繁繁'
     })
   }
 })
