@@ -106,12 +106,30 @@
             <div class="setting-section account-info-section">
               <h3>账户信息</h3>
               <div class="account-info">
-                <FanAvatar
-                  :imageUrl="userInfo?.avatar"
-                  :size="80"
-                  :username="userInfo?.username || 'fanfan'"
-                  class="account-avatar"
-                />
+                <!-- 头像上传 -->
+<div class="avatar-upload-wrapper" @click="openAvatarSelect">
+  <FanAvatar
+    :imageUrl="userInfo?.avatar"
+    :size="80"
+    :username="userInfo?.username || 'fanfan'"
+    class="account-avatar"
+  />
+  <div class="avatar-upload-mask">
+    <AppIcon name="mdi:camera" size="24" />
+    <span>更换头像</span>
+  </div>
+</div>
+
+<!-- 隐藏的 file 选择器 -->
+<a-upload
+  ref="avatarUploadRef"
+  accept="image/*"
+  :show-file-list="false"
+  :auto-upload="false"
+  @change="onAvatarSelect"
+>
+  <template #upload-button></template>
+</a-upload>
                 <div class="account-details">
                   <div class="account-name-group">
                     <span class="account-name">{{ userInfo?.nickname || userInfo?.username || 'fanfan' }}</span>
@@ -198,13 +216,14 @@ import { $message } from "@/hooks/useMessage";
 import AppIcon from "@/components/AppIcon.vue";
 import FanAvatar from "@/views/home/components/Fan-Avatar.vue";
 import { STORAGE_KEYS, APP_PREFIX } from "@/utils/constants";
+import type { UploadInstance, FileItem } from '@arco-design/web-vue';
 const newDockTitle = ref("");
 const router = useRouter();
 const settingStore = useSettingStore();
 const authStore = useAuthStore();
 const { isLogin, userInfo } = storeToRefs(authStore);
 const { isDark, isShowTextCursor } = storeToRefs(settingStore);
-
+const avatarUploadRef = ref<UploadInstance>();
 const fontOptions = [
   { value: "default", label: "系统默认", family: "'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif" },
   { value: "serif", label: "衬线体", family: "'Georgia', 'Times New Roman', serif" },
@@ -213,6 +232,16 @@ const fontOptions = [
   { value: "songti", label: "宋体", family: "'SimSun', 'Songti SC', serif" },
   { value: "heiti", label: "黑体", family: "'SimHei', 'Heiti SC', sans-serif" },
 ];
+function openAvatarSelect() {
+  avatarUploadRef.value?.submit(); // 触发 Arco 的 file 选择
+}
+
+function onAvatarSelect(fileList: FileItem[]) {
+  const file = fileList[0];
+  if (!file) return;
+  // TODO: 拿到 file.file 后做预览 / 上传
+  console.log('选中头像', file.file);
+}
 
 const currentFont = ref("default");
 const fontSize = ref(16);
@@ -342,8 +371,8 @@ const getStatusText = (status: string) => {
       return '活跃';
     case 'inactive':
       return '未激活';
-    case 'expired':
-      return '已过期';
+    case 'valid':
+      return '有效';
     default:
       return '未知';
   }
@@ -357,7 +386,36 @@ const handleLogout = () => {
 
 <style scoped lang="scss">
 @import "@/styles/_variables.scss";
+.avatar-upload-wrapper {
+  position: relative;
+  cursor: pointer;
+  display: inline-block;
+  border-radius: 50%;
+  overflow: hidden;
 
+  .account-avatar {           // 让头像本身圆角完整
+    display: block;
+  }
+
+  .avatar-upload-mask {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    font-size: 12px;
+    gap: 4px;
+  }
+
+  &:hover .avatar-upload-mask {
+    opacity: 1;
+  }
+}
 .setting-page {
   padding: 0 $padding-24 $padding-24;
   background: var(--color-bg-primary);

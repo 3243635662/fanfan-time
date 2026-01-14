@@ -1,8 +1,8 @@
-// 此模块配置API请求
+// src/api/request.ts
 import axios from 'axios'
-import { router } from '@/router'
 import { STORAGE_KEYS, APP_PREFIX } from '@/utils/constants'
-// 创建axios实例
+import { storeToRefs } from 'pinia'
+
 const instance = axios.create({
   baseURL: import.meta.env.VITE_GLOB_API_URL || '',
   timeout: 4000,
@@ -12,53 +12,39 @@ const instance = axios.create({
   }
 })
 
-// 添加请求拦截器
-instance.interceptors.request.use((config) => {
+// 请求拦截器：运行时再去读 store
+instance.interceptors.request.use(async(config) => {
   console.log('发送请求:', config.url);
-  
-  // 从localStorage获取token（只有记住我时才会存）
-  const token = localStorage.getItem(`${APP_PREFIX}:${STORAGE_KEYS.TOKEN}`);
-  if (token) {
-    config.headers = config.headers || {};
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  
-  // 如果启用了Mock且没有配置baseURL，确保URL以/api开头
-  if (import.meta.env.VITE_USE_MOCK === 'true' && !import.meta.env.VITE_GLOB_API_URL) {
-    if (config.url && !config.url.startsWith('/api')) {
-      config.url = `/api${config.url}`
-    }
+
+  // 运行时动态获取最新 token
+  const { useAuthStore } = await import('@/store/auth') // 动态导入，避免循环依赖
+  const { token } = storeToRefs(useAuthStore())
+
+  const storedToken = localStorage.getItem(`${APP_PREFIX}:${STORAGE_KEYS.TOKEN}`)
+  const finalToken = token.value || storedToken
+  if (finalToken) {
+    config.headers = config.headers || {}
+    config.headers.Authorization = `Bearer ${finalToken}`
   }
 
+  // Mock 处理逻辑保持不变...
   return config
 }, (error) => {
-  console.error('请求错误:', error);
-  // 对请求错误做些什么
+  console.error('请求错误:', error)
   return Promise.reject(error)
 })
 
-// 添加响应拦截器
-instance.interceptors.response.use((response) => {
-  console.log('收到响应:', response.data);
-  // 2xx 范围内的状态码都会触发该函数。
-  // 对响应数据做点什么 - 返回脱壳后的数据
+// 响应拦截器同理，401 时动态导入 store
+instance.interceptors.response.use( async(response) => {
+  console.log('收到响应:', response.data)
   return response.data
-}, (error) => {
-  console.error('响应错误:', error);
-  // 超出 2xx 范围的状态码都会触发该函数。
-  // 对响应错误做点什么
-
-  // 处理token过期的情况
+}, async (error) => {
   if (error.response?.status === 401) {
-    // 清除本地存储的token
-    localStorage.removeItem(`${APP_PREFIX}:${STORAGE_KEYS.TOKEN}`);
-    localStorage.removeItem(`${APP_PREFIX}:${STORAGE_KEYS.USER}`);
-    localStorage.removeItem(`${APP_PREFIX}:${STORAGE_KEYS.TOKEN_EXPIRY}`);
-    
-    // 跳转到登录页面
-    router.push({ name: 'Login' });
+    // 运行时动态导入，避免循环依赖
+    const { useAuthStore } = await import('@/store/auth')
+    useAuthStore().logout() // 统一走 store 的 logout
   }
-
   return Promise.reject(error)
 })
+
 export default instance

@@ -1,8 +1,8 @@
 import { $notification } from '@/hooks/useNotification';
 import { defineStore } from "pinia";
 import { ref } from "vue";
-import type { UserInfo, LoginParams, RegisterParams } from "@/types";
-import { getUserInfoAPI, loginAPI } from "@/api/auth";
+import type { UserInfo, LoginParams, RegisterData } from "@/types";
+import { getUserInfoAPI, loginAPI, registerAPI } from "@/api/auth";
 import { STORAGE_KEYS, APP_PREFIX, TOKEN_EXPIRY_24H } from "@/utils/constants";
 import { router } from "@/router";
 
@@ -13,13 +13,9 @@ export const useAuthStore = defineStore("auth", () => {
   const isLogin = ref(false);
 
 
-  const switchLoginStatus = () => {
-    isLogin.value = !isLogin.value;
-  };
 
-  const switchIsLoadingStatus = () => {
-    isLoading.value = !isLoading.value;
-  };
+
+
 
   const getUserInfo = async () => {
     try {
@@ -32,7 +28,6 @@ export const useAuthStore = defineStore("auth", () => {
       });
     }
   }
-
 
   const login = async (params: LoginParams) => {
     isLoading.value = true;
@@ -55,7 +50,7 @@ export const useAuthStore = defineStore("auth", () => {
         }
         // 登录成功后获取用户信息
         await getUserInfo()
-        // 
+        // 这里需要携带token去获取，又分记住我和不记住我
         return { success: true, message: res.message || "登录成功" };
       } else {
         return { success: false, message: res.message || "登录失败" };
@@ -67,14 +62,21 @@ export const useAuthStore = defineStore("auth", () => {
     }
   };
 
-  const register = async (params: RegisterParams) => {
-    switchIsLoadingStatus();
+  const register = async (data: RegisterData) => {
+    isLoading.value = true;
 
     try {
-      // TODO: 实现真实的注册逻辑
-      // 这里暂时返回模拟的成功响应
-      return { success: true, message: "注册成功" };
-    } finally {
+      const res = await registerAPI(data)
+      if (res.code === 0) {
+        return { success: true, message: res.message || "注册成功" };
+      } else {
+        return { success: false, message: res.message || "注册失败" };
+      }
+    }
+    catch (error) {
+      return { success: false, message: error instanceof Error ? error.message : "注册错误" };
+    }
+    finally {
       isLoading.value = false;
     }
   };
@@ -103,8 +105,14 @@ export const useAuthStore = defineStore("auth", () => {
         // token未过期，恢复登录状态
         token.value = storedToken;
         isLogin.value = true;
+        // 登录成功后获取用户信息
+        getUserInfo()
       } else {
         // token已过期，清除存储
+        $notification.error({
+          title: "登录过期",
+          content: "您的登录会话已过期，请重新登录。",
+        });
         logout();
       }
     }
@@ -119,7 +127,5 @@ export const useAuthStore = defineStore("auth", () => {
     register,
     logout,
     initAuth,
-    switchLoginStatus,
-    switchIsLoadingStatus
   };
 });

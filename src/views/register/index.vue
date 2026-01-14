@@ -32,7 +32,7 @@
         <p class="subtitle">加入fan时光，开启精彩旅程</p>
       </div>
 
-      <a-form :model="formData" layout="vertical" @submit.prevent="handleRegister" class="register-form">
+      <a-form :model="formData" layout="vertical" @submit="handleRegister" class="register-form">
         <a-form-item field="username" :rules="usernameRules" :validate-trigger="['blur', 'change']">
           <a-input v-model="formData.username" placeholder="用户名" size="large" allow-clear>
             <template #prefix>
@@ -153,8 +153,8 @@ import { useRouter } from "vue-router";
 import { useAuthStore } from "@/store/auth";
 import { useSettingStore } from "@/store/setting";
 import { storeToRefs } from "pinia";
-import { $message } from "@/hooks/useMessage";
 import AppIcon from "@/components/AppIcon.vue";
+import { $notification } from "@/hooks/useNotification";
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -203,7 +203,10 @@ const confirmPasswordRules = [
 
 const handleRegister = async () => {
   if (!formData.agreeTerms) {
-    $message.warning("请先同意服务条款和隐私政策");
+    $notification.warning({
+      title: "警告",
+      content: "请先同意服务条款和隐私政策",
+    });
     return;
   }
 
@@ -211,14 +214,26 @@ const handleRegister = async () => {
     username: formData.username,
     email: formData.email,
     password: formData.password,
-    confirmPassword: formData.confirmPassword,
   });
 
   if (result.success) {
-    $message.success(result.message || "注册成功");
-    router.push("/login");
+    $notification.success({
+      title: "成功",
+      content: result.message || "注册成功",
+    });
+// 注册成功之后立即将账号密码传递到登录页
+    router.push({
+      name: "login",
+      query: {
+        username: formData.username,
+        password: formData.password,
+      },
+    });
   } else {
-    $message.error(result.message || "注册失败");
+    $notification.error({
+      title: "错误",
+      content: result.message || "注册失败",
+    });
   }
 };
 </script>

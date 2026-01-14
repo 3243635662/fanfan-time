@@ -127,7 +127,8 @@ import { useSettingStore } from "@/store/setting";
 import { storeToRefs } from "pinia";
 import { $notification } from "@/hooks/useNotification";
 import AppIcon from "@/components/AppIcon.vue";
-
+import { useRoute } from 'vue-router';
+const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
 const settingStore = useSettingStore();
@@ -198,7 +199,12 @@ onMounted(() => {
   if (authStore.isLogin) {
     router.push({ name: 'home' });
   }
+  // 如果路由带了参数，直接填进表单
+  if (route.query.username) formData.username = route.query.username as string;
+  if (route.query.password) formData.password = route.query.password as string;
 });
+
+
 </script>
 
 <style scoped lang="scss">

@@ -97,11 +97,10 @@ export interface LoginParams {
 }
 
 // 注册请求参数
-export interface RegisterParams {
+export interface RegisterData {
   username: string;
   email: string;
   password: string;
-  confirmPassword: string;
 }
 
 // 登录响应
@@ -113,8 +112,17 @@ export interface LoginResponse {
 
 // 注册响应
 export interface RegisterResponse {
-  message: string;
-  user?: UserInfo;
+  id: number;
+  username: string;
+  nickname: string;
+  email: string;
+  avatar: string;
+  roles: any[]
+  active: number;
+  areaId: number;
+  remark: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 // 字体设置选项

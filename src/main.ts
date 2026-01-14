@@ -12,4 +12,8 @@ app.use(ArcoVue, {
 });
 app.use(createPinia());
 app.use(router);
+
+// 初始化登录状态（刷新页面时恢复本地 token）
+import { useAuthStore } from '@/store/auth';
+useAuthStore().initAuth();
 app.mount("#app");
