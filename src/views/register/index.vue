@@ -114,7 +114,7 @@
     <div class="register-decoration">
       <video 
         class="decoration-video"
-        src="@/assets/video/register.mp4"
+        src="https://yc.tuchung.cc/uploads/video_7e373d8bfd4641d3a00bf4092dee7224.mp4"
         autoplay
         muted
         loop

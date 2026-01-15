@@ -2,9 +2,13 @@
   <div v-if="imageUrl">
     <a-avatar :imageUrl="imageUrl" :size="size" />
   </div>
-  <div v-else>
+  <div v-else-if="username">
     <a-avatar :size="size" >
       {{ (username)?.charAt(0) }}
+    </a-avatar>
+  </div>
+  <div v-else>
+    <a-avatar :size="size" imageUrl="https://img0.baidu.com/it/u=4292800137,1650020833&fm=253&fmt=auto?w=800&h=800" >
     </a-avatar>
   </div>
 </template>

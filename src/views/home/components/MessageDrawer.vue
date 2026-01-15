@@ -8,16 +8,16 @@
 
     <!-- 新增模式 -->
     <div v-if="isAddMode" class="add-container">
-      <a-form :model="addForm" layout="vertical" class="add-form">
+      <a-form :model="addMessageForm" layout="vertical" class="add-form">
         <a-form-item label="内容" required>
-          <div class="content-input-wrapper" :style="{ backgroundColor: addForm.backgroundColor }">
-            <a-textarea v-model="addForm.content" placeholder="分享你的想法..." :rows="12" :max-length="500" show-word-limit
+          <div class="content-input-wrapper" :style="{ backgroundColor: addMessageForm.backgroundColor }">
+            <a-textarea v-model="addMessageForm.content" placeholder="分享你的想法..." :rows="12" :max-length="500" show-word-limit
               class="content-textarea" />
           </div>
         </a-form-item>
 
         <a-form-item label="标签">
-          <a-select v-model:value="addForm.tag" placeholder="选择标签">
+          <a-select v-model:value="addMessageForm.tag" placeholder="选择标签">
             <a-option v-for="option in categoryOptions" :key="option.type" :value="option.type">
               {{ option.title }}
             </a-option>
@@ -27,15 +27,15 @@
         <a-form-item label="背景色">
           <div class="color-picker">
             <div v-for="color in backgroundColorOptions" :key="color" class="color-option"
-              :class="{ active: addForm.backgroundColor === color }" :style="{ backgroundColor: color }"
-              @click="addForm.backgroundColor = color"></div>
+              :class="{ active: addMessageForm.backgroundColor === color }" :style="{ backgroundColor: color }"
+              @click="addMessageForm.backgroundColor = color"></div>
           </div>
         </a-form-item>
 
         <a-form-item>
           <div class="form-actions">
             <a-button @click="handleCancel">取消</a-button>
-            <a-button type="primary" @click="submitNewMessage" :disabled="!addForm.content.trim()">
+            <a-button type="primary" @click="submitNewMessage" :disabled="!addMessageForm.content.trim()">
               发布
             </a-button>
           </div>
@@ -106,10 +106,10 @@
         </a-divider>
         <a-comment>
           <template #avatar>
-            <a-avatar>U</a-avatar>
+            <FanAvatar :size="32" :imageUrl="userInfo?.avatar" :username="userInfo?.nickname || userInfo?.username" />
           </template>
           <template #content>
-            <a-textarea v-model:value="newComment" placeholder="请输入评论..." :rows="3" :max-length="200" show-word-limit
+            <a-textarea v-model="newComment" placeholder="请输入评论..." :rows="3" :max-length="200" show-word-limit
               class="comment-input" />
             <div class="comment-actions">
               <a-button type="primary" size="small" @click="addComment" :disabled="!newComment.trim()">
@@ -134,9 +134,8 @@ import { $message } from '@/hooks/useMessage'
 import AppIcon from '@/components/AppIcon.vue'
 import FanAvatar from './Fan-Avatar.vue'
 import type { CategoryOption, MessageDetailData } from '@/types'
-import { createMessageAPI } from '@/api/home'
+import {  createMessageAPI } from '@/api/home'
 import { formatTime } from '@/utils'
-
 // 定义props
 interface Props {
   visible: boolean
@@ -144,7 +143,11 @@ interface Props {
   messageDetail: MessageDetailData | null
   categoryOptions: CategoryOption[]
 }
+import { useAuthStore } from '@/store/auth'
+import { storeToRefs } from 'pinia'
 
+const authStore = useAuthStore()
+const { userInfo } = storeToRefs(authStore)
 const props = withDefaults(defineProps<Props>(), {
   visible: false,
   isAddMode: false,
@@ -161,8 +164,9 @@ const emit = defineEmits<{
   report: []
 }>()
 
+
 // 响应式数据
-const addForm = ref({
+const addMessageForm = ref({
   content: '',
   tag: 1,
   backgroundColor: '#ebd4d0'
@@ -197,7 +201,7 @@ const handleCancel = () => {
 }
 
 const resetForm = () => {
-  addForm.value = {
+  addMessageForm.value = {
     content: '',
     tag: 1,
     backgroundColor: '#ebd4d0'
@@ -208,21 +212,21 @@ const resetForm = () => {
 
 // 提交新增留言
 const submitNewMessage = async () => {
-  if (!addForm.value.content.trim()) {
+  if (!addMessageForm.value.content.trim()) {
     console.warn('请输入内容')
     return
   }
 
   try {
     const res = await createMessageAPI({
-      content: addForm.value.content,
-      tag: addForm.value.tag,
-      backgroundColor: addForm.value.backgroundColor
+      content: addMessageForm.value.content,
+      tag: addMessageForm.value.tag,
+      backgroundColor: addMessageForm.value.backgroundColor
     })
 
     if (res.code === 0) {
       $message.success(res.message)
-      emit('submitMessage', addForm.value.content, addForm.value.tag, addForm.value.backgroundColor)
+      emit('submitMessage', addMessageForm.value.content, addMessageForm.value.tag, addMessageForm.value.backgroundColor)
       resetForm()
       emit('close')
     } else {
@@ -261,6 +265,12 @@ watch(() => props.visible, (newVal) => {
 </script>
 
 <style scoped lang="scss">
+:deep(.arco-drawer) {
+  .dark-mode &{
+    background-color: #666 !important;
+  }
+}
+
 .drawer-title {
   font-size: 18px;
   font-weight: 600;

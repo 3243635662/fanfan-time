@@ -8,7 +8,8 @@ const instance = axios.create({
   timeout: 4000,
   headers: {
     'Content-Type': 'application/json',
-    'X-Custom-Header': 'foobar'
+    'X-Custom-Header': 'foobar',
+
   }
 })
 
@@ -34,12 +35,12 @@ instance.interceptors.request.use(async(config) => {
   return Promise.reject(error)
 })
 
-// 响应拦截器同理，401 时动态导入 store
+// 响应拦截器同理，403 时动态导入 store
 instance.interceptors.response.use( async(response) => {
   console.log('收到响应:', response.data)
   return response.data
 }, async (error) => {
-  if (error.response?.status === 401) {
+  if (error.response?.status === 403) {
     // 运行时动态导入，避免循环依赖
     const { useAuthStore } = await import('@/store/auth')
     useAuthStore().logout() // 统一走 store 的 logout

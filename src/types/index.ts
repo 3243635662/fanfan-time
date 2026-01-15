@@ -125,6 +125,11 @@ export interface RegisterResponse {
   updatedAt: Date;
 }
 
+// 头像保存响应：
+export interface AvatarSaveResponse {
+imgUrl:string
+}
+
 // 字体设置选项
 export interface FontOption {
   value: string;

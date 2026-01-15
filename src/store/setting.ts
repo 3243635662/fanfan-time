@@ -18,8 +18,10 @@ export const useSettingStore = defineStore("setting", () => {
   watch(isDark, (newValue) => {
     if (newValue) {
       document.body.classList.add("dark-mode");
+      document.body.setAttribute('arco-theme', 'dark')
     } else {
       document.body.classList.remove("dark-mode");
+      document.body.setAttribute('arco-theme', 'light')
     }
   }, { immediate: true });
 

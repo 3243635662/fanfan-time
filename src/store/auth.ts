@@ -12,11 +12,6 @@ export const useAuthStore = defineStore("auth", () => {
   const isLoading = ref(false);
   const isLogin = ref(false);
 
-
-
-
-
-
   const getUserInfo = async () => {
     try {
       const res = await getUserInfoAPI()
@@ -55,8 +50,19 @@ export const useAuthStore = defineStore("auth", () => {
       } else {
         return { success: false, message: res.message || "登录失败" };
       }
-    } catch (error) {
-      return { success: false, message: error instanceof Error ? error.message : "登录错误" };
+    } catch (error: any) {
+      // 处理HTTP错误响应
+      if (error.response?.data) {
+        const errorData = error.response.data;
+        return {
+          success: false,
+          message: errorData.message || "登录失败"
+        };
+      }
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : "登录错误"
+      };
     } finally {
       isLoading.value = false;
     }
@@ -73,8 +79,19 @@ export const useAuthStore = defineStore("auth", () => {
         return { success: false, message: res.message || "注册失败" };
       }
     }
-    catch (error) {
-      return { success: false, message: error instanceof Error ? error.message : "注册错误" };
+    catch (error: any) {
+      // 处理HTTP错误响应
+      if (error.response?.data) {
+        const errorData = error.response.data;
+        return {
+          success: false,
+          message: errorData.message || "注册失败"
+        };
+      }
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : "注册错误"
+      };
     }
     finally {
       isLoading.value = false;

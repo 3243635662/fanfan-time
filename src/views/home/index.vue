@@ -21,6 +21,7 @@
             <div class="tab-content">
               <div v-if="loading" class="loading">加载中...</div>
               <div v-else-if="error" class="error">{{ error }}</div>
+                <!-- 添加分页 -->
               <div v-else class="cards-grid">
                 <Card v-for="msg in messagesList" :key="msg.id" :item="msg" @click="showDetail(msg.id)" />
               </div>
@@ -41,7 +42,7 @@
     :category-options="categoryOptions"
     @close="handleDrawerClose"
     @submit-message="handleMessageSubmit"
-    @add-comment="handleAddComment"
+    @addComment="handleAddComment"
     @like="handleLike"
     @report="handleReport"
   />
@@ -56,8 +57,8 @@ import { storeToRefs } from 'pinia'
 import Magnet from '@/components/MotionEffect/Magnet.vue'
 import TextCursor from '@/components/MotionEffect/TextCursor.vue'
 import Card from './components/card.vue'
-import { getMessageListAPI, getMessageDetailByIdAPI } from '@/api/home'
-
+import { getMessageListAPI, getMessageDetailByIdAPI ,addCommentAPI} from '@/api/home'
+import { $notification } from '@/hooks/useNotification'
 // 异步组件加载抽屉组件
 const MessageDrawer = defineAsyncComponent(() =>
   import('./components/MessageDrawer.vue')
@@ -98,35 +99,35 @@ const handleMessageSubmit = () => {
   getMessageList()
 }
 
-// 处理添加评论
-const handleAddComment = (content: string) => {
+// 处理添加评论  (只需要传递messageId,content即可)
+const  handleAddComment = async(content: string) => {
   if (!messageDetail.value) return
-  
-  const comment = {
-    id: Date.now(),
-    username: '当前用户',
-    time: new Date(),
-    content: content,
-    avatar: 'https://via.placeholder.com/40x40?text=U'
-  }
-  
-  if (!messageDetail.value.comments) {
-    messageDetail.value.comments = {
-      list: [],
-      totalPage: 0,
-      total: 0,
-      page: 1,
-      limit: 10
+
+  try {
+    const res = await addCommentAPI({
+      messageId: messageDetail.value.id,
+      content
+    })
+    if (res.code === 0) {
+      $notification.success({
+        title: '评论成功',
+        content: res.message || '评论成功'
+      })
     }
+    else{
+      $notification.error({
+        title: '评论失败',
+        content: res.message || '评论失败'
+      })
+    }
+  } catch (error) {
+    console.error('添加评论失败:', error)
+    $notification.error({
+      title: '评论失败',
+      content: '网络请求失败，请稍后重试'
+    })
   }
 
-  messageDetail.value.comments.list.unshift(comment)
-  if (messageDetail.value.commentCount !== undefined) {
-    messageDetail.value.commentCount++
-  }
-  if (messageDetail.value.comments.total !== undefined) {
-    messageDetail.value.comments.total++
-  }
 }
 
 // 处理点赞

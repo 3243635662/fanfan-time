@@ -1,5 +1,5 @@
 import request from '@/api/request'
-import type { LoginParams, LoginResponse, APIResponse, UserInfo, RegisterData, RegisterResponse } from '@/types'
+import type { LoginParams, LoginResponse, APIResponse, UserInfo, RegisterData, RegisterResponse, AvatarSaveResponse } from '@/types'
 
 // 登录接口
 export const loginAPI = (params: LoginParams): Promise<APIResponse<LoginResponse>> => {
@@ -14,4 +14,9 @@ export const getUserInfoAPI = (): Promise<APIResponse<UserInfo>> => {
 // 注册接口
 export const registerAPI=(data:RegisterData): Promise<APIResponse<RegisterResponse>> => {
   return request.post('user', data)
+}
+
+// 保存图床图片的路径
+export const saveImageHostingUrlAPI: (imgUrl: string) => Promise<APIResponse<AvatarSaveResponse>> = (imgUrl: string) => {
+  return request.post('user/imgHost', { imgUrl })
 }

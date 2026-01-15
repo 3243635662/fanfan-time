@@ -3,9 +3,9 @@
     <!-- 顶部导航栏 -->
     <TopBar />
     <!-- 背景视频 (双层淡入淡出) -->
-    <video class="background-video" :class="{ visible: !isDark }" src="/video/daytime.mp4" autoplay muted loop
+    <video class="background-video" :class="{ visible: !isDark }" src="https://yc.tuchung.cc/uploads/video_731138705fcf4a568cfc0fbc8df17929.mp4" autoplay muted loop
       playsinline></video>
-    <video class="background-video" :class="{ visible: isDark }" src="/video/night.mp4" autoplay muted loop
+    <video class="background-video" :class="{ visible: isDark }" src="https://yc.tuchung.cc/uploads/video_1a652bd630b342639678d38e91014032.mp4" autoplay muted loop
       playsinline></video>
 
     <!-- 页面内容区域 -->

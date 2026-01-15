@@ -8,9 +8,6 @@
 
       <a-tabs default-active-key="appearance" class="setting-tabs">
         <a-tab-pane key="appearance" title="外观">
-
-
-
           <div class="setting-section">
             <h3>主题设置</h3>
             <div class="setting-item">
@@ -106,30 +103,30 @@
             <div class="setting-section account-info-section">
               <h3>账户信息</h3>
               <div class="account-info">
-                <!-- 头像上传 -->
-<div class="avatar-upload-wrapper" @click="openAvatarSelect">
-  <FanAvatar
-    :imageUrl="userInfo?.avatar"
-    :size="80"
-    :username="userInfo?.username || 'fanfan'"
-    class="account-avatar"
-  />
-  <div class="avatar-upload-mask">
-    <AppIcon name="mdi:camera" size="24" />
-    <span>更换头像</span>
-  </div>
-</div>
-
-<!-- 隐藏的 file 选择器 -->
-<a-upload
-  ref="avatarUploadRef"
-  accept="image/*"
-  :show-file-list="false"
-  :auto-upload="false"
-  @change="onAvatarSelect"
->
-  <template #upload-button></template>
-</a-upload>
+                <a-upload accept="image/*" :show-file-list="false" :auto-upload="false" @change="onAvatarSelect">
+                  <template #upload-button>
+                    <div class="avatar-upload-wrapper" :style="{ cursor: isUploading ? 'wait' : 'pointer' }">
+                      <FanAvatar
+                        :imageUrl="userInfo?.avatar"
+                        :size="80"
+                        :username="userInfo?.username || 'fanfan'"
+                        class="account-avatar"
+                      />
+                      <div class="avatar-upload-mask" v-if="!isUploading">
+                        <AppIcon name="mdi:camera" size="24" />
+                        <span>更换头像</span>
+                      </div>
+                      <div class="avatar-upload-loading" v-else>
+                        <AppIcon name="mdi:loading" size="24" class="spinning" />
+                        <span>上传中...</span>
+                      </div>
+                    </div>
+                  </template>
+                </a-upload>
+                <div class="avatar-upload-tip">
+                  <AppIcon name="mdi:information-outline" size="16" />
+                  <span>头像使用360图床存储，请勿上传违法图片！！！</span>
+                </div>
                 <div class="account-details">
                   <div class="account-name-group">
                     <span class="account-name">{{ userInfo?.nickname || userInfo?.username || 'fanfan' }}</span>
@@ -162,15 +159,15 @@
           </div>
 
           <div v-else>
-          <a-empty  description="未登录">
-        <template #image>
-                  <AppIcon name="line-md:watch-off-twotone" size="64" />
-          </template>
+            <a-empty description="未登录">
+              <template #image>
+                <AppIcon name="line-md:watch-off-twotone" size="64" />
+              </template>
               <router-link to="/login">
                 <a-button type="primary">去登录</a-button>
               </router-link>
             </a-empty>
-            </div>
+          </div>
         </a-tab-pane>
 
         <a-tab-pane key="about" title="关于">
@@ -209,21 +206,24 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
 import { storeToRefs } from "pinia";
-import { useRouter } from "vue-router";
 import { useSettingStore } from "@/store/setting";
 import { useAuthStore } from "@/store/auth";
 import { $message } from "@/hooks/useMessage";
 import AppIcon from "@/components/AppIcon.vue";
 import FanAvatar from "@/views/home/components/Fan-Avatar.vue";
 import { STORAGE_KEYS, APP_PREFIX } from "@/utils/constants";
-import type { UploadInstance, FileItem } from '@arco-design/web-vue';
+import type { FileItem } from '@arco-design/web-vue';
+
+// 京东图床API配置
+const imageHostingURL = 'https://api.xinyew.cn/api/360tc';
+
 const newDockTitle = ref("");
-const router = useRouter();
 const settingStore = useSettingStore();
 const authStore = useAuthStore();
 const { isLogin, userInfo } = storeToRefs(authStore);
 const { isDark, isShowTextCursor } = storeToRefs(settingStore);
-const avatarUploadRef = ref<UploadInstance>();
+const isUploading = ref(false);
+
 const fontOptions = [
   { value: "default", label: "系统默认", family: "'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif" },
   { value: "serif", label: "衬线体", family: "'Georgia', 'Times New Roman', serif" },
@@ -232,15 +232,84 @@ const fontOptions = [
   { value: "songti", label: "宋体", family: "'SimSun', 'Songti SC', serif" },
   { value: "heiti", label: "黑体", family: "'SimHei', 'Heiti SC', sans-serif" },
 ];
-function openAvatarSelect() {
-  avatarUploadRef.value?.submit(); // 触发 Arco 的 file 选择
-}
 
-function onAvatarSelect(fileList: FileItem[]) {
+// 清理URL，移除可能存在的查询参数
+const cleanUrl = (url: string): string => {
+  if (!url) return '';
+  try {
+    const urlObj = new URL(url);
+    return `${urlObj.protocol}//${urlObj.host}${urlObj.pathname}`;
+  } catch {
+    return url;
+  }
+};
+
+// 头像上传处理 - 使用京东图床接口
+async function onAvatarSelect(fileList: FileItem[]) {
   const file = fileList[0];
-  if (!file) return;
-  // TODO: 拿到 file.file 后做预览 / 上传
-  console.log('选中头像', file.file);
+  if (!file || !file.file) return;
+
+  // 文件大小检查 (限制 5MB)
+  if (file.file.size > 5 * 1024 * 1024) {
+    $message.error('头像文件大小不能超过 5MB');
+    return;
+  }
+
+  // 文件类型检查
+  if (!file.file.type.startsWith('image/')) {
+    $message.error('请选择图片文件');
+    return;
+  }
+
+  // 防止重复上传
+  if (isUploading.value) return;
+
+  try {
+    isUploading.value = true;
+
+    const formData = new FormData();
+    formData.append('file', file.file);
+
+    const uploadResponse = await fetch(imageHostingURL, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!uploadResponse.ok) {
+      throw new Error(`图床上传失败: HTTP ${uploadResponse.status}`);
+    }
+
+    const uploadResult = await uploadResponse.json();
+
+    if (!uploadResult || uploadResult.errno !== 0 || !uploadResult.data?.url) {
+      throw new Error(uploadResult.message || '图床返回数据格式错误');
+    }
+
+    const cleanedUrl = cleanUrl(uploadResult.data.url);
+    const timestamp = new Date().getTime();
+    const finalUrl = cleanedUrl.includes('?')
+      ? `${cleanedUrl}&t=${timestamp}` 
+      : `${cleanedUrl}?t=${timestamp}`;
+
+    const { saveImageHostingUrlAPI } = await import('@/api/auth');
+    const saveResponse = await saveImageHostingUrlAPI(finalUrl);
+
+    if (saveResponse.code === 0) {
+      if (userInfo.value) {
+        userInfo.value.avatar = finalUrl;
+      }
+      
+      localStorage.setItem(`${APP_PREFIX}:${STORAGE_KEYS.USER}`, JSON.stringify(userInfo.value));
+      $message.success('头像上传成功！');
+    } else {
+      throw new Error(saveResponse.message || '保存头像URL失败');
+    }
+
+  } catch (error) {
+    $message.error(`头像上传失败: ${error instanceof Error ? error.message : '未知错误'}`);
+  } finally {
+    isUploading.value = false;
+  }
 }
 
 const currentFont = ref("default");
@@ -261,19 +330,20 @@ const applyFontSizeToGlobal = () => {
 };
 
 const applyThemeToGlobal = (isDarkMode: boolean) => {
-  if (isDarkMode) {
-    document.body.classList.add("dark-mode");
-    document.body.classList.remove("light-mode");
-  } else {
-    document.body.classList.remove("dark-mode");
-    document.body.classList.add("light-mode");
-  }
+  document.body.classList.toggle("dark-mode", isDarkMode);
+  document.body.classList.toggle("light-mode", !isDarkMode);
 };
 
 onMounted(() => {
   const storedFont = localStorage.getItem(`${APP_PREFIX}:${STORAGE_KEYS.PREFERRED_FONT}`);
   const storedFontSize = localStorage.getItem(`${APP_PREFIX}:${STORAGE_KEYS.PREFERRED_FONT_SIZE}`);
   const storedIsDark = localStorage.getItem(`${APP_PREFIX}:${STORAGE_KEYS.IS_DARK_MODE}`);
+
+  if (storedIsDark !== null) {
+    const isDarkMode = storedIsDark === "true";
+    settingStore.isDark = isDarkMode;
+    applyThemeToGlobal(isDarkMode);
+  }
 
   if (storedFont) {
     currentFont.value = storedFont;
@@ -283,26 +353,12 @@ onMounted(() => {
     fontSize.value = parseInt(storedFontSize, 10);
     applyFontSizeToGlobal();
   }
-  
-  // 初始化主题设置
-  const isDarkMode = storedIsDark === "true";
-  settingStore.isDark = isDarkMode;
-  applyThemeToGlobal(isDarkMode);
-
 });
 
 const handleDarkModeChange = (value: string | number | boolean) => {
   const isDarkMode = Boolean(value);
-  settingStore.isDark = isDarkMode; // 确保store中的状态也更新
-  applyThemeToGlobal(isDarkMode);
+  settingStore.isDark = isDarkMode;
   localStorage.setItem(`${APP_PREFIX}:${STORAGE_KEYS.IS_DARK_MODE}`, String(isDarkMode));
-  
-  // 强制重新应用背景样式
-  if (isDarkMode) {
-    document.body.classList.add('dark-mode');
-  } else {
-    document.body.classList.remove('dark-mode');
-  }
 };
 
 const handleFontChange = (value: string) => {
@@ -339,53 +395,33 @@ const increaseFontSize = () => {
   }
 };
 
-// 格式化日期
 const formatDate = (date: Date | string | undefined) => {
   if (!date) return '';
-  const d = new Date(date);
-  return d.toLocaleDateString('zh-CN', {
+  return new Date(date).toLocaleDateString('zh-CN', {
     year: 'numeric',
     month: 'long',
     day: 'numeric'
   });
 };
 
-// 获取状态样式类
-const getStatusClass = (status: string) => {
-  switch (status) {
-    case 'active':
-      return 'status-active';
-    case 'inactive':
-      return 'status-inactive';
-    case 'expired':
-      return 'status-expired';
-    default:
-      return 'status-default';
-  }
+const getStatusClass = (status: string) => `status-${status}`;
+
+const statusTextMap: Record<string, string> = {
+  active: '活跃',
+  inactive: '未激活',
+  valid: '有效'
 };
 
-// 获取状态文本
-const getStatusText = (status: string) => {
-  switch (status) {
-    case 'active':
-      return '活跃';
-    case 'inactive':
-      return '未激活';
-    case 'valid':
-      return '有效';
-    default:
-      return '未知';
-  }
-};
+const getStatusText = (status: string) => statusTextMap[status] || '未知';
 
 const handleLogout = () => {
   authStore.logout();
-  router.push("/login");
 };
 </script>
 
 <style scoped lang="scss">
 @import "@/styles/_variables.scss";
+
 .avatar-upload-wrapper {
   position: relative;
   cursor: pointer;
@@ -393,7 +429,7 @@ const handleLogout = () => {
   border-radius: 50%;
   overflow: hidden;
 
-  .account-avatar {           // 让头像本身圆角完整
+  .account-avatar {
     display: block;
   }
 
@@ -412,25 +448,57 @@ const handleLogout = () => {
     gap: 4px;
   }
 
+  .avatar-upload-loading {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    gap: 4px;
+  }
+
   &:hover .avatar-upload-mask {
     opacity: 1;
   }
+
+  .spinning {
+    animation: spin 1s linear infinite;
+  }
 }
+
+.avatar-upload-tip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 12px;
+  font-size: 12px;
+  color: var(--color-warning);
+  text-align: center;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+
 .setting-page {
   padding: 0 $padding-24 $padding-24;
   background: var(--color-bg-primary);
   transition: background-color var(--transition-duration) ease;
   min-height: 100vh;
   position: relative;
-  z-index: 100; // 确保在背景视频之上
+  z-index: 100;
 }
 
-// 深色模式下的纯黑色背景
 body.dark-mode .setting-page {
   background: #000000 !important;
 }
-
-
 
 .setting-container {
   max-width: 900px;
@@ -600,8 +668,6 @@ body.dark-mode .setting-page {
   border-radius: 16px;
   box-shadow: 0 2px 8px var(--color-shadow);
 
-
-
   .account-details {
     display: flex;
     flex-direction: column;
@@ -735,7 +801,6 @@ body.dark-mode .setting-page {
   border-radius: $radius-12;
   margin-bottom: $padding-16;
   transition: all var(--transition-duration) ease;
-
 
   .about-text {
     h4 {

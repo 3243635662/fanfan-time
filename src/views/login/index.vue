@@ -100,7 +100,7 @@
     <div class="login-decoration">
       <video
         class="decoration-video"
-        src="@/assets/video/login.mp4"
+        src="https://yc.tuchung.cc/uploads/video_cc0283c76e8d449e9dd1f10993f246b5.mp4"
         autoplay
         muted
         loop
