@@ -22,8 +22,23 @@
               <div v-if="loading" class="loading">加载中...</div>
               <div v-else-if="error" class="error">{{ error }}</div>
                 <!-- 添加分页 -->
-              <div v-else class="cards-grid">
-                <Card v-for="msg in messagesList" :key="msg.id" :item="msg" @click="showDetail(msg.id)" />
+              <div v-else>
+                <div class="cards-grid">
+                  <Card v-for="msg in messagesList" :key="msg.id" :item="msg" @click="showDetail(msg.id)" />
+                </div>
+                <div class="pagination-container">
+                  <a-pagination
+                  :total="pageInfo.total"
+                  :current="pageInfo.current"
+                  :page-size="pageInfo.limit"
+                  :page-size-options="[12, 16, 20, 24, 28, 32]"
+                  show-total
+                  show-jumper
+                  show-page-size
+                  @change="handlePageChange"
+                  @page-size-change="handlePageSizeChange"
+                />
+                </div>
               </div>
             </div>
           </a-tab-pane>
@@ -66,7 +81,12 @@ const MessageDrawer = defineAsyncComponent(() =>
 
 const settingStore = useSettingStore()
 const { DockTitle, isShowMessageDrawer, isAddMode, isShowTextCursor } = storeToRefs(settingStore)
-
+const pageInfo = ref({
+  current: 1,
+  total: 0,
+  limit: 12,
+  totalPage: 0
+})
 // 统一的分类数据
 const categoryOptions = ref<CategoryOption[]>([
   { type: 1, title: "全部", text: "all" },
@@ -113,6 +133,11 @@ const  handleAddComment = async(content: string) => {
         title: '评论成功',
         content: res.message || '评论成功'
       })
+      // 刷新详情数据
+      const detailRes = await getMessageDetailByIdAPI(messageDetail.value.id)
+      if (detailRes.code === 0 && detailRes.result) {
+        messageDetail.value = detailRes.result
+      }
     }
     else{
       $notification.error({
@@ -127,7 +152,6 @@ const  handleAddComment = async(content: string) => {
       content: '网络请求失败，请稍后重试'
     })
   }
-
 }
 
 // 处理点赞
@@ -149,6 +173,8 @@ const handleReport = () => {
 // 切换标签时的处理
 const handleTabChange = (key: string | number) => {
   currentCategory.value = Number(key)
+  // 重置到第一页
+  pageInfo.value.current = 1
   // 根据选中的分类获取对应的数据
   getMessageList()
 }
@@ -174,16 +200,33 @@ const showDetail = async (id: number | undefined) => {
   }
 }
 
+// 处理页码改变
+const handlePageChange = (page: number) => {
+  pageInfo.value.current = page
+  getMessageList()
+}
+
+// 处理每页条数改变
+const handlePageSizeChange = (pageSize: number) => {
+  pageInfo.value.limit = pageSize
+  pageInfo.value.current = 1 // 重置到第一页
+  getMessageList()
+}
+
 // 获取消息列表（根据分类）
-const getMessageList = async () => {
+const getMessageList = async (page: number = pageInfo.value.current, limit: number = pageInfo.value.limit) => {
   try {
     loading.value = true
     error.value = ''
     
     // 直接传入当前选中的分类id作为type，后端数据库使用数字类型的type字段
-    const res: MessageListResponse = await getMessageListAPI(currentCategory.value)
+    const res: MessageListResponse = await getMessageListAPI(currentCategory.value, page, limit)
     if (res.code === 0 && res.result) {
       messagesList.value = res.result.list || []
+      pageInfo.value.current = res.result.page || 1  // 使用page而不是current
+      pageInfo.value.total = res.result.total || 0
+      pageInfo.value.limit = res.result.limit || 12
+      pageInfo.value.totalPage = res.result.totalPage || 0
     } else {
       error.value = res.message || '获取数据失败'
     }
@@ -300,6 +343,13 @@ onMounted(() => {
         width: 100%;
         max-width: 1200px;
         margin: 0 auto;
+      }
+
+      .pagination-container {
+        display: flex;
+        justify-content: center;
+        margin-top: 40px;
+        padding: 20px 0;
       }
     }
   }

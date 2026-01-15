@@ -1,10 +1,10 @@
 <template>
-  <div v-if="imageUrl">
+  <div v-if="imageUrl && imageUrl.trim()">
     <a-avatar :imageUrl="imageUrl" :size="size" />
   </div>
   <div v-else-if="username">
     <a-avatar :size="size" >
-      {{ (username)?.charAt(0) }}
+      {{ username?.charAt(0) }}
     </a-avatar>
   </div>
   <div v-else>

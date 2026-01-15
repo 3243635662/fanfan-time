@@ -14,7 +14,7 @@ const instance = axios.create({
 })
 
 // 请求拦截器：运行时再去读 store
-instance.interceptors.request.use(async(config) => {
+instance.interceptors.request.use(async (config) => {
   console.log('发送请求:', config.url);
 
   // 运行时动态获取最新 token
@@ -23,6 +23,7 @@ instance.interceptors.request.use(async(config) => {
 
   const storedToken = localStorage.getItem(`${APP_PREFIX}:${STORAGE_KEYS.TOKEN}`)
   const finalToken = token.value || storedToken
+  console.log('finalToken:', finalToken)
   if (finalToken) {
     config.headers = config.headers || {}
     config.headers.Authorization = `Bearer ${finalToken}`
@@ -36,7 +37,7 @@ instance.interceptors.request.use(async(config) => {
 })
 
 // 响应拦截器同理，403 时动态导入 store
-instance.interceptors.response.use( async(response) => {
+instance.interceptors.response.use(async (response) => {
   console.log('收到响应:', response.data)
   return response.data
 }, async (error) => {

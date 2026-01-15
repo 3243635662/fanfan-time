@@ -33,6 +33,7 @@ export interface MessageListResponse {
     page: number;
     limit: number;
     type: number;
+    totalPage: number;
     links?: {
       first?: string;
       previous?: string;
@@ -82,7 +83,7 @@ export interface UserInfo {
   nickname: string;
   avatar: string;
   email: string;
-  roles:any[]
+  roles: any[]
   createdAt: Date;
   updatedAt: Date;
   lastLoginAt: Date;
@@ -105,7 +106,7 @@ export interface RegisterData {
 
 // 登录响应
 export interface LoginResponse {
-  id:number
+  id: number
   token: string;
   timestamp: Date;
 }
@@ -127,7 +128,7 @@ export interface RegisterResponse {
 
 // 头像保存响应：
 export interface AvatarSaveResponse {
-imgUrl:string
+  imgUrl: string
 }
 
 // 字体设置选项
@@ -136,3 +137,13 @@ export interface FontOption {
   label: string;
   family: string;
 }
+
+// 评论列表响应
+export interface CommentListResponse {
+  list: MessageDetailData['comments']['list'];
+  total: number;
+  page: number;
+  limit: number;
+  totalPage: number;
+}
+

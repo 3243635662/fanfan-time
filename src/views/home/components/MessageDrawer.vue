@@ -44,7 +44,7 @@
     </div>
 
     <!-- 详情模式 -->
-    <div class="detail-container" v-else-if="messageDetail && Object.keys(messageDetail).length > 0">
+    <div class="detail-container" v-else-if="messageDetail">
       <!-- 头部信息 -->
       <div class="detail-header">
         <div class="header-content">
@@ -86,17 +86,44 @@
       </div>
 
       <!-- 评论区域 -->
-      <div class="comments-section" v-if="messageDetail.comments && messageDetail.comments.list && messageDetail.comments.list.length > 0">
-        <a-divider orientation="left">
-          <span class="comments-title">评论 {{ messageDetail.comments.total }}</span>
-        </a-divider>
+      <div class="comments-section-wrapper" ref="commentsContainerRef">
+        <div class="comments-section">
+          <a-divider orientation="left">
+            <span class="comments-title">评论 {{ totalComments }}</span>
+          </a-divider>
 
-        <a-comment v-for="(comment, index) in messageDetail.comments.list" :key="index" :author="comment.nickname || comment.username"
-          :datetime="formatTime(comment.time)" :content="comment.content">
-          <template #avatar>
-            <FanAvatar :imageUrl="comment.avatar" :username="comment.nickname || comment.username" />
-          </template>
-        </a-comment>
+          <!-- 评论列表 -->
+          <div class="comments-list" ref="commentsListRef">
+            <a-comment 
+              v-for="comment in comments" 
+              :key="comment.id"
+              :author="comment.nickname || comment.username"
+              :datetime="formatTime(comment.time)" 
+              :content="comment.content"
+            >
+              <template #avatar>
+                <FanAvatar :imageUrl="comment.avatar" :username="comment.nickname || comment.username" />
+              </template>
+            </a-comment>
+          </div>
+
+          <!-- 加载指示器（刷新和加载更多都在这里显示） -->
+          <PullToLoadIndicator
+            v-if="isRefreshing || isLoadingMore || hasMore"
+            :is-loading="isRefreshing || isLoadingMore"
+            type="bottom"
+          >
+          <template #icon>
+    <AppIcon name="mdi:chevron-down" :size="28" color="#165dff" />
+  </template>
+  <template #loading>
+    <AppIcon name="line-md:loading-alt-loop" :size="28" color="#165dff" />
+  </template>
+        </PullToLoadIndicator>
+          <div v-else-if="comments.length > 0" class="no-more">
+            —— 没有更多评论了 ——
+          </div>
+        </div>
       </div>
 
       <!-- 添加评论 -->
@@ -129,25 +156,26 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { usePullToLoad } from '@/composables/usePullToLoad'
+import PullToLoadIndicator from './PullToLoadIndicator.vue'
 import { $message } from '@/hooks/useMessage'
 import AppIcon from '@/components/AppIcon.vue'
 import FanAvatar from './Fan-Avatar.vue'
 import type { CategoryOption, MessageDetailData } from '@/types'
-import {  createMessageAPI } from '@/api/home'
+import { createMessageAPI, getMessageDetailByIdAPI } from '@/api/home'
 import { formatTime } from '@/utils'
-// 定义props
+import { useAuthStore } from '@/store/auth'
+import { storeToRefs } from 'pinia'
+
+// Props
 interface Props {
   visible: boolean
   isAddMode: boolean
   messageDetail: MessageDetailData | null
   categoryOptions: CategoryOption[]
 }
-import { useAuthStore } from '@/store/auth'
-import { storeToRefs } from 'pinia'
 
-const authStore = useAuthStore()
-const { userInfo } = storeToRefs(authStore)
 const props = withDefaults(defineProps<Props>(), {
   visible: false,
   isAddMode: false,
@@ -155,7 +183,7 @@ const props = withDefaults(defineProps<Props>(), {
   categoryOptions: () => []
 })
 
-// 定义emits
+// Emits
 const emit = defineEmits<{
   close: []
   submitMessage: [content: string, tag: number, backgroundColor: string]
@@ -164,29 +192,133 @@ const emit = defineEmits<{
   report: []
 }>()
 
+// Store
+const authStore = useAuthStore()
+const { userInfo } = storeToRefs(authStore)
 
-// 响应式数据
+// 表单数据
 const addMessageForm = ref({
   content: '',
   tag: 1,
   backgroundColor: '#ebd4d0'
 })
-
 const newComment = ref('')
 const isLiked = ref(false)
 
 // 背景色选项
-const backgroundColorOptions = [
-  '#ebd4d0',
-  '#efe4fd',
-  '#cbe4e9',
-  '#fef6de',
-  '#e2f7d9'
-]
+const backgroundColorOptions = ['#ebd4d0', '#efe4fd', '#cbe4e9', '#fef6de', '#e2f7d9']
 
+// 评论相关数据
+const commentsContainerRef = ref<HTMLElement>()
+const comments = ref<MessageDetailData['comments']['list'][number][]>([])
+const totalComments = ref(0)
+const currentPage = ref(1)
+const isRefreshing = ref(false)
+const isLoadingMore = ref(false)
+const hasMore = ref(true)
 
+// 下拉刷新功能
+const {
+  bindEvents,
+  unbindEvents
+} = usePullToLoad({
+  threshold: 60,
+  onRefresh: handleRefresh,
+  onLoadMore: handleLoadMore,
+  hasMore: hasMore,
+  isLoading: isRefreshing.value || isLoadingMore
+})
 
-// 事件处理函数
+// 监听详情数据变化
+watch(() => props.messageDetail, (newVal) => {
+  if (newVal?.comments?.list) {
+    comments.value = newVal.comments.list
+    totalComments.value = newVal.comments.total || 0
+    currentPage.value = newVal.comments.page || 1
+    hasMore.value = currentPage.value < (newVal.comments.totalPage || 1)
+  }
+}, { immediate: true })
+
+// 监听抽屉可见性变化，重新绑定事件
+watch(() => props.visible, async (newVal) => {
+  if (newVal) {
+    await nextTick()
+    if (commentsContainerRef.value) {
+      bindEvents(commentsContainerRef.value)
+    }
+  }
+})
+
+// 下拉刷新 - 重新加载第一页
+async function handleRefresh() {
+  if (isRefreshing.value || !props.messageDetail?.id) return
+  
+  isRefreshing.value = true
+  const startTime = Date.now()
+  const minLoadingTime = 600
+  
+  try {
+    const res = await getMessageDetailByIdAPI(props.messageDetail.id, 1)
+    
+    if (res.code === 0 && res.result) {
+      comments.value = res.result.comments.list || []
+      totalComments.value = res.result.comments.total || 0
+      currentPage.value = res.result.comments.page || 1
+      hasMore.value = currentPage.value < (res.result.comments.totalPage || 1)
+      
+      const elapsedTime = Date.now() - startTime
+      if (elapsedTime < minLoadingTime) {
+        await new Promise(resolve => setTimeout(resolve, minLoadingTime - elapsedTime))
+      }
+      
+      $message.success('刷新成功')
+    } else {
+      $message.error(res.message || '刷新失败')
+    }
+  } catch {
+    $message.error('刷新失败')
+  } finally {
+    isRefreshing.value = false
+  }
+}
+
+// 上拉加载更多
+async function handleLoadMore() {
+  if (isLoadingMore.value || !hasMore.value || !props.messageDetail?.id) return
+  
+  isLoadingMore.value = true
+  const startTime = Date.now()
+  const minLoadingTime = 500
+  
+  try {
+    const nextPage = currentPage.value + 1
+    const res = await getMessageDetailByIdAPI(props.messageDetail.id, nextPage)
+    
+    if (res.code === 0 && res.result) {
+      const newComments = res.result.comments.list || []
+      if (newComments.length > 0) {
+        comments.value.push(...newComments)
+        currentPage.value = nextPage
+        hasMore.value = currentPage.value < (res.result.comments.totalPage || 1)
+      } else {
+        hasMore.value = false
+      }
+      
+      const elapsedTime = Date.now() - startTime
+      if (elapsedTime < minLoadingTime) {
+        await new Promise(resolve => setTimeout(resolve, minLoadingTime - elapsedTime))
+      }
+    } else {
+      $message.error(res.message || '加载更多失败')
+    }
+  } catch {
+    $message.error('加载更多失败')
+  } finally {
+    isLoadingMore.value = false
+  }
+}
+
+// 事件处理
 const handleOk = () => {
   if (props.isAddMode) {
     submitNewMessage()
@@ -210,12 +342,24 @@ const resetForm = () => {
   isLiked.value = false
 }
 
-// 提交新增留言
+const addComment = () => {
+  if (!newComment.value.trim()) return
+  emit('addComment', newComment.value)
+  newComment.value = ''
+}
+
+const handleLike = () => {
+  isLiked.value = !isLiked.value
+  emit('like')
+}
+
+const handleReport = () => {
+  emit('report')
+}
+
+// 提交留言
 const submitNewMessage = async () => {
-  if (!addMessageForm.value.content.trim()) {
-    console.warn('请输入内容')
-    return
-  }
+  if (!addMessageForm.value.content.trim()) return
 
   try {
     const res = await createMessageAPI({
@@ -237,40 +381,55 @@ const submitNewMessage = async () => {
   }
 }
 
-// 添加评论功能
-const addComment = () => {
-  if (!newComment.value.trim()) return
-  
-  emit('addComment', newComment.value)
-  newComment.value = ''
-}
-
-// 点赞功能
-const handleLike = () => {
-  isLiked.value = !isLiked.value
-  emit('like')
-}
-
-// 举报功能
-const handleReport = () => {
-  emit('report')
-}
-
-// 监听visible变化，重置表单
-watch(() => props.visible, (newVal) => {
-  if (!newVal) {
-    resetForm()
+// 生命周期
+onMounted(async () => {
+  await nextTick()
+  if (commentsContainerRef.value) {
+    bindEvents(commentsContainerRef.value)
   }
+})
+
+onUnmounted(() => {
+  unbindEvents()
 })
 </script>
 
 <style scoped lang="scss">
-:deep(.arco-drawer) {
-  .dark-mode &{
-    background-color: #666 !important;
-  }
+@import "@/styles/_variables.scss";
+
+.comments-section-wrapper {
+  position: relative;
+  height: 400px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
+.comments-section {
+  min-height: 100%;
+}
+
+.comments-list {
+  min-height: 100%;
+}
+
+.no-more {
+  text-align: center;
+  padding: 20px;
+  color: #999;
+  font-size: 14px;
+}
+
+/* 隐藏滚动条 */
+.comments-section-wrapper::-webkit-scrollbar {
+  width: 4px;
+}
+
+.comments-section-wrapper::-webkit-scrollbar-thumb {
+  background: #ddd;
+  border-radius: 2px;
+}
+
+/* 原有样式保持不变 */
 .drawer-title {
   font-size: 18px;
   font-weight: 600;
@@ -284,7 +443,6 @@ watch(() => props.visible, (newVal) => {
 .detail-header {
   padding: 20px;
   margin-bottom: 20px;
-  position: relative;
 }
 
 .header-content {
@@ -345,20 +503,11 @@ watch(() => props.visible, (newVal) => {
   gap: 6px;
   color: #666;
   font-size: 14px;
-
-  :hover {
-    cursor: pointer;
-  }
-}
-
-.stat-item .anticon {
-  color: #ff6b6b;
+  cursor: pointer;
 }
 
 .comments-section {
   margin-bottom: 20px;
-  max-height: 400px;
-  overflow-y: auto;
 }
 
 .comments-title {
@@ -402,72 +551,19 @@ watch(() => props.visible, (newVal) => {
 .add-form {
   width: 100%;
 
-  .arco-form-item {
-    margin-bottom: 10px;
-
-    :deep(.arco-form-item-label) {
-      font-size: $font-size-20;
-      font-weight: 600;
-      color: #333;
-      margin-bottom: 12px;
-    }
-  }
-
   .content-input-wrapper {
     border-radius: 20px;
     padding: 32px;
-    transition: background-color 0.3s ease;
     border: 2px solid #e5e5e5;
     min-height: 400px;
-    width: 100%;
-    max-width: none;
-    position: relative;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
     margin: 16px 0;
 
     .content-textarea {
       background: transparent !important;
       border: none !important;
-      box-shadow: none !important;
       font-size: 16px;
       line-height: 1.6;
-      resize: none;
-
-      &:focus {
-        background: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
-      }
-
-      :deep(.arco-textarea) {
-        background: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
-        font-size: $font-size-16;
-        line-height: 1.8;
-        padding: 0;
-        min-height: 320px;
-        width: 100%;
-
-        &::placeholder {
-          color: rgba(0, 0, 0, 0.45);
-          font-size: $font-size-20;
-        }
-      }
-
-      :deep(.arco-textarea-word-limit) {
-        background: rgba(255, 255, 255, 0.9);
-        border-radius: 8px;
-        padding: 6px 12px;
-        margin-top: 16px;
-        font-size: 12px;
-        color: #666;
-        border: 1px solid rgba(0, 0, 0, 0.1);
-        position: absolute;
-        bottom: 20px;
-        right: 20px;
-        backdrop-filter: blur(4px);
-      }
     }
   }
 
@@ -484,35 +580,10 @@ watch(() => props.visible, (newVal) => {
     cursor: pointer;
     border: 0.5px solid transparent;
     transition: all 0.3s ease;
-    position: relative;
-
-    &::after {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 16px;
-      height: 16px;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.8);
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-
-    &:hover {
-      transform: scale(1.05);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    }
 
     &.active {
       border-color: #165dff;
       transform: scale(1.15);
-      box-shadow: 0 4px 16px rgba(22, 93, 255, 0.4);
-
-      &::after {
-        opacity: 1;
-      }
     }
   }
 
@@ -521,34 +592,7 @@ watch(() => props.visible, (newVal) => {
     gap: 16px;
     justify-content: flex-end;
     margin-top: $length-20;
-
-    .arco-btn {
-      height: 40px;
-      padding: 0 24px;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 500;
-    }
   }
-}
-
-/* 滚动条样式 */
-.comments-section::-webkit-scrollbar {
-  width: 4px;
-}
-
-.comments-section::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 2px;
-}
-
-.comments-section::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 2px;
-}
-
-.comments-section::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
 }
 
 /* 自定义Arco Comment组件样式 */
