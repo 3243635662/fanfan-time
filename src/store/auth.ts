@@ -106,7 +106,7 @@ export const useAuthStore = defineStore("auth", () => {
     localStorage.removeItem(`${APP_PREFIX}:${STORAGE_KEYS.TOKEN}`);
     localStorage.removeItem(`${APP_PREFIX}:${STORAGE_KEYS.USER}`);
     localStorage.removeItem(`${APP_PREFIX}:${STORAGE_KEYS.TOKEN_EXPIRY}`);
-    router.push('/home');
+    router.push('/login');
   };
 
 

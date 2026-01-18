@@ -97,25 +97,42 @@
       </div>
     </div>
 
-    <div class="login-decoration">
-      <video
-        class="decoration-video"
-        src="https://yc.tuchung.cc/uploads/video_cc0283c76e8d449e9dd1f10993f246b5.mp4"
-        autoplay
-        muted
-        loop
-        playsinline
-        preload="auto"
-      ></video>
-      <div class="decoration-overlay">
-        <div class="decoration-content">
-          <h2 class="animated-title">
-            <span>记</span><span>录</span><span>每</span><span>一</span><span>个</span><span>精</span><span>彩</span><span>瞬</span><span>间</span>
-          </h2>
-          <p>分享你的想法，记录你的生活，与朋友一起创造美好的回忆</p>
+      <div class="login-decoration">
+        <video
+          class="decoration-video"
+          src="https://yc.tuchung.cc/uploads/video_cc0283c76e8d449e9dd1f10993f246b5.mp4"
+          autoplay
+          muted
+          loop
+          playsinline
+          preload="auto"
+        ></video>
+        <div class="decoration-overlay">
+          <div class="decoration-content">
+            <div class="animated-title-wrapper">
+              <h2 class="animated-title">
+                <span>记</span><span>录</span><span>每</span><span>一</span><span>个</span><span>精</span><span>彩</span><span>瞬</span><span>间</span>
+              </h2>
+              <div class="title-glow"></div>
+            </div>
+            <div class="animated-subtitle">
+              <p class="subtitle-line">分享你的想法，记录你的生活</p>
+              <p class="subtitle-line">与朋友一起创造美好的回忆</p>
+            </div>
+            <div class="floating-elements">
+              <div class="floating-element element-1">
+                <AppIcon name="mdi:heart" size="24" color="#ff6b6b" />
+              </div>
+              <div class="floating-element element-2">
+                <AppIcon name="mdi:star" size="20" color="#ffd93d" />
+              </div>
+              <div class="floating-element element-3">
+                <AppIcon name="mdi:sparkles" size="18" color="#6bcf7f" />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
   </div>
 </template>
 
@@ -451,13 +468,20 @@ onMounted(() => {
     transition: all var(--transition-duration) ease-in-out;
     animation: fadeInUp 1s ease-out;
 
-    h2 {
+    .animated-title-wrapper {
+      position: relative;
+      display: inline-block;
+      margin-bottom: $padding-16;
+    }
+
+    .animated-title {
       font-size: 2.5rem;
       font-weight: 700;
-      margin-bottom: $padding-16;
+      margin-bottom: 0;
       color: rgba(255, 255, 255, 0.95);
       transition: all var(--transition-duration) ease-in-out;
       animation: slideIn 1s ease-out 0.3s both;
+      text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
       
       &.animated-title {
         display: inline-block;
@@ -479,12 +503,68 @@ onMounted(() => {
       }
     }
 
-    p {
-      font-size: $font-size-16;
-      line-height: 1.8;
-      color: rgba(255, 255, 255, 0.9);
-      transition: all var(--transition-duration) ease-in-out;
-      animation: slideIn 1s ease-out 0.6s both;
+    .title-glow {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 120%;
+      height: 120%;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 70%);
+      border-radius: 50%;
+      animation: glow 3s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    .animated-subtitle {
+      margin-bottom: $padding-24;
+      
+      .subtitle-line {
+        font-size: $font-size-16;
+        line-height: 1.6;
+        color: rgba(255, 255, 255, 0.9);
+        transition: all var(--transition-duration) ease-in-out;
+        animation: slideIn 1s ease-out 0.6s both;
+        margin-bottom: 8px;
+        
+        &:last-child {
+          margin-bottom: 0;
+        }
+      }
+    }
+
+    .floating-elements {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .floating-element {
+      position: absolute;
+      animation: float 6s ease-in-out infinite;
+      opacity: 0.6;
+      
+      &.element-1 {
+        top: 20%;
+        left: 10%;
+        animation-delay: 0s;
+      }
+      
+      &.element-2 {
+        top: 60%;
+        right: 15%;
+        animation-delay: 2s;
+      }
+      
+      &.element-3 {
+        bottom: 30%;
+        left: 20%;
+        animation-delay: 4s;
+      }
     }
   }
 
@@ -518,7 +598,28 @@ onMounted(() => {
       transform: translateY(-10px);
     }
   }
+
+  @keyframes glow {
+    0%, 100% {
+      opacity: 0.3;
+      transform: translate(-50%, -50%) scale(1);
+    }
+    50% {
+      opacity: 0.6;
+      transform: translate(-50%, -50%) scale(1.2);
+    }
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0) rotate(0deg);
+    }
+    50% {
+      transform: translateY(-20px) rotate(180deg);
+    }
+  }
 }
+
 
 @media (max-width: $tablet) {
   .login-page {

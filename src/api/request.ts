@@ -1,3 +1,4 @@
+import { $notification } from '@/hooks/useNotification';
 // src/api/request.ts
 import axios from 'axios'
 import { STORAGE_KEYS, APP_PREFIX } from '@/utils/constants'
@@ -44,6 +45,10 @@ instance.interceptors.response.use(async (response) => {
   if (error.response?.status === 403) {
     // 运行时动态导入，避免循环依赖
     const { useAuthStore } = await import('@/store/auth')
+    $notification.error({
+      title: '身份失效',
+      content: '您的身份已过期，请重新登录',
+    })
     useAuthStore().logout() // 统一走 store 的 logout
   }
   return Promise.reject(error)

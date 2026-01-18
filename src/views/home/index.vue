@@ -72,7 +72,7 @@ import { storeToRefs } from 'pinia'
 import Magnet from '@/components/MotionEffect/Magnet.vue'
 import TextCursor from '@/components/MotionEffect/TextCursor.vue'
 import Card from './components/card.vue'
-import { getMessageListAPI, getMessageDetailByIdAPI ,addCommentAPI} from '@/api/home'
+import { getMessageListAPI, getMessageDetailByIdAPI, addCommentAPI, likeMessageAPI } from '@/api/home'
 import { $notification } from '@/hooks/useNotification'
 // 异步组件加载抽屉组件
 const MessageDrawer = defineAsyncComponent(() =>
@@ -89,15 +89,15 @@ const pageInfo = ref({
 })
 // 统一的分类数据
 const categoryOptions = ref<CategoryOption[]>([
-  { type: 1, title: "全部", text: "all" },
-  { type: 2, title: "理想", text: "ideal" },
-  { type: 3, title: "学业", text: "academic" },
-  { type: 4, title: "生活", text: "life" },
-  { type: 5, title: "其他", text: "other" }
+  { type: 0, title: "全部", text: "all" },
+  { type: 1, title: "理想", text: "ideal" },
+  { type: 2, title: "学业", text: "academic" },
+  { type: 3, title: "生活", text: "life" },
+  { type: 4, title: "其他", text: "other" }
 ])
 
 // 当前选中的分类
-const currentCategory = ref(1)
+const currentCategory = ref(0)
 
 // 消息列表数据
 const messagesList = ref<MessageType[]>([])
@@ -155,11 +155,37 @@ const  handleAddComment = async(content: string) => {
 }
 
 // 处理点赞
-const handleLike = () => {
-  if (!messageDetail.value) return
-  
-  // 这里可以根据实际需求处理点赞逻辑
-  // 目前只是简单的前端状态更新
+const handleLike = async (id: number) => {
+  if (!id) return
+
+  try {
+    const res = await likeMessageAPI(id)
+    if (res.code === 0 && res.result) {
+      $notification.success({
+        title: '点赞成功',
+        content: res.message || '点赞成功'
+      })
+      const newLikedCount = res.result.likedCount
+      if (messageDetail.value) {
+        messageDetail.value.likedCount = newLikedCount
+      }
+      const message = messagesList.value.find(msg => msg.id === id)
+      if (message) {
+        message.likedCount = newLikedCount
+      }
+    } else {
+      $notification.error({
+        title: '点赞失败',
+        content: res.message || '点赞失败'
+      })
+    }
+  } catch (error) {
+    console.error('点赞失败:', error)
+    $notification.error({
+      title: '点赞失败',
+      content: '网络请求失败，请稍后重试'
+    })
+  }
 }
 
 // 处理举报

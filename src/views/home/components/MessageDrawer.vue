@@ -8,39 +8,85 @@
 
     <!-- 新增模式 -->
     <div v-if="isAddMode" class="add-container">
-      <a-form :model="addMessageForm" layout="vertical" class="add-form">
-        <a-form-item label="内容" required>
-          <div class="content-input-wrapper" :style="{ backgroundColor: addMessageForm.backgroundColor }">
-            <a-textarea v-model="addMessageForm.content" placeholder="分享你的想法..." :rows="12" :max-length="500" show-word-limit
-              class="content-textarea" />
+      <div class="add-form">
+        <div class="form-section">
+          <div class="form-label">
+            <span class="label-text">内容</span>
+            <span class="label-required">*</span>
           </div>
-        </a-form-item>
+          <div class="content-input-wrapper" :style="{ backgroundColor: addMessageForm.backgroundColor }">
+            <a-textarea 
+              v-model="addMessageForm.content" 
+              placeholder="分享你的想法，记录美好时光..." 
+              :rows="12" 
+              :max-length="500" 
+              show-word-limit
+              class="content-textarea"
+              allow-clear
+            />
+          </div>
+        </div>
 
-        <a-form-item label="标签">
-          <a-select v-model:value="addMessageForm.tag" placeholder="选择标签">
-            <a-option v-for="option in categoryOptions" :key="option.type" :value="option.type">
+        <div class="form-section">
+          <div class="form-label">
+            <span class="label-text">标签</span>
+          </div>
+          <a-select 
+            v-model:value="addMessageForm.tag" 
+            placeholder="选择标签"
+            class="tag-select"
+          >
+            <a-option v-for="option in filteredCategoryOptions" :key="option.type" :value="option.type">
               {{ option.title }}
             </a-option>
           </a-select>
-        </a-form-item>
+        </div>
 
-        <a-form-item label="背景色">
+        <div class="form-section">
+          <div class="form-label">
+            <span class="label-text">背景色</span>
+          </div>
           <div class="color-picker">
-            <div v-for="color in backgroundColorOptions" :key="color" class="color-option"
-              :class="{ active: addMessageForm.backgroundColor === color }" :style="{ backgroundColor: color }"
-              @click="addMessageForm.backgroundColor = color"></div>
+            <div 
+              v-for="color in backgroundColorOptions" 
+              :key="color" 
+              class="color-option"
+              :class="{ active: addMessageForm.backgroundColor === color }" 
+              :style="{ backgroundColor: color }"
+              @click="addMessageForm.backgroundColor = color"
+            >
+              <AppIcon v-if="addMessageForm.backgroundColor === color" name="mdi:check" :size="16" color="#fff" />
+            </div>
           </div>
-        </a-form-item>
+        </div>
 
-        <a-form-item>
-          <div class="form-actions">
-            <a-button @click="handleCancel">取消</a-button>
-            <a-button type="primary" @click="submitNewMessage" :disabled="!addMessageForm.content.trim()">
-              发布
-            </a-button>
+        <div class="form-actions">
+          <a-button @click="handleCancel" class="cancel-btn">
+            取消
+          </a-button>
+          <a-button
+            type="primary"
+            @click="submitNewMessage" 
+            :disabled="!addMessageForm.content.trim()"
+            class="submit-btn"
+          >
+            <template #icon>
+              <AppIcon name="mdi:send" :size="16" />
+            </template>
+            发布
+          </a-button>
+        </div>
+        
+        <div class="form-decorations">
+          <div class="decoration-circle decoration-1"></div>
+          <div class="decoration-circle decoration-2"></div>
+          <div class="decoration-circle decoration-3"></div>
+          <div class="decoration-text">
+            <AppIcon name="mdi:sparkles" :size="16" color="#165dff" />
+            <span>分享你的美好时光</span>
           </div>
-        </a-form-item>
-      </a-form>
+        </div>
+      </div>
     </div>
 
     <!-- 详情模式 -->
@@ -67,7 +113,10 @@
       <!-- 统计信息 -->
       <div class="detail-stats">
         <div class="stat-item like-item" :class="{ liked: isLiked }" @click="handleLike">
-          <AppIcon name="mdi:heart" :size="26" :color="isLiked ? '#ff6b6b' : '#666'" />
+          <div class="like-button-container">
+            <AppIcon name="mdi:heart" :size="26" :color="isLiked ? '#ff4757' : '#999'" :style="{ transition: 'all 0.3s ease', transform: isLiked ? 'scale(1.2)' : 'scale(1)' }" />
+            <div class="heart-particles" ref="heartParticles"></div>
+          </div>
           <span>{{ messageDetail.likedCount || 0 }}</span>
         </div>
         <div class="stat-item">
@@ -91,6 +140,14 @@
           <a-divider orientation="left">
             <span class="comments-title">评论 {{ totalComments }}</span>
           </a-divider>
+
+          <!-- 敏感词检查提示 -->
+          <div class="sensitive-word-tip">
+            <AppIcon name="mdi:shield-check" :size="14" color="#165dff" />
+            <span>评论由 </span>
+            <a href="https://uapis.cn/" target="_blank" class="uapi-link">UApiPro</a>
+            <span> 提供敏感词检查</span>
+          </div>
 
           <!-- 评论列表 -->
           <div class="comments-list" ref="commentsListRef">
@@ -128,19 +185,36 @@
 
       <!-- 添加评论 -->
       <div class="add-comment">
-        <a-divider orientation="left">
+        <div class="add-comment-header">
           <span class="add-comment-title">添加评论</span>
-        </a-divider>
+        </div>
         <a-comment>
           <template #avatar>
-            <FanAvatar :size="32" :imageUrl="userInfo?.avatar" :username="userInfo?.nickname || userInfo?.username" />
+            <FanAvatar :size="36" :imageUrl="userInfo?.avatar" :username="userInfo?.nickname || userInfo?.username" />
           </template>
           <template #content>
-            <a-textarea v-model="newComment" placeholder="请输入评论..." :rows="3" :max-length="200" show-word-limit
-              class="comment-input" />
-            <div class="comment-actions">
-              <a-button type="primary" size="small" @click="addComment" :disabled="!newComment.trim()">
-                评论
+            <a-textarea 
+              v-model="newComment" 
+              placeholder="写下你的想法..." 
+              :rows="3" 
+              :max-length="200" 
+              show-word-limit
+              class="comment-input"
+              allow-clear
+            />
+            <div class="comment-footer">
+              <span class="comment-hint">分享你的想法，与大家互动</span>
+              <a-button 
+                type="primary" 
+                size="small" 
+                @click="addComment" 
+                :disabled="!newComment.trim()"
+                class="submit-comment-btn"
+              >
+                <template #icon>
+                  <AppIcon name="mdi:send" :size="14" />
+                </template>
+                发送
               </a-button>
             </div>
           </template>
@@ -156,7 +230,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, watch, onMounted, onUnmounted, nextTick, computed } from 'vue'
 import { usePullToLoad } from '@/composables/usePullToLoad'
 import PullToLoadIndicator from './PullToLoadIndicator.vue'
 import { $message } from '@/hooks/useMessage'
@@ -183,12 +257,17 @@ const props = withDefaults(defineProps<Props>(), {
   categoryOptions: () => []
 })
 
+// 过滤掉type为0的选项，只保留1,2,3,4
+const filteredCategoryOptions = computed(() => {
+  return props.categoryOptions.filter(option => option.type !== 0)
+})
+
 // Emits
 const emit = defineEmits<{
   close: []
   submitMessage: [content: string, tag: number, backgroundColor: string]
   addComment: [content: string]
-  like: []
+  like: [id: number]
   report: []
 }>()
 
@@ -216,6 +295,49 @@ const currentPage = ref(1)
 const isRefreshing = ref(false)
 const isLoadingMore = ref(false)
 const hasMore = ref(true)
+
+// 点赞特效相关
+const heartParticles = ref<HTMLElement>()
+
+// 创建心形粒子特效
+const createHeartParticles = () => {
+  if (!heartParticles.value) return
+  
+  const particleCount = 12
+  const colors = ['#ff6b6b', '#ff8787', '#ffa8a8', '#ffc9c9', '#ffe3e3']
+  
+  for (let i = 0; i < particleCount; i++) {
+    const particle = document.createElement('div')
+    particle.className = 'heart-particle'
+    
+    const angle = (i / particleCount) * Math.PI * 2
+    const distance = 30 + Math.random() * 20
+    const duration = 0.6 + Math.random() * 0.4
+    const delay = Math.random() * 0.1
+    const size = 8 + Math.random() * 8
+    const color = colors[Math.floor(Math.random() * colors.length)]
+    
+    particle.style.cssText = `
+      position: absolute;
+      width: ${size}px;
+      height: ${size}px;
+      background: ${color};
+      border-radius: 50%;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      animation: particle-explode ${duration}s ease-out ${delay}s forwards;
+      box-shadow: 0 0 ${size}px ${color};
+    `
+    
+    heartParticles.value.appendChild(particle)
+    
+    setTimeout(() => {
+      particle.remove()
+    }, (duration + delay) * 1000)
+  }
+}
 
 // 下拉刷新功能
 const {
@@ -349,8 +471,11 @@ const addComment = () => {
 }
 
 const handleLike = () => {
-  isLiked.value = !isLiked.value
-  emit('like')
+  if (!props.messageDetail) return
+  if (isLiked.value) return
+  isLiked.value = true
+  createHeartParticles()
+  emit('like', props.messageDetail.id)
 }
 
 const handleReport = () => {
@@ -360,7 +485,8 @@ const handleReport = () => {
 // 提交留言
 const submitNewMessage = async () => {
   if (!addMessageForm.value.content.trim()) return
-
+  console.log(addMessageForm.value.tag);
+  
   try {
     const res = await createMessageAPI({
       content: addMessageForm.value.content,
@@ -506,8 +632,58 @@ onUnmounted(() => {
   cursor: pointer;
 }
 
+.like-button-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.heart-particles {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+@keyframes particle-explode {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0);
+  }
+}
+
 .comments-section {
   margin-bottom: 20px;
+}
+
+.sensitive-word-tip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  background: #f0f7ff;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 16px;
+
+  .uapi-link {
+    color: #165dff;
+    text-decoration: none;
+    font-weight: 500;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
 }
 
 .comments-title {
@@ -517,23 +693,64 @@ onUnmounted(() => {
 }
 
 .add-comment {
-  margin-top: 20px;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.add-comment-header {
+  margin-bottom: 16px;
 }
 
 .add-comment-title {
   font-size: 16px;
-  color: #333;
   font-weight: 600;
+  color: #1f2937;
+  letter-spacing: 0.02em;
 }
 
 .comment-input {
   margin-bottom: 12px;
+  border-radius: 12px;
 }
 
-.comment-actions {
+.comment-footer {
   display: flex;
-  justify-content: flex-end;
-  margin-top: 12px;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 2px;
+}
+
+.comment-hint {
+  font-size: 12px;
+  color: #9ca3af;
+  letter-spacing: 0.01em;
+}
+
+.submit-comment-btn {
+  height: 32px;
+  padding: 0 16px;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 13px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(22, 93, 255, 0.3);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 }
 
 .empty-state {
@@ -550,48 +767,242 @@ onUnmounted(() => {
 
 .add-form {
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
 
-  .content-input-wrapper {
-    border-radius: 20px;
-    padding: 32px;
-    border: 2px solid #e5e5e5;
-    min-height: 400px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-    margin: 16px 0;
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
 
-    .content-textarea {
-      background: transparent !important;
-      border: none !important;
-      font-size: 16px;
-      line-height: 1.6;
-    }
+.form-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.label-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+  letter-spacing: 0.01em;
+}
+
+.label-required {
+  color: #ef4444;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.content-input-wrapper {
+  border-radius: 16px;
+  padding: 24px;
+  border: 2px solid transparent;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 100%);
+    pointer-events: none;
   }
 
-  .color-picker {
-    display: flex;
-    gap: $length-22;
-    flex-wrap: wrap;
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+  }
+}
+
+.content-textarea {
+  background: transparent !important;
+  border: none !important;
+  font-size: 16px;
+  line-height: 1.8;
+  color: #1f2937;
+  resize: none;
+  position: relative;
+  z-index: 1;
+
+  &::placeholder {
+    color: rgba(0, 0, 0, 0.4);
+  }
+}
+
+.tag-select {
+  width: 100%;
+  border-radius: 10px;
+  border: 1.5px solid #e5e7eb;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: #d1d5db;
   }
 
-  .color-option {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    cursor: pointer;
-    border: 0.5px solid transparent;
-    transition: all 0.3s ease;
+  &:focus-within {
+    border-color: #165dff;
+    box-shadow: 0 0 0 3px rgba(22, 93, 255, 0.1);
+  }
+}
 
-    &.active {
-      border-color: #165dff;
-      transform: scale(1.15);
-    }
+.color-picker {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.color-option {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 3px solid transparent;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+  &:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   }
 
-  .form-actions {
-    display: flex;
-    gap: 16px;
-    justify-content: flex-end;
-    margin-top: $length-20;
+  &.active {
+    border-color: #165dff;
+    transform: scale(1.15);
+    box-shadow: 0 4px 16px rgba(22, 93, 255, 0.3);
+  }
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.cancel-btn {
+  height: 40px;
+  padding: 0 24px;
+  border-radius: 10px;
+  font-weight: 500;
+  font-size: 14px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #f3f4f6;
+  }
+}
+
+.submit-btn {
+  height: 40px;
+  padding: 0 28px;
+  border-radius: 10px;
+  font-weight: 500;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(22, 93, 255, 0.35);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.form-decorations {
+  position: relative;
+  margin-top: 40px;
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.decoration-circle {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.1;
+  animation: float 6s ease-in-out infinite;
+}
+
+.decoration-1 {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #165dff 0%, #4096ff 100%);
+  left: 10%;
+  animation-delay: 0s;
+}
+
+.decoration-2 {
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #ff6b6b 0%, #ff8787 100%);
+  right: 15%;
+  animation-delay: 2s;
+}
+
+.decoration-3 {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #52c41a 0%, #73d13d 100%);
+  left: 50%;
+  bottom: 0;
+  animation-delay: 4s;
+}
+
+.decoration-text {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #666;
+  font-weight: 500;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-20px) rotate(180deg);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
   }
 }
 

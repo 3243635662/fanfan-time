@@ -146,4 +146,9 @@ export interface CommentListResponse {
   limit: number;
   totalPage: number;
 }
+// 点赞响应
+export interface LikeResponse {
+  id: number;
+  likedCount: number;
+}
 

@@ -123,10 +123,16 @@
       ></video>
       <div class="decoration-overlay">
         <div class="decoration-content">
-          <h2 class="animated-title">
-            <span>加</span><span>入</span><span>我</span><span>们</span><span>的</span><span>社</span><span>区</span>
-          </h2>
-          <p>与志同道合的人交流，分享生活的点滴，创造美好的回忆</p>
+          <div class="animated-title-wrapper">
+            <h2 class="animated-title">
+              <span>加</span><span>入</span><span>我</span><span>们</span><span>的</span><span>社</span><span>区</span>
+            </h2>
+            <div class="title-glow"></div>
+          </div>
+          <div class="animated-subtitle">
+            <p class="subtitle-line">与志同道合的人交流，分享生活的点滴</p>
+            <p class="subtitle-line">创造美好的回忆，开启精彩旅程</p>
+          </div>
           <div class="features">
             <div class="feature-item">
               <AppIcon name="mdi:pencil-box-outline" size="24" />
@@ -139,6 +145,20 @@
             <div class="feature-item">
               <AppIcon name="mdi:cloud-outline" size="24" />
               <span>云端同步</span>
+            </div>
+          </div>
+          <div class="floating-elements">
+            <div class="floating-element element-1">
+              <AppIcon name="mdi:heart" size="24" color="#ff6b6b" />
+            </div>
+            <div class="floating-element element-2">
+              <AppIcon name="mdi:star" size="20" color="#ffd93d" />
+            </div>
+            <div class="floating-element element-3">
+              <AppIcon name="mdi:sparkles" size="18" color="#6bcf7f" />
+            </div>
+            <div class="floating-element element-4">
+              <AppIcon name="mdi:flower" size="16" color="#ff8787" />
             </div>
           </div>
         </div>
@@ -481,75 +501,143 @@ const handleRegister = async () => {
   }
 
   .decoration-content {
-    text-align: center;
-    max-width: 400px;
-    z-index: 3;
-    color: rgba(255, 255, 255, 0.95);
-    transition: all var(--transition-duration) ease-in-out;
-    animation: fadeInUp 1s ease-out;
-
-    h2 {
-      font-size: 2.5rem;
-      font-weight: 700;
-      margin-bottom: $padding-16;
+      text-align: center;
+      max-width: 400px;
+      z-index: 3;
       color: rgba(255, 255, 255, 0.95);
       transition: all var(--transition-duration) ease-in-out;
-      animation: slideIn 1s ease-out 0.3s both;
-      
-      &.animated-title {
+      animation: fadeInUp 1s ease-out;
+
+      .animated-title-wrapper {
+        position: relative;
         display: inline-block;
-        
-        span {
-          display: inline-block;
-          animation: bounceText 2s ease-in-out infinite;
-          
-          &:nth-child(1) { animation-delay: 0s; }
-          &:nth-child(2) { animation-delay: 0.1s; }
-          &:nth-child(3) { animation-delay: 0.2s; }
-          &:nth-child(4) { animation-delay: 0.3s; }
-          &:nth-child(5) { animation-delay: 0.4s; }
-          &:nth-child(6) { animation-delay: 0.5s; }
-          &:nth-child(7) { animation-delay: 0.6s; }
-        }
+        margin-bottom: $padding-16;
       }
-    }
 
-    p {
-      font-size: $font-size-16;
-      line-height: 1.8;
-      margin-bottom: $padding-24;
-      color: rgba(255, 255, 255, 0.9);
-      transition: all var(--transition-duration) ease-in-out;
-      animation: slideIn 1s ease-out 0.6s both;
-    }
-
-    .features {
-      display: flex;
-      justify-content: center;
-      gap: $padding-16;
-
-      .feature-item {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: $padding-4;
-        padding: $padding-12;
-        border-radius: $radius-8;
+      .animated-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0;
+        color: rgba(255, 255, 255, 0.95);
         transition: all var(--transition-duration) ease-in-out;
-        border: 1px solid;
-        min-width: 70px;
+        animation: slideIn 1s ease-out 0.3s both;
+        text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+        
+        &.animated-title {
+          display: inline-block;
+          
+          span {
+            display: inline-block;
+            animation: bounceText 2s ease-in-out infinite;
+            
+            &:nth-child(1) { animation-delay: 0s; }
+            &:nth-child(2) { animation-delay: 0.1s; }
+            &:nth-child(3) { animation-delay: 0.2s; }
+            &:nth-child(4) { animation-delay: 0.3s; }
+            &:nth-child(5) { animation-delay: 0.4s; }
+            &:nth-child(6) { animation-delay: 0.5s; }
+            &:nth-child(7) { animation-delay: 0.6s; }
+          }
+        }
+      }
 
-        :deep(.arco-icon) {
-          font-size: 20px;
+      .title-glow {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 120%;
+        height: 120%;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 70%);
+        border-radius: 50%;
+        animation: glow 3s ease-in-out infinite;
+        pointer-events: none;
+      }
+
+      .animated-subtitle {
+        margin-bottom: $padding-24;
+        
+        .subtitle-line {
+          font-size: $font-size-16;
+          line-height: 1.6;
+          color: rgba(255, 255, 255, 0.9);
+          transition: all var(--transition-duration) ease-in-out;
+          animation: slideIn 1s ease-out 0.6s both;
+          margin-bottom: 8px;
+          
+          &:last-child {
+            margin-bottom: 0;
+          }
+        }
+      }
+
+      .floating-elements {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        pointer-events: none;
+        overflow: hidden;
+      }
+
+      .floating-element {
+        position: absolute;
+        animation: float 6s ease-in-out infinite;
+        opacity: 0.6;
+        
+        &.element-1 {
+          top: 20%;
+          left: 10%;
+          animation-delay: 0s;
+        }
+        
+        &.element-2 {
+          top: 60%;
+          right: 15%;
+          animation-delay: 2s;
+        }
+        
+        &.element-3 {
+          bottom: 30%;
+          left: 20%;
+          animation-delay: 4s;
         }
 
-        span {
-          font-size: $font-size-12;
-          font-weight: 500;
+        &.element-4 {
+          top: 40%;
+          right: 25%;
+          animation-delay: 1s;
+        }
+      }
+
+      .features {
+        display: flex;
+        justify-content: center;
+        gap: $padding-16;
+
+        .feature-item {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: $padding-4;
+          padding: $padding-12;
+          border-radius: $radius-8;
+          transition: all var(--transition-duration) ease-in-out;
+          border: 1px solid;
+          min-width: 70px;
+
+          :deep(.arco-icon) {
+            font-size: 20px;
+          }
+
+          span {
+            font-size: $font-size-12;
+            font-weight: 500;
+          }
         }
       }
     }
-  }
 
   @keyframes fadeInUp {
     from {
@@ -582,6 +670,27 @@ const handleRegister = async () => {
     }
   }
 
+  @keyframes glow {
+    0%, 100% {
+      opacity: 0.3;
+      transform: translate(-50%, -50%) scale(1);
+    }
+    50% {
+      opacity: 0.6;
+      transform: translate(-50%, -50%) scale(1.2);
+    }
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0) rotate(0deg);
+    }
+    50% {
+      transform: translateY(-20px) rotate(180deg);
+    }
+  }
+}
+
   @keyframes bounce {
     0%, 100% {
       transform: translateY(0);
@@ -590,7 +699,7 @@ const handleRegister = async () => {
       transform: translateY(-10px);
     }
   }
-}
+
 
 @media (max-width: $tablet) {
   .register-page {

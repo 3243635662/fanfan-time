@@ -69,24 +69,53 @@ const containerClass = computed(() => {
 .container {
   cursor: pointer;
   padding: 24px;
-  border-radius: 16px;
+  border-radius: 20px;
   transition: all var(--transition-duration) ease;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   min-height: 200px;
   box-shadow:
-    0 4px 16px var(--color-shadow),
+    0 8px 32px var(--color-shadow),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   position: relative;
-  background: inherit;
+  background: var(--card-bg-color, inherit);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.1) 0%,
+      rgba(255, 255, 255, 0.05) 50%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    pointer-events: none;
+    border-radius: inherit;
+  }
 
   &:hover {
-    transform: translateY(-4px);
+    transform: translateY(-6px) scale(1.02);
     box-shadow:
-      0 8px 24px var(--color-shadow-hover),
-      inset 0 1px 0 rgba(255, 255, 255, 0.25);
+      0 16px 48px var(--color-shadow-hover),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    
+    &::before {
+      background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.15) 0%,
+        rgba(255, 255, 255, 0.08) 50%,
+        rgba(255, 255, 255, 0) 100%
+      );
+    }
   }
 
   > * {
@@ -104,26 +133,33 @@ const containerClass = computed(() => {
       font-size: 12px;
       font-family: '清韵文楷', system-ui, -apple-system, sans-serif;
       color: var(--card-text-color);
+      opacity: 0.8;
+      transition: opacity var(--transition-duration) ease;
     }
 
     .tag {
       font-size: 12px;
       font-family: '清韵文楷', system-ui, -apple-system, sans-serif;
-      padding: 4px 12px;
-      border-radius: 12px;
+      padding: 6px 14px;
+      border-radius: 16px;
       font-weight: 500;
       @include card-tag;
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
     }
   }
 
   .content {
     flex: 1;
     font-size: 16px;
-    line-height: 1.7;
+    line-height: 1.8;
     margin-bottom: 24px;
     font-weight: 500;
     font-family: '清韵文楷', system-ui, -apple-system, sans-serif;
     @include card-content;
+    opacity: 0.9;
+    transition: opacity var(--transition-duration) ease;
   }
 
   .footer {
@@ -138,23 +174,33 @@ const containerClass = computed(() => {
       span {
         display: flex;
         align-items: center;
-        gap: 4px;
+        gap: 6px;
         font-size: 13px;
         font-family: '清韵文楷', system-ui, -apple-system, sans-serif;
         @include card-text;
+        opacity: 0.8;
+        transition: all var(--transition-duration) ease;
+
+        &:hover {
+          opacity: 1;
+          transform: translateY(-1px);
+        }
 
         :deep(svg) {
-          opacity: 0.7;
+          opacity: 0.8;
           color: var(--card-text-color);
+          transition: all var(--transition-duration) ease;
         }
       }
     }
 
     .username {
       font-size: 14px;
-      font-weight: 700;
+      font-weight: 600;
       font-family: '清韵文楷', system-ui, -apple-system, sans-serif;
       @include card-username;
+      opacity: 0.9;
+      transition: opacity var(--transition-duration) ease;
     }
   }
 }
