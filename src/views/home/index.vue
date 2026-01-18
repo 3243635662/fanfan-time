@@ -19,7 +19,7 @@
           <a-tab-pane v-for="item in categoryOptions" :key="item.type" :title="item.title">
             <!-- 内容区域 -->
             <div class="tab-content">
-              <div v-if="loading" class="loading">加载中...</div>
+              <MessageSkeletonList v-if="loading" :count="pageInfo.limit" />
               <div v-else-if="error" class="error">{{ error }}</div>
                 <!-- 添加分页 -->
               <div v-else>
@@ -72,6 +72,7 @@ import { storeToRefs } from 'pinia'
 import Magnet from '@/components/MotionEffect/Magnet.vue'
 import TextCursor from '@/components/MotionEffect/TextCursor.vue'
 import Card from './components/card.vue'
+import MessageSkeletonList from './components/skeleton/MessageSkeletonList.vue'
 import { getMessageListAPI, getMessageDetailByIdAPI, addCommentAPI, likeMessageAPI } from '@/api/home'
 import { $notification } from '@/hooks/useNotification'
 // 异步组件加载抽屉组件
@@ -137,6 +138,12 @@ const  handleAddComment = async(content: string) => {
       const detailRes = await getMessageDetailByIdAPI(messageDetail.value.id)
       if (detailRes.code === 0 && detailRes.result) {
         messageDetail.value = detailRes.result
+        // 更新列表数据中对应卡片的评论数
+        const newCommentCount = detailRes.result.commentCount
+        const message = messagesList.value.find(msg => msg.id === messageDetail.value!.id)
+        if (message) {
+          message.commentCount = newCommentCount
+        }
       }
     }
     else{
@@ -381,18 +388,10 @@ onMounted(() => {
   }
 }
 
-.loading,
 .error {
   text-align: center;
   padding: 40px;
   font-size: 16px;
-}
-
-.error {
   color: #f56565;
-}
-
-.loading {
-  color: #666;
 }
 </style>

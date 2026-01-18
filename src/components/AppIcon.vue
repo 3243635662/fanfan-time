@@ -9,10 +9,20 @@ const props = defineProps({
 </script>
 
 <template>
+  <div class="app-icon">
   <Icon
     :icon="props.name"
     :width="props.size"
     :height="props.size"
     :style="props.color ? { color: props.color, fill: props.color } : {}"
   />
+  </div>
 </template>
+
+<style scoped lang="scss">
+.app-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+</style>

@@ -16,7 +16,6 @@ const instance = axios.create({
 
 // 请求拦截器：运行时再去读 store
 instance.interceptors.request.use(async (config) => {
-  console.log('发送请求:', config.url);
 
   // 运行时动态获取最新 token
   const { useAuthStore } = await import('@/store/auth') // 动态导入，避免循环依赖
@@ -24,7 +23,6 @@ instance.interceptors.request.use(async (config) => {
 
   const storedToken = localStorage.getItem(`${APP_PREFIX}:${STORAGE_KEYS.TOKEN}`)
   const finalToken = token.value || storedToken
-  console.log('finalToken:', finalToken)
   if (finalToken) {
     config.headers = config.headers || {}
     config.headers.Authorization = `Bearer ${finalToken}`

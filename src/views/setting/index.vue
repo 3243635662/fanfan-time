@@ -124,8 +124,14 @@
                   </template>
                 </a-upload>
                 <div class="avatar-upload-tip">
-                  <AppIcon name="mdi:information-outline" size="16" />
-                  <span>头像使用360图床存储，请勿上传违法图片！！！</span>
+                  <div>
+                    <AppIcon name="mdi:information-outline" size="12" />
+                    <p>点击头像进行上传</p>
+                  </div>
+                  <div>
+                    <AppIcon name="mdi:information-outline" size="12" />
+                    <p>使用360图床存储,请勿上传违法图片！！！</p>
+                  </div>
                 </div>
                 <div class="account-details">
                   <div class="account-name-group">
@@ -472,13 +478,22 @@ const handleLogout = () => {
 
 .avatar-upload-tip {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  margin-top: 12px;
-  font-size: 12px;
-  color: var(--color-warning);
+  gap: 8px;
+  color: #f59e0b;
   text-align: center;
+
+   div {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  p {
+    margin: 0;
+    padding: 0;
+  }
   }
 
   @keyframes spin {

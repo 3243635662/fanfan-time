@@ -106,6 +106,12 @@ const add = () => {
       color: var(--color-text-primary);
     }
 
+    @media (max-width: 768px) {
+      p {
+        display: none;
+      }
+    }
+
     display: flex;
     align-items: center;
   }

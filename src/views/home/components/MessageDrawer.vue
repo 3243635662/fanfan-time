@@ -15,11 +15,11 @@
             <span class="label-required">*</span>
           </div>
           <div class="content-input-wrapper" :style="{ backgroundColor: addMessageForm.backgroundColor }">
-            <a-textarea 
+            <a-textarea
               v-model="addMessageForm.content" 
-              placeholder="分享你的想法，记录美好时光..." 
-              :rows="12" 
-              :max-length="500" 
+              placeholder="分享你的想法，记录美好时光..."
+              :rows="12"
+              :max-length="500"
               show-word-limit
               class="content-textarea"
               allow-clear
@@ -31,8 +31,8 @@
           <div class="form-label">
             <span class="label-text">标签</span>
           </div>
-          <a-select 
-            v-model:value="addMessageForm.tag" 
+          <a-select
+            v-model:value="addMessageForm.tag"
             placeholder="选择标签"
             class="tag-select"
           >
