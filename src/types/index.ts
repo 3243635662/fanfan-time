@@ -11,6 +11,12 @@ export interface CategoryOption {
   title: string;
   text: string;
 }
+// 照片分类选项格式
+export interface CategoryOptionForPhoto {
+  category: number;
+  title: string;
+  text: string;
+}
 
 // 单个留言格式
 export interface MessageType {
@@ -152,3 +158,46 @@ export interface LikeResponse {
   likedCount: number;
 }
 
+// 媒体单个结构
+export interface MediaItemType {
+  id: number;
+  type: number;// 1为图片，2为视频
+  category: number; // 分类
+  title: string;
+  content: string;
+  publishTime: Date;
+  likedCount: number;
+  commentCount: number;
+  viewCount: number;
+  videoUrl?: string;
+  cover?: string;
+  imageUrls?: string[];
+  aspectRatio: number; // 宽高比
+  publisher: {
+    userId: number;
+    username: string;
+    avatar: string;
+    nickname?: string;
+  };
+}
+// 获取媒体列表(分页，关键词，分类筛选)
+export interface MediaListResponse {
+  code: number;
+  result: {
+    list: MediaItemType[];
+    totalPage: number;
+    total: number;
+    page: number;
+    limit: number;
+    filterCategory: number;
+    keyword?: string;
+    links?: {
+      first?: string;
+      previous?: string;
+      next?: string;
+      last?: string;
+    };
+  } | null;
+
+  message: string;
+}
