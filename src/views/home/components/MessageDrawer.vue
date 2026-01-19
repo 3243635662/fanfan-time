@@ -1,5 +1,25 @@
 <template>
-  <a-drawer :width="560" :visible="visible" @ok="handleOk" @cancel="handleCancel" unmountOnClose :footer="false">
+  <a-drawer 
+    :width="drawerWidth" 
+    :visible="visible" 
+    @ok="handleOk" 
+    @cancel="handleCancel" 
+    unmountOnClose 
+    :footer="false"
+    :closable="!isMobile"  
+    class="mobile-optimized-drawer"
+  >
+  <!-- 自定义关闭按钮 - 只在移动端显示 -->
+    <a-button 
+      v-if="isMobile"
+      type="text" 
+      class="close-btn" 
+      @click="handleCancel"
+      size="small"
+    >
+      <AppIcon name="mdi:close" :size="20" />
+    </a-button>
+    
     <template #title>
       <div class="drawer-title">
         <span>{{ isAddMode ? '新增留言' : '详情' }}</span>
@@ -257,6 +277,20 @@ const props = withDefaults(defineProps<Props>(), {
   categoryOptions: () => []
 })
 
+// 移动端检测
+const isMobile = ref(false)
+const checkIsMobile = () => {
+  isMobile.value = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+}
+
+// 响应式抽屉宽度
+const drawerWidth = computed(() => {
+  if (isMobile.value) {
+    return '100%' // 移动端全屏
+  }
+  return 560 // PC端固定宽度
+})
+
 // 过滤掉type为0的选项，只保留1,2,3,4
 const filteredCategoryOptions = computed(() => {
   return props.categoryOptions.filter(option => option.type !== 0)
@@ -393,7 +427,6 @@ async function handleRefresh() {
         await new Promise(resolve => setTimeout(resolve, minLoadingTime - elapsedTime))
       }
       
-      $message.success('刷新成功')
     } else {
       $message.error(res.message || '刷新失败')
     }
@@ -509,6 +542,8 @@ const submitNewMessage = async () => {
 
 // 生命周期
 onMounted(async () => {
+  checkIsMobile()
+  window.addEventListener('resize', checkIsMobile)
   await nextTick()
   if (commentsContainerRef.value) {
     bindEvents(commentsContainerRef.value)
@@ -516,6 +551,7 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
+  window.removeEventListener('resize', checkIsMobile)
   unbindEvents()
 })
 </script>
@@ -1029,5 +1065,230 @@ onUnmounted(() => {
   color: #666;
   line-height: 1.5;
   word-break: break-word;
+}
+
+/* 移动端优化样式 */
+@media (max-width: 768px) {
+  /* 抽屉头部优化 */
+  .close-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 1000;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    
+    &:hover {
+      background: rgba(255, 255, 255, 1);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+  }
+
+  /* 移动端标题区域添加右边距给关闭按钮留空间 */
+  :deep(.arco-drawer-header) {
+    position: relative;
+    padding-right: 60px; /* 给关闭按钮留空间 */
+  }
+
+  /* 详情模式移动端优化 */
+  .detail-header {
+    padding: 16px;
+    margin-bottom: 12px;
+    position: relative; /* 为标签定位做准备 */
+  }
+
+  .header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-right: 40px; /* 给关闭按钮留空间 */
+  }
+
+  .user-info {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  /* 标签位置调整 */
+  .detail-header :deep(.arco-tag) {
+    position: absolute;
+    top: 16px;
+    right: 50px; /* 在关闭按钮左边 */
+  }
+
+  .detail-content {
+    padding: 16px;
+    margin: 0 16px 16px;
+    border-radius: 12px;
+  }
+
+  .content-text {
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  .detail-stats {
+    padding: 12px 16px;
+    margin: 0 16px 16px;
+    gap: 16px;
+  }
+
+  .stat-item {
+    font-size: 13px;
+    gap: 4px;
+  }
+
+  /* 评论区移动端优化 */
+  .comments-section-wrapper {
+    height: 50vh; /* 移动端使用视窗高度 */
+    max-height: 400px;
+  }
+
+  .comments-section {
+    padding: 0 16px;
+  }
+
+  .sensitive-word-tip {
+    padding: 6px 10px;
+    font-size: 11px;
+    margin-bottom: 12px;
+  }
+
+  /* 新增评论区域优化 */
+  .add-comment {
+    padding: 16px;
+    margin-top: 16px;
+  }
+
+  .add-comment-header {
+    margin-bottom: 12px;
+  }
+
+  .comment-input {
+    margin-bottom: 8px;
+  }
+
+  .comment-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .comment-hint {
+    font-size: 11px;
+  }
+
+  .submit-comment-btn {
+    align-self: flex-end;
+    height: 36px;
+    padding: 0 20px;
+  }
+
+  /* 新增模式移动端优化 */
+  .add-container {
+    padding: 16px 0;
+  }
+
+  .add-form {
+    gap: 16px;
+  }
+
+  .form-section {
+    gap: 8px;
+  }
+
+  .content-input-wrapper {
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  .content-textarea {
+    font-size: 15px;
+  }
+
+  .form-actions {
+    padding: 12px 0 0;
+    margin-top: 4px;
+  }
+
+  .cancel-btn,
+  .submit-btn {
+    height: 44px;
+    padding: 0 20px;
+    font-size: 15px;
+  }
+
+  /* 颜色选择器优化 */
+  .color-picker {
+    gap: 12px;
+  }
+
+  .color-option {
+    width: 40px;
+    height: 40px;
+  }
+
+  /* 评论列表优化 */
+  :deep(.arco-comment) {
+    margin-bottom: 12px;
+  }
+
+  :deep(.arco-comment-content) {
+    margin-left: 8px;
+  }
+
+  :deep(.arco-comment-content-author) {
+    font-size: 13px;
+  }
+
+  :deep(.arco-comment-content-datetime) {
+    font-size: 11px;
+  }
+
+  :deep(.arco-comment-content-detail) {
+    font-size: 14px;
+    line-height: 1.6;
+  }
+}
+
+@media (max-width: 480px) {
+  /* 超小屏幕优化 */
+  .detail-header,
+  .detail-content,
+  .detail-stats,
+  .comments-section,
+  .add-comment {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .comments-section-wrapper {
+    height: 45vh;
+  }
+
+  .drawer-title {
+    font-size: 16px;
+  }
+
+  .content-text {
+    font-size: 14px;
+  }
+
+  .form-decorations {
+    padding: 16px 12px;
+  }
+
+  .decoration-circle {
+    display: none; /* 超小屏幕隐藏装饰元素 */
+  }
 }
 </style>

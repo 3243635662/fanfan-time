@@ -32,7 +32,6 @@
 		"eslint-plugin-vue": "^10.6.2",
 		"globals": "^16.5.0",
 		"jsrepo": "^3.0.8",
-		"mockjs": "^1.1.0",
 		"prettier": "^3.7.4",
 		"typescript": "~5.9.3",
 		"typescript-eslint": "^8.49.0",
