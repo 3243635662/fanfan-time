@@ -140,7 +140,7 @@
                   </div>
                   <span class="account-email">{{ userInfo?.email || 'fanfan@fanfan-time.com' }}</span>
                   <div class="account-meta">
-                    <span class="account-date">注册于 {{ formatDate(userInfo?.createdAt) || '2024年1月13日' }}</span>
+                    <span class="account-date">注册于 {{ formatTime(userInfo?.createdAt) || '2024年1月13日' }}</span>
                     <span class="account-roles" v-if="userInfo?.roles?.length">• {{ userInfo.roles.join(', ') }}</span>
                   </div>
                   <div class="account-status" v-if="userInfo?.tokenStatus">
@@ -218,6 +218,7 @@ import { $message } from "@/hooks/useMessage";
 import AppIcon from "@/components/AppIcon.vue";
 import FanAvatar from "@/views/home/components/Fan-Avatar.vue";
 import { STORAGE_KEYS, APP_PREFIX } from "@/utils/constants";
+import { formatTime } from "@/utils";
 import type { FileItem } from '@arco-design/web-vue';
 
 // 京东图床API配置
@@ -399,15 +400,6 @@ const increaseFontSize = () => {
     localStorage.setItem(`${APP_PREFIX}:${STORAGE_KEYS.PREFERRED_FONT_SIZE}`, String(fontSize.value));
     document.documentElement.style.fontSize = `${fontSize.value}px`;
   }
-};
-
-const formatDate = (date: Date | string | undefined) => {
-  if (!date) return '';
-  return new Date(date).toLocaleDateString('zh-CN', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
 };
 
 const getStatusClass = (status: string) => `status-${status}`;

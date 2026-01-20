@@ -14,7 +14,11 @@ export const useSettingStore = defineStore("setting", () => {
   const toggleDarkMode = () => {
     isDark.value = !isDark.value;
   };
-
+  // 是否是媒体详情弹窗
+  const isShowMediaDetailModal = ref(false)
+  // 是否是添加媒体弹窗
+  const isShowAddMediaModal = ref(false)
+  const showModal = ref(false)
   watch(isDark, (newValue) => {
     if (newValue) {
       document.body.classList.add("dark-mode");
@@ -50,18 +54,49 @@ export const useSettingStore = defineStore("setting", () => {
     isShowMessageDrawer.value = false;
     isAddMode.value = false;
   };
+  // 打开媒体详情弹窗
+  const openMediaDetailModal = () => {
+    isShowAddMediaModal.value = false
+    showModal.value = true
+    isShowMediaDetailModal.value = true
+  }
 
+  // 关闭媒体详情弹窗
+  const closeMediaDetailModal = () => {
+    isShowAddMediaModal.value = false
+    showModal.value = false
+    isShowMediaDetailModal.value = false
+  }
+  // 打开添加媒体弹窗
+  const openAddMediaModal = () => {
+    isShowMediaDetailModal.value = false
+    isShowAddMediaModal.value = true
+    showModal.value = true
+  }
+  // 关闭添加媒体弹窗
+  const closeAddMediaModal = () => {
+
+    isShowAddMediaModal.value = false
+    showModal.value = false
+  }
   return {
+    showModal,
     isDark,
     isShowMessageDrawer,
     isAddMode,
     DockTitle,
     isShowTextCursor,
+    isShowMediaDetailModal,
+    isShowAddMediaModal,
     toggleDarkMode,
     setDockTitle,
     toggleMessageDrawer,
     openAddMode,
     openDetailMode,
-    closeDrawer
+    closeDrawer,
+    openMediaDetailModal,
+    closeMediaDetailModal,
+    openAddMediaModal,
+    closeAddMediaModal
   };
 });

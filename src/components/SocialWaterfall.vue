@@ -117,11 +117,14 @@
 
           <!-- 内容信息 -->
           <div class="item-info">
-            <div class="item-header">
-              <FanAvatar :image-url="item.publisher.avatar" :size="isMobile ? 28 : 32" />
-              <span class="item-author">{{ item.publisher.nickname }}</span>
+            <div class="item-user">
+              <FanAvatar :image-url="item.publisher.avatar" :size="isMobile ? 24 : 28" />
+              <span class="item-author">{{ item.publisher.username }}</span>
             </div>
-            <div class="item-title">{{ item.title }}</div>
+            <div class="item-content-row">
+              <div class="item-title">{{ item.title }}</div>
+              <div class="time">{{ formatDate(item.publishTime) }}</div>
+            </div>
           </div>
         </div>
       </div>
@@ -146,6 +149,8 @@
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import type { MediaItemType } from '@/types'
 import FanAvatar from '@/views/home/components/Fan-Avatar.vue'
+import { formatDate } from '@/utils'
+import { usePhotoStore } from '@/store/photo'
 
 interface Props {
   items: MediaItemType[]
@@ -256,9 +261,9 @@ const calculateItemHeight = (item: MediaItemType): number => {
   if (!item) return 300 // 默认高度，如果item为undefined
   
   // 内容区域高度
-  const headerHeight = isMobile.value ? 48 : 52 // 作者信息高度
-  const titleHeight = item.title ? Math.ceil(item.title.length / 20) * 20 + 8 : 0 // 标题高度（根据字数计算）
-  const contentHeight = headerHeight + Math.min(titleHeight, 60) + 16 // 总内容高度（移除tags高度）
+  const userHeight = isMobile.value ? 34 : 40 // 用户信息行高度
+  const titleHeight = item.title ? Math.ceil(item.title.length / 20) * (isMobile.value ? 16 : 18) + 8 : 0 // 标题高度（根据字数计算）
+  const contentHeight = userHeight + Math.min(titleHeight, isMobile.value ? 36 : 40) + (isMobile.value ? 14 : 16) // 总内容高度
   
   // 媒体高度 - 优先使用已计算的高度，避免重复计算
   let mediaHeight = itemHeights.value.get(item.id)
@@ -277,7 +282,7 @@ const calculateItemHeight = (item: MediaItemType): number => {
     
     // 基于item.id生成稳定的伪随机因子，确保同一项目高度始终一致
     const stableRandomFactor = 0.9 + (item.id % 10) * 0.02 // 0.9-1.1的稳定因子
-    mediaHeight = Math.min(containerWidth / aspectRatio, isMobile.value ? 400 : 500) * stableRandomFactor
+    mediaHeight = Math.min(containerWidth / aspectRatio, isMobile.value ? 350 : 500) * stableRandomFactor
   }
   
   // 缓存计算结果，避免重复计算
@@ -576,7 +581,8 @@ const onVideoError = (item: MediaItemType) => {
 
 // 处理各种交互
 const handleItemClick = (item: MediaItemType) => {
-  emit('itemClick', item)
+  const photoStore = usePhotoStore()
+  photoStore.openDetailModal(item.id)
 }
 
 const handleLike = (item: MediaItemType) => {
@@ -1073,20 +1079,20 @@ onUnmounted(() => {
 
 // 内容信息
 .item-info {
-  padding: 12px;
+  padding: 10px 12px;
 }
 
-.item-header {
+.item-user {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: 6px;
+  margin-bottom: 6px;
 }
 
 .item-author {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 500;
-  color: #333;
+  color: var(--color-text-primary);
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1097,43 +1103,18 @@ onUnmounted(() => {
   }
 }
 
-.following-tag {
-  font-size: 12px;
-  color: #999;
-  background: #f5f5f5;
-  padding: 2px 6px;
-  border-radius: 4px;
-
-  .dark-mode & {
-    background: #333;
-    color: #aaa;
-  }
-}
-
-.follow-btn {
-  font-size: 12px;
-  color: #ff2442;
-  background: #fff0f0;
-  padding: 4px 8px;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-weight: 500;
-
-  &:hover {
-    background: #ff2442;
-    color: white;
-  }
-
-  .dark-mode & {
-    background: rgba(255, 36, 66, 0.1);
-  }
+.item-content-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 .item-title {
-  font-size: 14px;
+  flex: 1;
+  font-size: 13px;
   line-height: 1.4;
-  color: #333;
+  color: var(--color-text-primary);
   margin-bottom: 0;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -1143,6 +1124,19 @@ onUnmounted(() => {
 
   .dark-mode & {
     color: #fff;
+  }
+}
+
+.time {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+  line-height: 1.4;
+  padding-top: 2px;
+
+  .dark-mode & {
+    color: #999;
   }
 }
 
@@ -1188,6 +1182,98 @@ onUnmounted(() => {
 // 移动端优化
 @media (max-width: 768px) {
   .waterfall-columns {
+    padding: 6px;
+    gap: 6px;
+  }
+
+  .waterfall-column {
+    gap: 6px;
+  }
+
+  .waterfall-item {
+    border-radius: 8px;
+    margin-bottom: 0;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  }
+
+  .item-info {
+    padding: 8px 10px;
+  }
+
+  .item-user {
+    margin-bottom: 4px;
+    gap: 5px;
+  }
+
+  .item-author {
+    font-size: 11px;
+  }
+
+  .item-content-row {
+    gap: 6px;
+  }
+
+  .item-title {
+    font-size: 12px;
+    line-height: 1.3;
+    -webkit-line-clamp: 2;
+  }
+
+  .time {
+    font-size: 10px;
+    line-height: 1.3;
+    padding-top: 1px;
+  }
+
+  .interaction-buttons {
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    gap: 6px;
+    opacity: 1;
+  }
+
+  .like-btn,
+  .comment-btn,
+  .share-btn {
+    width: 32px;
+    height: 32px;
+
+    svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    span {
+      font-size: 8px;
+    }
+  }
+
+  .video-play-icon {
+    width: 36px;
+    height: 36px;
+
+    svg {
+      width: 14px;
+      height: 14px;
+    }
+  }
+
+  .skeleton-container {
+    gap: 6px;
+    padding: 6px;
+  }
+
+  .skeleton-item {
+    min-width: calc(50% - 3px);
+    max-width: calc(50% - 3px);
+    margin-bottom: 0;
+  }
+}
+
+// 超小屏幕优化
+@media (max-width: 480px) {
+  .waterfall-columns {
     padding: 4px;
     gap: 4px;
   }
@@ -1197,69 +1283,65 @@ onUnmounted(() => {
   }
 
   .waterfall-item {
-    border-radius: 8px;
-    margin-bottom: 4px;
+    border-radius: 6px;
   }
 
   .item-info {
-    padding: 8px;
+    padding: 6px 8px;
   }
 
-  .item-header {
-    margin-bottom: 6px;
+  .item-user {
+    margin-bottom: 3px;
+    gap: 4px;
   }
 
   .item-author {
-    font-size: 13px;
+    font-size: 10px;
+  }
+
+  .item-content-row {
+    gap: 4px;
   }
 
   .item-title {
-    font-size: 13px;
-    margin-bottom: 6px;
+    font-size: 11px;
+    line-height: 1.2;
+  }
+
+  .time {
+    font-size: 9px;
   }
 
   .interaction-buttons {
-    right: 8px;
-    top: 50%;
-    transform: translateY(-50%);
-    gap: 8px;
+    right: 4px;
+    gap: 4px;
+    opacity: 1;
   }
 
   .like-btn,
   .comment-btn,
   .share-btn {
-    width: 36px;
-    height: 36px;
+    width: 28px;
+    height: 28px;
 
     svg {
-      width: 16px;
-      height: 16px;
+      width: 12px;
+      height: 12px;
     }
 
     span {
-      font-size: 9px;
+      font-size: 7px;
     }
   }
 
   .video-play-icon {
-    width: 40px;
-    height: 40px;
+    width: 32px;
+    height: 32px;
 
     svg {
-      width: 16px;
-      height: 16px;
+      width: 12px;
+      height: 12px;
     }
-  }
-
-  .skeleton-container {
-    gap: 4px;
-    padding: 4px;
-  }
-
-  .skeleton-item {
-    min-width: calc(50% - 2px);
-    max-width: calc(50% - 2px);
-    margin-bottom: 4px;
   }
 }
 

@@ -5,37 +5,63 @@
       <p>记录每一个精彩瞬间</p>
     </div>
 
+    <div class="search-container">
+      <div class="search-box">
+        <input
+          v-model="keyword"
+          type="text"
+          placeholder="搜索照片..."
+          class="search-input"
+          @keyup.enter="handleSearch"
+        />
+        <button class="search-button" @click="handleSearch">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.35-4.35"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
     <SkeletonList :count="isMobile() ? 8 : 12" list-class="grid-layout" v-if="isLoading && mediaList.length === 0" />
-<div class="tabs-wrapper">
-<a-tabs type="rounded" :default-active-key="currentCategory" lazy-load :animation="true" class="custom-tabs" @change="handleTabChange" >
-   <a-tab-pane v-for="item in categoryOptions" :key="item.category" :title="item.title">
-    <div v-if="isError && !isLoading" class="error-message">
-      <div class="error-icon">⚠️</div>
-      <div class="error-text">加载照片失败，请稍后重试</div>
-      <button class="retry-button" @click="loadPhotos()">重试</button>
+    <div class="tabs-wrapper">
+      <a-tabs type="rounded" :default-active-key="currentCategory" lazy-load :animation="true" class="custom-tabs" @change="handleTabChange" >
+        <a-tab-pane v-for="item in categoryOptions" :key="item.category" :title="item.title">
+          <div v-if="isError && !isLoading" class="error-message">
+            <div class="error-icon">⚠️</div>
+            <div class="error-text">加载照片失败，请稍后重试</div>
+            <button class="retry-button" @click="loadPhotos()">重试</button>
+          </div>
+
+          <div v-if="showEmptySearch" class="empty-search-message">
+            <div class="empty-search-icon">🔍</div>
+            <div class="empty-search-text">没有找到相关照片</div>
+            <div class="empty-search-hint">换个关键词试试吧</div>
+            <button class="clear-search-button" @click="clearSearch">清除搜索</button>
+          </div>
+
+          <SocialWaterfall
+            :items="mediaList"
+            :loading="isLoading"
+            :no-more="page >= totalPage && totalPage > 0"
+            @load-more="loadMorePhotos"
+            @like="handleLike"
+            @comment="handleComment"
+            @share="handleShare"
+            v-if="!isError || mediaList.length > 0" />
+        </a-tab-pane>
+      </a-tabs>
     </div>
 
-    <SocialWaterfall 
-      :items="mediaList" 
-      :loading="isLoading"
-      :no-more="page >= totalPage && totalPage > 0"
-      @item-click="handleItemClick"
-      @load-more="loadMorePhotos"
-      @like="handleLike"
-      @comment="handleComment"
-      @share="handleShare"
-      v-if="!isError || mediaList.length > 0" />
-</a-tab-pane>
-  </a-tabs>
-</div>
+    <PostDetailModal />
   </div>
 </template>
 
 <script setup lang="ts">
 import SkeletonList from '@/components/skeleton/SkeletonList.vue';
 import SocialWaterfall from '@/components/SocialWaterfall.vue';
+import PostDetailModal from './components/PostDetailModal.vue';
 import type { CategoryOptionForPhoto, MediaItemType } from '@/types';
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { getPhotoListAPI } from '@/api/photo';
 import { $notification } from '@/hooks/useNotification';
 const mediaList = ref<MediaItemType[]>([])
@@ -49,7 +75,6 @@ const keyword = ref('')
 const type = ref(0)
 const currentCategory = ref(0)
 const pageSize = ref(20) // 每页数量
-
 // 移动端检测
 const isMobile = () => {
   return window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
@@ -62,6 +87,11 @@ const categoryOptions = ref<CategoryOptionForPhoto[]>([
   { category: 3, title: "图片", text: "photo" },
   { category: 4, title: "视频", text: "video" }
 ])
+
+const showEmptySearch = computed(() => {
+  return !isLoading.value && !isError.value && mediaList.value.length === 0 && keyword.value.trim() !== ''
+})
+
 // 优化：添加请求缓存和防抖
 let requestCache = new Map<string, any>()
 const requestCacheTimeout = 5 * 60 * 1000 // 5分钟缓存
@@ -86,11 +116,11 @@ const loadPhotos = async (filterCategory: number = 0) => {
       isLoading.value = false
       return
     }
-    
+
     const response = await getPhotoListAPI(
-      page.value, 
-      filterCategory, 
-      keyword.value, 
+      page.value,
+      filterCategory,
+      keyword.value,
       type.value,
       pageSize.value,
       'created_at',
@@ -187,13 +217,6 @@ const handleTabChange = (key: string | number) => {
   loadPhotos(Number(key))
 }
 
-const handleItemClick = (item: MediaItemType) => {
-  console.log('点击了卡片:', item)
-  // 这里可以处理跳转到详情页的逻辑
-  // 例如: router.push(`/photo/${item.id}`)
-  alert(`点击了: ${item.title} (ID: ${item.id})`)
-}
-
 // 处理点赞 - 静态模拟，不调用API
 const handleLike = (item: MediaItemType) => {
   console.log('点赞:', item)
@@ -226,6 +249,17 @@ const handleShare = (item: MediaItemType) => {
     title: '提示',
     content: '分享功能开发中'
   })
+}
+
+const handleSearch = () => {
+  page.value = 1
+  loadPhotos(currentCategory.value)
+}
+
+const clearSearch = () => {
+  keyword.value = ''
+  page.value = 1
+  loadPhotos(currentCategory.value)
 }
 
 
@@ -373,6 +407,67 @@ onMounted(() => {
       margin: 0;
     }
   }
+
+  .search-container {
+    margin-bottom: $padding-24;
+    display: flex;
+    justify-content: center;
+
+    .search-box {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      max-width: 500px;
+      background: var(--color-bg-2);
+      border: 1px solid var(--color-border);
+      border-radius: 24px;
+      padding: 4px 4px 4px 20px;
+      transition: all 0.3s ease;
+
+      &:hover,
+      &:focus-within {
+        border-color: var(--color-primary);
+        box-shadow: 0 2px 8px rgba(var(--color-primary-rgb), 0.1);
+      }
+
+      .search-input {
+        flex: 1;
+        border: none;
+        outline: none;
+        font-size: $font-size-14;
+        color: var(--color-text-primary);
+        background: transparent;
+        padding: 8px 0;
+
+        &::placeholder {
+          color: var(--color-text-tertiary);
+        }
+      }
+
+      .search-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border: none;
+        border-radius: 20px;
+        background: var(--color-bg-2);
+        color: var(--color-text-primary);
+        cursor: pointer;
+        transition: all 0.3s ease;
+
+        &:hover {
+          background: var(--color-primary);
+          transform: scale(1.4);
+        }
+
+        &:active {
+          transform: scale(0.95);
+        }
+      }
+    }
+  }
     .custom-tabs {
       :deep(.arco-tabs-nav) {
         display: flex;
@@ -431,6 +526,54 @@ onMounted(() => {
 
       &:hover {
         background: var(--color-primary-hover);
+      }
+    }
+  }
+
+  .empty-search-message {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 20px;
+    text-align: center;
+
+    .empty-search-icon {
+      font-size: 64px;
+      margin-bottom: 20px;
+      opacity: 0.6;
+    }
+
+    .empty-search-text {
+      font-size: $font-size-18;
+      font-weight: 600;
+      color: var(--color-text-primary);
+      margin-bottom: 8px;
+    }
+
+    .empty-search-hint {
+      font-size: $font-size-14;
+      color: var(--color-text-tertiary);
+      margin-bottom: 24px;
+    }
+
+    .clear-search-button {
+      padding: 10px 28px;
+      background: var(--color-bg-2);
+      color: var(--color-text-primary);
+      border: 1px solid var(--color-border);
+      border-radius: 6px;
+      font-size: $font-size-14;
+      cursor: pointer;
+      transition: all 0.3s;
+
+      &:hover {
+        background:#f9fbfc ;
+        border-color: var(--color-primary);
+        .dark-mode & {
+          background: #000;
+          color: #fff;
+        }
       }
     }
   }
