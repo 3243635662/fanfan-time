@@ -49,8 +49,12 @@ onMounted(() => {
 });
 
 const add = () => {
-  console.log("Add clicked!");
-  settingStore.openAddMode()
+  if (router.currentRoute.value.name === 'home') {
+    settingStore.openAddMode()
+  }
+  else {
+    settingStore.openAddMediaModal()
+  }
 };
 // 监听页面滚动变化 实现底部bottom的变化
 const scrollBottom = () => {

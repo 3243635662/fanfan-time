@@ -18,7 +18,7 @@ export const useSettingStore = defineStore("setting", () => {
   const isShowMediaDetailModal = ref(false)
   // 是否是添加媒体弹窗
   const isShowAddMediaModal = ref(false)
-  const showModal = ref(false)
+  const isShowModal = ref(false)
   watch(isDark, (newValue) => {
     if (newValue) {
       document.body.classList.add("dark-mode");
@@ -57,30 +57,30 @@ export const useSettingStore = defineStore("setting", () => {
   // 打开媒体详情弹窗
   const openMediaDetailModal = () => {
     isShowAddMediaModal.value = false
-    showModal.value = true
+    isShowModal.value = true
     isShowMediaDetailModal.value = true
   }
 
   // 关闭媒体详情弹窗
   const closeMediaDetailModal = () => {
     isShowAddMediaModal.value = false
-    showModal.value = false
+    isShowModal.value = false
     isShowMediaDetailModal.value = false
   }
   // 打开添加媒体弹窗
   const openAddMediaModal = () => {
     isShowMediaDetailModal.value = false
     isShowAddMediaModal.value = true
-    showModal.value = true
+    isShowModal.value = true
   }
   // 关闭添加媒体弹窗
   const closeAddMediaModal = () => {
 
     isShowAddMediaModal.value = false
-    showModal.value = false
+    isShowModal.value = false
   }
   return {
-    showModal,
+    isShowModal,
     isDark,
     isShowMessageDrawer,
     isAddMode,

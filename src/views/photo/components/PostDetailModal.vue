@@ -1,48 +1,53 @@
 <template>
-  <div v-if="showDetailModal" class="modal-overlay" @click.self="closeDetailModal">
-    <div class="modal-content">
+  <div class="modal-overlay" v-if="isShowModal" @click.self="settingStore.closeMediaDetailModal">
+    <!-- 详情内容区域 -->
+    <div class="modal-content" v-if="isShowMediaDetailModal">
       <div class="modal-left">
         <img :src="post.image" alt="post" class="post-image" />
       </div>
-      
+
       <div class="modal-right">
         <div class="modal-header">
           <div class="user-info">
-            <img :src="post.author.avatar" alt="avatar" class="avatar" />
+            <FanAvatar :imageUrl="post.author.avatar" class="avatar" />
             <div class="user-details">
               <h3>{{ post.author.username }}</h3>
-              <button class="follow-btn" @click="toggleFollow">
-                {{ isFollowing ? '已关注' : '关注' }}
-              </button>
             </div>
           </div>
-          <button class="close-btn" @click="closeDetailModal">&times;</button>
+          <button class="close-btn" @click="settingStore.closeMediaDetailModal">
+            <AppIcon name="mdi:close" :size="24" color="#666" />
+          </button>
         </div>
-        
+
+        <div class="post-title">
+          <h2 ref="titleElement" :class="{ expanded: isTitleExpanded }">{{ post.title }}</h2>
+          <button v-if="isTitleOverflow" class="expand-btn" @click="toggleTitle">
+            {{ isTitleExpanded ? '收起' : '展开' }}
+          </button>
+        </div>
+
         <div class="post-text">
           <p>{{ post.content }}</p>
           <div class="hashtags">
-            <span v-for="tag in post.tags" :key="tag" class="tag">
-              #{{ tag }}
-            </span>
+            <span v-for="tag in post.tags" :key="tag" class="tag">#{{ tag }}</span>
           </div>
         </div>
-        
+
         <div class="post-actions">
           <div class="action-btn" @click="toggleLike">
-            <i :class="['fas', 'fa-heart', { active: isLiked }]"></i>
+            <AppIcon name="mdi:heart" :size="20" :color="isLiked ? '#ff2442' : '#666'" />
             <span>{{ post.likes }}</span>
           </div>
           <div class="action-btn">
-            <i class="fas fa-comment"></i>
+            <AppIcon name="mdi:comment-outline" :size="20" color="#666" />
             <span>{{ post.comments }}</span>
           </div>
           <div class="action-btn">
-            <i class="fas fa-share"></i>
+            <AppIcon name="mdi:share-variant-outline" :size="20" color="#666" />
             <span>{{ post.shares }}</span>
           </div>
         </div>
-        
+
         <div class="comments-section">
           <h4>评论 ({{ post.comments }})</h4>
           <div class="comments-list">
@@ -60,23 +65,289 @@
         </div>
       </div>
     </div>
+
+    <!-- 上传内容区域 -->
+    <div class="modal-upload" v-else>
+      <div class="upload-container">
+        <div class="upload-header">
+          <div class="user-info">
+            <div class="user-details">
+              <FanAvatar :imageUrl="userInfo?.avatar" class="avatar" />
+            </div>
+          </div>
+          <button class="close-btn" @click="settingStore.closeMediaDetailModal">
+            <AppIcon name="mdi:close" :size="24" color="#666" />
+          </button>
+        </div>
+
+        <a-tabs type="rounded" :default-active-key="currentTabs" lazy-load :animation="true" class="custom-tabs">
+          <a-tab-pane :key="TabsPane[0]?.key" :title="TabsPane[0]?.title">
+            <div class="image-upload-content">
+              <a-upload
+                list-type="picture-card"
+                :file-list="fileList"
+                :show-upload-button="true"
+                :show-preview-button="false"
+                :custom-request="handleUpload"
+                @change="handleFileChange"
+                @exceed-limit="handleExceedLimit"
+                accept="image/*"
+                :limit="5"
+              >
+                <div v-if="fileList.length === 0" class="upload-placeholder">
+                  <AppIcon name="mdi:plus" :size="40" color="#999" />
+                  <span>上传图片</span>
+                </div>
+              </a-upload>
+
+              <div class="form-section">
+                <a-input
+                  v-model="uploadForm.title"
+                  placeholder="添加标题..."
+                  :max-length="50"
+                  show-word-limit
+                  class="title-input"
+                />
+              </div>
+
+              <div class="form-section">
+                <a-textarea
+                  v-model="uploadForm.content"
+                  placeholder="添加描述..."
+                  :max-length="500"
+                  show-word-limit
+                  :rows="4"
+                  class="content-input"
+                />
+              </div>
+
+              <div class="form-section">
+                <div class="category-label">选择分类</div>
+                <div class="category-options">
+                  <div
+                    v-for="cat in categories"
+                    :key="cat.value"
+                    :class="['category-item', { active: uploadForm.category === cat.value }]"
+                    @click="handleCategoryChange(cat.value)"
+                  >
+                    {{ cat.label }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-section hashtags-section">
+                <div class="hashtags-label">添加标签</div>
+                <div class="hashtags-list">
+                  <span
+                    v-for="tag in availableTags"
+                    :key="tag"
+                    :class="['hashtag-item', { active: selectedTags.includes(tag) }]"
+                    @click="toggleTag(tag)"
+                  >
+                    #{{ tag }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </a-tab-pane>
+
+          <a-tab-pane :key="TabsPane[1]?.key" :title="TabsPane[1]?.title"> </a-tab-pane>
+        </a-tabs>
+
+        <div class="upload-footer">
+          <a-button type="primary" :disabled="!canSubmit" :loading="uploading" class="publish-btn" @click="handlePublish">
+            发布
+          </a-button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
-<script setup>
-import { usePhotoStore } from '@/store/photo'
+<script setup lang="ts">
+import { useSettingStore } from '@/store/setting'
 import { storeToRefs } from 'pinia'
-import { ref } from 'vue'
+import { ref, computed, watch } from 'vue'
+import { Message } from '@arco-design/web-vue'
+import type { FileItem,RequestOption } from '@arco-design/web-vue'
+import AppIcon from '@/components/AppIcon.vue'
+import { useAuthStore } from '@/store/auth'
+import FanAvatar from '@/views/home/components/Fan-Avatar.vue'
+const { userInfo } = storeToRefs(useAuthStore())
+const settingStore = useSettingStore()
+const { isShowMediaDetailModal, isShowModal } = storeToRefs(settingStore)
 
-const { showDetailModal } = storeToRefs(usePhotoStore())
-const { closeDetailModal } = usePhotoStore()
+const currentTabs = ref('image')
+const imageHostingURL = 'https://api.xinyew.cn/api/360tc'
 
-const isFollowing = ref(false)
+// Arco Upload 文件列表（用于 UI 回显）
+const fileList = ref<FileItem[]>([])
+// 图床返回的 URL 列表（用于后续入库）
+const imgUrlList = ref<string[]>([])
+
+const uploading = ref(false)
+
+const TabsPane = [
+  { key: 'image', title: '图片' },
+  { key: 'video', title: '视频' },
+]
+
+const uploadForm = ref({
+  title: '',
+  content: '',
+  category: null as number | null,
+})
+
+const categories = [
+  { value: 1, label: '好看' },
+  { value: 2, label: '风景' },
+]
+
+const availableTags = ['风景', '摄影', '自然', '旅行', '生活', '日常', '美好', '艺术']
+const selectedTags = ref<string[]>([])
+
+const canSubmit = computed(() => {
+  return imgUrlList.value.length > 0 && uploadForm.value.title.trim() !== '' && uploadForm.value.category !== null
+})
+
 const isLiked = ref(false)
+const isTitleExpanded = ref(false)
+const isTitleOverflow = ref(false)
+const titleElement = ref<HTMLElement | null>(null)
+
+const cleanUrl = (url: string): string => {
+  if (!url) return ''
+  try {
+    const urlObj = new URL(url)
+    return `${urlObj.protocol}//${urlObj.host}${urlObj.pathname}`
+  } catch {
+    return url
+  }
+}
+
+// 自定义上传
+const handleUpload = async (options: RequestOption) => {
+  const { fileItem, onSuccess, onError, onProgress } = options || {}
+  const rawFile: File | undefined = fileItem?.file
+
+  if (!rawFile) {
+    onError?.(new Error('未获取到文件'))
+    return
+  }
+
+  if (!rawFile.type.startsWith('image/')) {
+    Message.error('请选择图片文件')
+    onError?.(new Error('请选择图片文件'))
+    return
+  }
+
+  if (rawFile.size > 5 * 1024 * 1024) {
+    Message.error('图片大小不能超过 5MB')
+    onError?.(new Error('图片大小不能超过 5MB'))
+    return
+  }
+
+  try {
+    if (fileItem) fileItem.status = 'uploading'
+    onProgress?.(20)
+
+    const formData = new FormData()
+    formData.append('file', rawFile)
+
+    const uploadResponse = await fetch(imageHostingURL, { method: 'POST', body: formData })
+    if (!uploadResponse.ok) throw new Error(`图床上传失败: HTTP ${uploadResponse.status}`)
+
+    const uploadResult = await uploadResponse.json()
+    if (!uploadResult || uploadResult.errno !== 0 || !uploadResult.data?.url) {
+      throw new Error(uploadResult?.error || '图床返回数据格式错误')
+    }
+
+    const cleaned = cleanUrl(uploadResult.data.url)
+    const finalUrl = cleaned.includes('?') ? `${cleaned}&t=${Date.now()}` : `${cleaned}?t=${Date.now()}`
+
+    imgUrlList.value.push(finalUrl)
+    console.log('[360图床] upload url:', finalUrl)
+
+    if (fileItem) {
+      fileItem.url = finalUrl
+      fileItem.status = 'done'
+      ;(fileItem as any).response = uploadResult
+    }
+
+    onProgress?.(100)
+    onSuccess?.(uploadResult)
+  } catch (e) {
+    const err = e instanceof Error ? e : new Error('上传失败')
+    if (fileItem) fileItem.status = 'error'
+    Message.error(`图片上传失败: ${err.message}`)
+    onError?.(err)
+  }
+}
+
+const handleFileChange = (nextList: FileItem[]) => {
+  const prevUrls = new Set((fileList.value.map((i:any) => i.url).filter(Boolean) as string[]) || [])
+  const nextUrls = new Set((nextList.map((i) => i.url).filter(Boolean) as string[]) || [])
+
+  for (const url of prevUrls) {
+    if (!nextUrls.has(url)) {
+      imgUrlList.value = imgUrlList.value.filter((u) => u !== url)
+    }
+  }
+
+  fileList.value = nextList
+}
+
+const handleExceedLimit = () => {
+  Message.warning('最多只能上传5张图片')
+}
+
+const handleCategoryChange = (category: number) => {
+  uploadForm.value.category = category
+}
+
+const toggleTag = (tag: string) => {
+  const index = selectedTags.value.indexOf(tag)
+  if (index > -1) {
+    selectedTags.value.splice(index, 1)
+  } else if (selectedTags.value.length < 5) {
+    selectedTags.value.push(tag)
+  } else {
+    Message.warning('最多选择5个标签')
+  }
+}
+
+const handlePublish = async () => {
+  if (!canSubmit.value) return
+
+  uploading.value = true
+  try {
+    console.log('Publish:', {
+      imgUrlList: imgUrlList.value,
+      title: uploadForm.value.title,
+      content: uploadForm.value.content,
+      category: uploadForm.value.category,
+      tags: selectedTags.value,
+    })
+
+    Message.success('发布成功！')
+
+    uploadForm.value = { title: '', content: '', category: null }
+    fileList.value = []
+    imgUrlList.value = []
+    selectedTags.value = []
+
+    settingStore.closeMediaDetailModal()
+  } catch (error) {
+    Message.error('发布失败，请重试')
+  } finally {
+    uploading.value = false
+  }
+}
 
 const post = ref({
   id: 1,
   image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800',
+  title: '美丽的风景：探索大自然的壮丽景色，感受山川湖海的震撼力量',
   content: '这是一张美丽的风景照片，记录了美好的瞬间。大自然的力量总是让人感到震撼和敬畏。',
   likes: 128,
   comments: 32,
@@ -84,7 +355,7 @@ const post = ref({
   tags: ['风景', '摄影', '自然'],
   author: {
     username: 'fanfan',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=fanfan'
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=fanfan',
   },
   commentsList: [
     {
@@ -92,36 +363,48 @@ const post = ref({
       author: 'user1',
       avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=user1',
       text: '太美了！请问这是在哪里拍的？',
-      time: '2小时前'
+      time: '2小时前',
     },
-    {
-      id: 2,
-      author: 'user2',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=user2',
-      text: '构图很棒，色彩也很和谐',
-      time: '1小时前'
-    },
-    {
-      id: 3,
-      author: 'user3',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=user3',
-      text: '学习了，下次我也试试这种拍摄角度',
-      time: '30分钟前'
-    }
-  ]
+  ],
 })
-
-const toggleFollow = () => {
-  isFollowing.value = !isFollowing.value
-}
 
 const toggleLike = () => {
   isLiked.value = !isLiked.value
   post.value.likes += isLiked.value ? 1 : -1
 }
+
+const toggleTitle = () => {
+  isTitleExpanded.value = !isTitleExpanded.value
+}
+
+const checkTitleOverflow = () => {
+  if (titleElement.value) {
+    const element = titleElement.value
+    const computedStyle = window.getComputedStyle(element)
+    const lineHeight = Number.parseFloat(computedStyle.lineHeight)
+    const maxHeight = lineHeight * 1
+    isTitleOverflow.value = element.scrollHeight > maxHeight
+  }
+}
+
+watch(isShowModal, (open) => {
+  document.body.style.overflow = open ? 'hidden' : ''
+}, { immediate: true })
+
+watch(isShowMediaDetailModal, (newValue) => {
+  if (newValue) setTimeout(checkTitleOverflow, 100)
+  else isTitleExpanded.value = false
+}, { immediate: true })
+
+watch(() => post.value.title, () => {
+  setTimeout(checkTitleOverflow, 0)
+}, { immediate: true })
 </script>
 
-<style scoped>
+
+<style scoped lang="scss">
+@use "@/styles/variables.scss" as *;
+
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -129,15 +412,17 @@ const toggleLike = () => {
   width: 100%;
   height: 100%;
   background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(3px);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+  z-index: 2000;
+  padding-top: 50px;
 }
 
 .modal-content {
-  background: white;
-  border-radius: 12px;
+  background: $gray-0;
+  border-radius: $radius-12;
   width: 90%;
   max-width: 1000px;
   max-height: 85vh;
@@ -148,7 +433,7 @@ const toggleLike = () => {
 
 .modal-left {
   flex: 1;
-  background: #000;
+  background: $gray-8;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -166,55 +451,42 @@ const toggleLike = () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 15px;
-  border-bottom: 1px solid #eee;
+  padding: $padding-16;
+  border-bottom: 1px solid $gray-2;
   flex-shrink: 0;
-}
 
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
+  .user-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
 
-.avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  object-fit: cover;
-}
+  .user-details {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+  .avatar {
+      display: block;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      background: linear-gradient($gray-0, $gray-0) padding-box,
+        linear-gradient(135deg, #ff8e8e 0%, #ff6b6b 100%) border-box;
+  }
+  .close-btn {
+    background: none;
+    border: none;
+    font-size: $font-size-24;
+    cursor: pointer;
+    color: $gray-5;
+    transition: color 0.3s ease;
 
-.user-details h3 {
-  margin: 0;
-  font-size: 16px;
-}
-
-.follow-btn {
-  background: #ff2442;
-  color: white;
-  border: none;
-  padding: 5px 15px;
-  border-radius: 20px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: all 0.3s ease;
-}
-
-.follow-btn:hover {
-  background: #ff1f3d;
-}
-
-.close-btn {
-  background: none;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-  color: #666;
-  transition: color 0.3s ease;
-}
-
-.close-btn:hover {
-  color: #333;
+    &:hover {
+      color: $gray-7;
+    }
+  }
 }
 
 .post-image {
@@ -223,181 +495,238 @@ const toggleLike = () => {
   object-fit: contain;
 }
 
+.post-title {
+  padding: $padding-16;
+  border-bottom: 1px solid $gray-2;
+  h2 {
+    margin: 0;
+    font-size: $font-size-20;
+    font-weight: 700;
+    color: var(--color-text-primary, $gray-7);
+    line-height: 1.4;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    transition: all 0.3s ease;
+
+    &.expanded {
+      -webkit-line-clamp: unset;
+    }
+  }
+
+  .expand-btn {
+    margin-top: 8px;
+    padding: 3px 10px;
+    background: transparent;
+    color: var(--color-text-secondary, $gray-5);
+    border: 1px solid var(--color-border, $gray-2);
+    border-radius: $radius-12;
+    font-size: $font-size-12;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 400;
+    letter-spacing: 0.5px;
+
+    &:hover {
+      background: var(--color-bg-1, $gray-1);
+      color: var(--color-text-primary, $gray-7);
+      border-color: var(--color-text-tertiary, $gray-5);
+    }
+  }
+}
+
 .post-text {
-  padding: 15px;
+  padding: $padding-16;
   line-height: 1.6;
-  border-bottom: 1px solid #eee;
-}
+  border-bottom: 1px solid $gray-2;
 
-.hashtags {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-top: 8px;
-}
+  .hashtags {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
 
-.tag {
-  color: #ff2442;
-  cursor: pointer;
-  transition: opacity 0.3s ease;
-}
+  .tag {
+    color: #ff2442;
+    cursor: pointer;
+    transition: opacity 0.3s ease;
 
-.tag:hover {
-  opacity: 0.7;
+    &:hover {
+      opacity: 0.7;
+    }
+  }
 }
 
 .post-actions {
   display: flex;
   justify-content: space-around;
-  padding: 15px;
-  border-bottom: 1px solid #eee;
+  padding: $padding-16;
+  border-bottom: 1px solid $gray-2;
   flex-shrink: 0;
-}
 
-.action-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 5px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
+  .action-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
 
-.action-btn:hover {
-  transform: scale(1.1);
-}
+    &:hover {
+      transform: scale(1.1);
+    }
 
-.action-btn i {
-  font-size: 20px;
-  color: #666;
-  transition: color 0.3s ease;
-}
-
-.action-btn i.active {
-  color: #ff2442;
-}
-
-.action-btn span {
-  font-size: 12px;
-  color: #666;
+    span {
+      font-size: $font-size-12;
+      color: $gray-5;
+    }
+  }
 }
 
 .comments-section {
-  padding: 15px;
+  padding: $padding-16;
   flex: 1;
   overflow-y: auto;
-}
 
-.comments-section h4 {
-  margin: 0 0 15px 0;
-  font-size: 16px;
-}
+  h4 {
+    margin: 0 0 15px 0;
+    font-size: $font-size-16;
+  }
 
-.comments-list {
-  margin-top: 15px;
-}
+  .comments-list {
+    margin-top: 15px;
+  }
 
-.comment {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 15px;
-  padding-bottom: 15px;
-  border-bottom: 1px solid #eee;
-}
+  .comment {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid $gray-2;
 
-.comment:last-child {
-  border-bottom: none;
-}
+    &:last-child {
+      border-bottom: none;
+    }
 
-.comment-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  object-fit: cover;
-}
+    .comment-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
 
-.comment-content {
-  flex: 1;
-}
+    .comment-content {
+      flex: 1;
+    }
 
-.comment-header {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 5px;
-}
+    .comment-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 5px;
+    }
 
-.comment-author {
-  font-weight: bold;
-  font-size: 14px;
-}
+    .comment-author {
+      font-weight: bold;
+      font-size: $font-size-14;
+    }
 
-.comment-time {
-  font-size: 12px;
-  color: #999;
-}
+    .comment-time {
+      font-size: $font-size-12;
+      color: $gray-4;
+    }
 
-.comment p {
-  margin: 0;
-  font-size: 14px;
-  line-height: 1.5;
+    p {
+      margin: 0;
+      font-size: $font-size-14;
+      line-height: 1.5;
+    }
+  }
 }
 
 .dark-mode {
   .modal-content {
-    background: #1a1a1a;
+    background: $gray-8;
   }
 
   .modal-header {
-    border-bottom-color: #333;
+    border-bottom-color: $gray-6;
+
+    .user-details h3 {
+      color: var(--color-text-primary, $gray-0);
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .close-btn {
+      color: $gray-4;
+
+      &:hover {
+        color: $gray-0;
+      }
+    }
   }
 
-  .user-details h3 {
-    color: #fff;
-  }
+  .post-title {
+    border-bottom-color: $gray-6;
 
-  .close-btn {
-    color: #999;
-  }
+    h2 {
+      color: var(--color-text-primary, $gray-1);
+    }
 
-  .close-btn:hover {
-    color: #fff;
+    .expand-btn {
+      color: var(--color-text-secondary, $gray-4);
+      border-color: $gray-6;
+
+      &:hover {
+        background: var(--color-bg-1, $gray-7);
+        color: var(--color-text-primary, $gray-0);
+        border-color: $gray-4;
+      }
+    }
   }
 
   .post-text {
-    color: #e0e0e0;
-    border-bottom-color: #333;
+    color: $gray-1;
+    border-bottom-color: $gray-6;
+
+    .tag {
+      color: #ff2442;
+    }
   }
 
   .post-actions {
-    border-bottom-color: #333;
-  }
+    border-bottom-color: $gray-6;
 
-  .action-btn i {
-    color: #999;
+    .action-btn span {
+      color: $gray-4;
+    }
   }
+  .comments-section {
+    h4 {
+      color: $gray-0;
+    }
 
-  .action-btn span {
-    color: #999;
-  }
+    .comment {
+      border-bottom-color: $gray-6;
 
-  .comments-section h4 {
-    color: #fff;
-  }
+      .comment-author {
+        color: $gray-0;
+      }
 
-  .comment {
-    border-bottom-color: #333;
-  }
+      .comment-time {
+        color: $gray-4;
+      }
 
-  .comment-author {
-    color: #fff;
-  }
-
-  .comment p {
-    color: #e0e0e0;
+      p {
+        color: $gray-1;
+      }
+    }
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: $mobile) {
   .modal-content {
     flex-direction: column;
     max-height: 90vh;
@@ -411,6 +740,374 @@ const toggleLike = () => {
   .modal-right {
     flex: 1;
     width: 100%;
+  }
+}
+
+.modal-upload {
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+
+  .upload-container {
+    background: $gray-0;
+    border-radius: $radius-12;
+    overflow: hidden;
+  }
+
+  .upload-header {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr; /* 左占位 | 中内容 | 右占位 */
+    align-items: center;
+    padding: $padding-16;
+    border-bottom: 1px solid $gray-2;
+
+    .user-info {
+      grid-column: 2;              /* 放中间列 */
+      justify-self: center;        /* 中间列内再居中 */
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .avatar {
+      display: block;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      background: linear-gradient($gray-0, $gray-0) padding-box,
+        linear-gradient(135deg, #ff8e8e 0%, #ff6b6b 100%) border-box;
+    }
+
+    .user-details h3 {
+      margin: 0;
+      font-size: $font-size-16;
+      font-weight: 600;
+      background: linear-gradient(135deg, #ff8e8e 0%, #ff6b6b 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .close-btn {
+      grid-column: 3;              /* 放右边列 */
+      justify-self: end;           /* 靠右 */
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 50%;
+      transition: background-color 0.3s ease;
+
+      &:hover {
+        background: $gray-1;
+      }
+    }
+  }
+  .image-upload-content {
+    padding: $padding-16;
+
+    .arco-upload-list {
+      margin-bottom: $padding-16;
+    }
+
+    .arco-upload-picture-card {
+      width: 100%;
+      height: 200px;
+      border-radius: $radius-12;
+      border: 2px dashed $gray-3;
+      background: $gray-1;
+      transition: all 0.3s ease;
+
+      &:hover {
+        border-color: #ff2442;
+        background: rgba(#ff2442, 0.05);
+      }
+    }
+
+    .upload-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: $gray-4;
+
+      span {
+        font-size: $font-size-14;
+      }
+    }
+    .arco-upload-list-picture-card .arco-upload-list-item {
+      border-radius: $radius-12;
+      border: none;
+    }
+  }
+
+  .form-section {
+    margin-bottom: $padding-16;
+  }
+
+  .title-input {
+    font-size: $font-size-18;
+    font-weight: 600;
+    border: none;
+    padding: $padding-12;
+    background: $gray-1;
+    border-radius: $radius-8;
+
+    &::placeholder {
+      color: $gray-4;
+    }
+
+    &:focus,
+    &:hover {
+      background: $gray-1;
+    }
+  }
+
+  .content-input {
+    font-size: $font-size-14;
+    line-height: 1.6;
+    border: none;
+    padding: $padding-12;
+    background: $gray-1;
+    border-radius: $radius-8;
+    resize: none;
+
+    &::placeholder {
+      color: $gray-4;
+    }
+
+    &:focus,
+    &:hover {
+      background: $gray-1;
+    }
+  }
+
+  .category-label {
+    font-size: $font-size-14;
+    font-weight: 600;
+    color: $gray-7;
+    margin-bottom: $padding-12;
+  }
+
+  .category-options {
+    display: flex;
+    gap: $padding-12;
+  }
+
+  .category-item {
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-size: $font-size-14;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 1px solid $gray-2;
+    color: $gray-6;
+    background: $gray-0;
+
+    &:hover {
+      border-color: #ff2442;
+      color: #ff2442;
+    }
+    &.active {
+      background: linear-gradient(135deg, #ff8e8e 0%, #ff6b6b 100%);
+      border-color: transparent;
+      color: $gray-0;
+    }
+  }
+
+  .hashtags-section {
+    .hashtags-label {
+      font-size: $font-size-14;
+      font-weight: 600;
+      color: $gray-7;
+      margin-bottom: $padding-12;
+    }
+
+    .hashtags-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .hashtag-item {
+      padding: 6px 12px;
+      border-radius: 16px;
+      font-size: $font-size-12;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background: $gray-1;
+      color: $gray-6;
+
+      &:hover {
+        background: rgba(#ff2442, 0.1);
+        color: #ff2442;
+      }
+
+      &.active {
+        background: rgba(#ff2442, 0.15);
+        color: #ff2442;
+      }
+    }
+  }
+
+  .upload-footer {
+    padding: $padding-16;
+    border-top: 1px solid $gray-2;
+  }
+
+  .publish-btn {
+    width: 100%;
+    height: 44px;
+    font-size: $font-size-16;
+    font-weight: 600;
+    background: linear-gradient(135deg, #ff8e8e 0%, #ff6b6b 100%);
+    border: none;
+    border-radius: $radius-24;
+    transition: all 0.3s ease;
+    &:hover:not(:disabled) {
+      opacity: 0.9;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(#ff6b6b, 0.4);
+    }
+
+    &:disabled {
+      background: $gray-3;
+      color: $gray-5;
+    }
+  }
+}
+.custom-tabs {
+      :deep(.arco-tabs-nav) {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+
+        .arco-tabs-nav-tab-list {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          margin: 0 auto;
+          width: fit-content;
+      .arco-tabs-tab-active {
+      background: linear-gradient(135deg, #ff8e8e 0%, #ff6b6b 100%);
+      border-color: transparent;
+      color: $gray-0;
+          }
+        }
+
+        .arco-tabs-nav-wrap {
+          display: flex;
+          justify-content: center;
+          width: 100%;
+        }
+      }
+
+      :deep(.arco-tabs-content) {
+        .arco-tabs-content-item {
+          padding: 0;
+        }
+      }
+    }
+.dark-mode {
+  .modal-upload .upload-container {
+    background: $gray-8;
+  }
+  .modal-upload .upload-header {
+    border-bottom-color: $gray-6;
+
+    .user-details h3 {
+      color: $gray-0;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .close-btn:hover {
+      background: $gray-6;
+    }
+  }
+
+  .modal-upload .image-upload-content {
+    .title-input {
+      background: $gray-7;
+      color: $gray-0;
+
+      &::placeholder {
+        color: $gray-5;
+      }
+    }
+
+    .content-input {
+      background: $gray-7;
+      color: $gray-0;
+
+      &::placeholder {
+        color: $gray-5;
+      }
+    }
+    .arco-upload-picture-card {
+      background: $gray-7;
+      border-color: $gray-6;
+
+      &:hover {
+        border-color: #ff2442;
+        background: rgba(#ff2442, 0.1);
+      }
+    }
+
+    .upload-placeholder {
+      color: $gray-5;
+    }
+  }
+
+  .modal-upload .category-label,
+  .modal-upload .hashtags-section .hashtags-label {
+    color: $gray-1;
+  }
+
+  .modal-upload .category-item {
+    background: $gray-7;
+    border-color: $gray-6;
+    color: $gray-4;
+
+    &:hover {
+      border-color: #ff2442;
+      color: #ff2442;
+    }
+  }
+
+  .modal-upload .hashtag-item {
+    background: $gray-7;
+    color: $gray-4;
+
+    &:hover,
+    &.active {
+      background: rgba(#ff2442, 0.2);
+      color: #ff2442;
+    }
+  }
+
+  .modal-upload .upload-footer {
+    border-top-color: $gray-6;
+  }
+}
+
+@media (max-width: $mobile) {
+  .modal-upload {
+    width: 95%;
+  }
+
+  .modal-upload .image-upload-content .arco-upload-picture-card {
+    height: 180px;
+  }
+  .modal-upload .category-options {
+    flex-wrap: wrap;
+  }
+
+  .modal-upload .category-item {
+    flex: 1;
+    text-align: center;
+    min-width: 80px;
   }
 }
 </style>

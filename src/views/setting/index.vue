@@ -252,7 +252,7 @@ const cleanUrl = (url: string): string => {
 };
 
 // 头像上传处理 - 使用京东图床接口
-async function onAvatarSelect(fileList: FileItem[]) {
+ const onAvatarSelect = async (fileList: FileItem[]) => {
   const file = fileList[0];
   if (!file || !file.file) return;
 
@@ -295,7 +295,7 @@ async function onAvatarSelect(fileList: FileItem[]) {
     const cleanedUrl = cleanUrl(uploadResult.data.url);
     const timestamp = new Date().getTime();
     const finalUrl = cleanedUrl.includes('?')
-      ? `${cleanedUrl}&t=${timestamp}` 
+      ? `${cleanedUrl}&t=${timestamp}`
       : `${cleanedUrl}?t=${timestamp}`;
 
     const { saveImageHostingUrlAPI } = await import('@/api/auth');
@@ -303,6 +303,7 @@ async function onAvatarSelect(fileList: FileItem[]) {
 
     if (saveResponse.code === 0) {
       if (userInfo.value) {
+      // 前端进行新图片回显
         userInfo.value.avatar = finalUrl;
       }
       
@@ -434,7 +435,7 @@ const handleLogout = () => {
   .avatar-upload-mask {
     position: absolute;
     inset: 0;
-    background: rgba(0, 0, 0, 0.55);
+    background: rgba(0, 0, 0, 0.45);
     color: #fff;
     display: flex;
     flex-direction: column;
@@ -443,7 +444,6 @@ const handleLogout = () => {
     opacity: 0;
     transition: opacity 0.2s ease;
     font-size: 12px;
-    gap: 4px;
   }
 
   .avatar-upload-loading {

@@ -1,0 +1,47 @@
+# 新野API - 360图床 完整文档
+---
+
+## 一、基本信息
+项目名称：新野API
+服务性质：公益接口服务，零盈利
+接口名称：360图床，一个图片文件即可轻松上传
+接口地址：https://api.xinyew.cn/api/360tc
+返回格式：JSON
+请求方式：POST/GET
+请求示例：http://api.xinyew.cn/api/360tc
+
+---
+
+## 二、请求参数说明
+名称    必填    类型    说明
+file    是      文件    上传的图片文件，字段名为file。
+
+---
+
+## 三、返回参数说明
+名称        类型        说明
+errno       整数        错误码，0表示成功，1表示失败。
+error       字符串      错误信息，成功时为空字符串，失败时包含具体错误描述。
+data        对象或null  成功时包含图片URL和文件名，失败时为null。
+data.url    字符串      图片的URL地址，上传成功时返回的图片链接。
+data.imgFile 字符串     上传的文件名。
+
+---
+
+## 四、错误码参照
+名称    类型    说明
+errno   整数    失败
+error   字符串  未检测到文件上传
+data    null    失败则为null，也就是无数据返回
+
+---
+
+## 五、返回示例
+{
+    "errno": 0,
+    "error": "",
+    "data": {
+        "url": "https://ps.sel.qing.com/t02b1765be8c262ef28.jpg",
+        "imgFile": "新野API.png"
+    }
+}

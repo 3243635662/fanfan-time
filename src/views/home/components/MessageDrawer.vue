@@ -1,25 +1,11 @@
 <template>
-  <a-drawer 
-    :width="drawerWidth" 
-    :visible="visible" 
-    @ok="handleOk" 
-    @cancel="handleCancel" 
-    unmountOnClose 
-    :footer="false"
-    :closable="!isMobile"  
-    class="mobile-optimized-drawer"
-  >
-  <!-- 自定义关闭按钮 - 只在移动端显示 -->
-    <a-button 
-      v-if="isMobile"
-      type="text" 
-      class="close-btn" 
-      @click="handleCancel"
-      size="small"
-    >
+  <a-drawer :width="drawerWidth" :visible="visible" @ok="handleOk" @cancel="handleCancel" unmountOnClose :footer="false"
+    :closable="!isMobile" class="mobile-optimized-drawer">
+    <!-- 自定义关闭按钮 - 只在移动端显示 -->
+    <a-button v-if="isMobile" type="text" class="close-btn" @click="handleCancel" size="small">
       <AppIcon name="mdi:close" :size="20" />
     </a-button>
-    
+
     <template #title>
       <div class="drawer-title">
         <span>{{ isAddMode ? '新增留言' : '详情' }}</span>
@@ -35,15 +21,8 @@
             <span class="label-required">*</span>
           </div>
           <div class="content-input-wrapper" :style="{ backgroundColor: addMessageForm.backgroundColor }">
-            <a-textarea
-              v-model="addMessageForm.content" 
-              placeholder="分享你的想法，记录美好时光..."
-              :rows="12"
-              :max-length="500"
-              show-word-limit
-              class="content-textarea"
-              allow-clear
-            />
+            <a-textarea v-model="addMessageForm.content" placeholder="分享你的想法，记录美好时光..." :rows="12" :max-length="500"
+              show-word-limit class="content-textarea" allow-clear />
           </div>
         </div>
 
@@ -51,11 +30,7 @@
           <div class="form-label">
             <span class="label-text">标签</span>
           </div>
-          <a-select
-            v-model:value="addMessageForm.tag"
-            placeholder="选择标签"
-            class="tag-select"
-          >
+          <a-select v-model:value="addMessageForm.tag" placeholder="选择标签" class="tag-select">
             <a-option v-for="option in filteredCategoryOptions" :key="option.type" :value="option.type">
               {{ option.title }}
             </a-option>
@@ -67,14 +42,9 @@
             <span class="label-text">背景色</span>
           </div>
           <div class="color-picker">
-            <div 
-              v-for="color in backgroundColorOptions" 
-              :key="color" 
-              class="color-option"
-              :class="{ active: addMessageForm.backgroundColor === color }" 
-              :style="{ backgroundColor: color }"
-              @click="addMessageForm.backgroundColor = color"
-            >
+            <div v-for="color in backgroundColorOptions" :key="color" class="color-option"
+              :class="{ active: addMessageForm.backgroundColor === color }" :style="{ backgroundColor: color }"
+              @click="addMessageForm.backgroundColor = color">
               <AppIcon v-if="addMessageForm.backgroundColor === color" name="mdi:check" :size="16" color="#fff" />
             </div>
           </div>
@@ -84,19 +54,15 @@
           <a-button @click="handleCancel" class="cancel-btn">
             取消
           </a-button>
-          <a-button
-            type="primary"
-            @click="submitNewMessage" 
-            :disabled="!addMessageForm.content.trim()"
-            class="submit-btn"
-          >
+          <a-button type="primary" @click="submitNewMessage" :disabled="!addMessageForm.content.trim()"
+            class="submit-btn">
             <template #icon>
               <AppIcon name="mdi:send" :size="16" />
             </template>
             发布
           </a-button>
         </div>
-        
+
         <div class="form-decorations">
           <div class="decoration-circle decoration-1"></div>
           <div class="decoration-circle decoration-2"></div>
@@ -115,7 +81,8 @@
       <div class="detail-header">
         <div class="header-content">
           <div class="user-info">
-            <FanAvatar :size="40" :imageUrl="messageDetail.publisher?.avatar" :username="messageDetail.publisher?.nickname || messageDetail.publisher?.username" />
+            <FanAvatar :size="40" :imageUrl="messageDetail.publisher?.avatar"
+              :username="messageDetail.publisher?.nickname || messageDetail.publisher?.username" />
             <div class="user-details">
               <div class="username">{{ messageDetail.publisher?.nickname || messageDetail.publisher?.username }}</div>
               <div class="time">{{ formatTime(messageDetail.time) }}</div>
@@ -134,7 +101,8 @@
       <div class="detail-stats">
         <div class="stat-item like-item" :class="{ liked: isLiked }" @click="handleLike">
           <div class="like-button-container">
-            <AppIcon name="mdi:heart" :size="26" :color="isLiked ? '#ff4757' : '#999'" :style="{ transition: 'all 0.3s ease', transform: isLiked ? 'scale(1.2)' : 'scale(1)' }" />
+            <AppIcon name="mdi:heart" :size="26" :color="isLiked ? '#ff4757' : '#999'"
+              :style="{ transition: 'all 0.3s ease', transform: isLiked ? 'scale(1.2)' : 'scale(1)' }" />
             <div class="heart-particles" ref="heartParticles"></div>
           </div>
           <span>{{ messageDetail.likedCount || 0 }}</span>
@@ -171,13 +139,8 @@
 
           <!-- 评论列表 -->
           <div class="comments-list" ref="commentsListRef">
-            <a-comment 
-              v-for="comment in comments" 
-              :key="comment.id"
-              :author="comment.nickname || comment.username"
-              :datetime="formatTime(comment.time)" 
-              :content="comment.content"
-            >
+            <a-comment v-for="comment in comments" :key="comment.id" :author="comment.nickname || comment.username"
+              :datetime="formatTime(comment.time)" :content="comment.content">
               <template #avatar>
                 <FanAvatar :imageUrl="comment.avatar" :username="comment.nickname || comment.username" />
               </template>
@@ -185,18 +148,15 @@
           </div>
 
           <!-- 加载指示器（刷新和加载更多都在这里显示） -->
-          <PullToLoadIndicator
-            v-if="isRefreshing || isLoadingMore || hasMore"
-            :is-loading="isRefreshing || isLoadingMore"
-            type="bottom"
-          >
-          <template #icon>
-    <AppIcon name="mdi:chevron-down" :size="28" color="#165dff" />
-  </template>
-  <template #loading>
-    <AppIcon name="line-md:loading-alt-loop" :size="28" color="#165dff" />
-  </template>
-        </PullToLoadIndicator>
+          <PullToLoadIndicator v-if="isRefreshing || isLoadingMore || hasMore"
+            :is-loading="isRefreshing || isLoadingMore" type="bottom">
+            <template #icon>
+              <AppIcon name="mdi:chevron-down" :size="28" color="#165dff" />
+            </template>
+            <template #loading>
+              <AppIcon name="line-md:loading-alt-loop" :size="28" color="#165dff" />
+            </template>
+          </PullToLoadIndicator>
           <div v-else-if="comments.length > 0" class="no-more">
             —— 没有更多评论了 ——
           </div>
@@ -213,24 +173,12 @@
             <FanAvatar :size="36" :imageUrl="userInfo?.avatar" :username="userInfo?.nickname || userInfo?.username" />
           </template>
           <template #content>
-            <a-textarea 
-              v-model="newComment" 
-              placeholder="写下你的想法..." 
-              :rows="3" 
-              :max-length="200" 
-              show-word-limit
-              class="comment-input"
-              allow-clear
-            />
+            <a-textarea v-model="newComment" placeholder="写下你的想法..." :rows="3" :max-length="200" show-word-limit
+              class="comment-input" allow-clear />
             <div class="comment-footer">
               <span class="comment-hint">分享你的想法，与大家互动</span>
-              <a-button 
-                type="primary" 
-                size="small" 
-                @click="addComment" 
-                :disabled="!newComment.trim()"
-                class="submit-comment-btn"
-              >
+              <a-button type="primary" size="small" @click="addComment" :disabled="!newComment.trim()"
+                class="submit-comment-btn">
                 <template #icon>
                   <AppIcon name="mdi:send" :size="14" />
                 </template>
@@ -336,21 +284,21 @@ const heartParticles = ref<HTMLElement>()
 // 创建心形粒子特效
 const createHeartParticles = () => {
   if (!heartParticles.value) return
-  
+
   const particleCount = 12
   const colors = ['#ff6b6b', '#ff8787', '#ffa8a8', '#ffc9c9', '#ffe3e3']
-  
+
   for (let i = 0; i < particleCount; i++) {
     const particle = document.createElement('div')
     particle.className = 'heart-particle'
-    
+
     const angle = (i / particleCount) * Math.PI * 2
     const distance = 30 + Math.random() * 20
     const duration = 0.6 + Math.random() * 0.4
     const delay = Math.random() * 0.1
     const size = 8 + Math.random() * 8
     const color = colors[Math.floor(Math.random() * colors.length)]
-    
+
     particle.style.cssText = `
       position: absolute;
       width: ${size}px;
@@ -364,9 +312,9 @@ const createHeartParticles = () => {
       animation: particle-explode ${duration}s ease-out ${delay}s forwards;
       box-shadow: 0 0 ${size}px ${color};
     `
-    
+
     heartParticles.value.appendChild(particle)
-    
+
     setTimeout(() => {
       particle.remove()
     }, (duration + delay) * 1000)
@@ -408,25 +356,25 @@ watch(() => props.visible, async (newVal) => {
 // 下拉刷新 - 重新加载第一页
 async function handleRefresh() {
   if (isRefreshing.value || !props.messageDetail?.id) return
-  
+
   isRefreshing.value = true
   const startTime = Date.now()
   const minLoadingTime = 600
-  
+
   try {
     const res = await getMessageDetailByIdAPI(props.messageDetail.id, 1)
-    
+
     if (res.code === 0 && res.result) {
       comments.value = res.result.comments.list || []
       totalComments.value = res.result.comments.total || 0
       currentPage.value = res.result.comments.page || 1
       hasMore.value = currentPage.value < (res.result.comments.totalPage || 1)
-      
+
       const elapsedTime = Date.now() - startTime
       if (elapsedTime < minLoadingTime) {
         await new Promise(resolve => setTimeout(resolve, minLoadingTime - elapsedTime))
       }
-      
+
     } else {
       $message.error(res.message || '刷新失败')
     }
@@ -440,15 +388,15 @@ async function handleRefresh() {
 // 上拉加载更多
 async function handleLoadMore() {
   if (isLoadingMore.value || !hasMore.value || !props.messageDetail?.id) return
-  
+
   isLoadingMore.value = true
   const startTime = Date.now()
   const minLoadingTime = 500
-  
+
   try {
     const nextPage = currentPage.value + 1
     const res = await getMessageDetailByIdAPI(props.messageDetail.id, nextPage)
-    
+
     if (res.code === 0 && res.result) {
       const newComments = res.result.comments.list || []
       if (newComments.length > 0) {
@@ -458,7 +406,7 @@ async function handleLoadMore() {
       } else {
         hasMore.value = false
       }
-      
+
       const elapsedTime = Date.now() - startTime
       if (elapsedTime < minLoadingTime) {
         await new Promise(resolve => setTimeout(resolve, minLoadingTime - elapsedTime))
@@ -519,7 +467,7 @@ const handleReport = () => {
 const submitNewMessage = async () => {
   if (!addMessageForm.value.content.trim()) return
   console.log(addMessageForm.value.tag);
-  
+
   try {
     const res = await createMessageAPI({
       content: addMessageForm.value.content,
@@ -690,6 +638,7 @@ onUnmounted(() => {
     opacity: 1;
     transform: translate(-50%, -50%) scale(1);
   }
+
   100% {
     opacity: 0;
     transform: translate(-50%, -50%) scale(0);
@@ -1023,19 +972,25 @@ onUnmounted(() => {
 }
 
 @keyframes float {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0) rotate(0deg);
   }
+
   50% {
     transform: translateY(-20px) rotate(180deg);
   }
 }
 
 @keyframes pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 0.6;
     transform: scale(1);
   }
+
   50% {
     opacity: 1;
     transform: scale(1.05);
@@ -1069,6 +1024,7 @@ onUnmounted(() => {
 
 /* 移动端优化样式 */
 @media (max-width: 768px) {
+
   /* 抽屉头部优化 */
   .close-btn {
     position: absolute;
@@ -1084,7 +1040,7 @@ onUnmounted(() => {
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.9);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    
+
     &:hover {
       background: rgba(255, 255, 255, 1);
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -1094,21 +1050,24 @@ onUnmounted(() => {
   /* 移动端标题区域添加右边距给关闭按钮留空间 */
   :deep(.arco-drawer-header) {
     position: relative;
-    padding-right: 60px; /* 给关闭按钮留空间 */
+    padding-right: 60px;
+    /* 给关闭按钮留空间 */
   }
 
   /* 详情模式移动端优化 */
   .detail-header {
     padding: 16px;
     margin-bottom: 12px;
-    position: relative; /* 为标签定位做准备 */
+    position: relative;
+    /* 为标签定位做准备 */
   }
 
   .header-content {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    padding-right: 40px; /* 给关闭按钮留空间 */
+    padding-right: 40px;
+    /* 给关闭按钮留空间 */
   }
 
   .user-info {
@@ -1122,7 +1081,8 @@ onUnmounted(() => {
   .detail-header :deep(.arco-tag) {
     position: absolute;
     top: 16px;
-    right: 50px; /* 在关闭按钮左边 */
+    right: 50px;
+    /* 在关闭按钮左边 */
   }
 
   .detail-content {
@@ -1149,7 +1109,8 @@ onUnmounted(() => {
 
   /* 评论区移动端优化 */
   .comments-section-wrapper {
-    height: 50vh; /* 移动端使用视窗高度 */
+    height: 50vh;
+    /* 移动端使用视窗高度 */
     max-height: 400px;
   }
 
@@ -1261,6 +1222,7 @@ onUnmounted(() => {
 }
 
 @media (max-width: 480px) {
+
   /* 超小屏幕优化 */
   .detail-header,
   .detail-content,
@@ -1288,7 +1250,8 @@ onUnmounted(() => {
   }
 
   .decoration-circle {
-    display: none; /* 超小屏幕隐藏装饰元素 */
+    display: none;
+    /* 超小屏幕隐藏装饰元素 */
   }
 }
 </style>

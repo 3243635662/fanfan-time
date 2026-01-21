@@ -150,8 +150,7 @@ import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import type { MediaItemType } from '@/types'
 import FanAvatar from '@/views/home/components/Fan-Avatar.vue'
 import { formatDate } from '@/utils'
-import { usePhotoStore } from '@/store/photo'
-
+import { useSettingStore } from '@/store/setting'
 interface Props {
   items: MediaItemType[]
   loading?: boolean
@@ -581,8 +580,9 @@ const onVideoError = (item: MediaItemType) => {
 
 // 处理各种交互
 const handleItemClick = (item: MediaItemType) => {
-  const photoStore = usePhotoStore()
-  photoStore.openDetailModal(item.id)
+  const settingStore = useSettingStore()
+  // 这里需要传入Id，稍后进行修改
+  settingStore.openMediaDetailModal()
 }
 
 const handleLike = (item: MediaItemType) => {
