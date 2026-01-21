@@ -1,7 +1,7 @@
 <template>
   <div class="layout">
     <!-- 顶部导航栏 -->
-    <TopBar />
+    <TopBar v-if="!isShowModal" />
     <!-- 背景视频 (双层淡入淡出) -->
     <video class="background-video" :class="{ visible: !isDark }" src="https://yc.tuchung.cc/uploads/video_731138705fcf4a568cfc0fbc8df17929.mp4" autoplay muted loop
       playsinline></video>
@@ -28,9 +28,8 @@ import TopBar from "@/layout/components/TopBar.vue";
 import FooterBar from "@/layout/components/FooterBar.vue";
 import { ref, onMounted, computed } from "vue";
 const settingStore = useSettingStore();
-const { isDark } = storeToRefs(settingStore);
+const { isDark ,isShowModal} = storeToRefs(settingStore);
 const bottom = ref(30)
-
 // 显示页脚的路由名称列表
 const showFooterNameList = ['home', 'photo']
 

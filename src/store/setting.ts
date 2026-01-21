@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
-import { ref, watch } from "vue";
-
+import {  ref, watch } from "vue";
+import { usePhotoStore } from "./photo";
+const photoStore = usePhotoStore()
 export const useSettingStore = defineStore("setting", () => {
   // 是否夜间
   const isDark = ref(false);
@@ -55,14 +56,23 @@ export const useSettingStore = defineStore("setting", () => {
     isAddMode.value = false;
   };
   // 打开媒体详情弹窗
-  const openMediaDetailModal = () => {
-    isShowAddMediaModal.value = false
-    isShowModal.value = true
-    isShowMediaDetailModal.value = true
+  const openMediaDetailModal = (id: number, page: number) => {
+    photoStore.currentMediaId = id
+
+    photoStore.getMediaDetail(id).then(() => {
+      isShowAddMediaModal.value = false
+      isShowModal.value = true
+      isShowMediaDetailModal.value = true
+    }).catch(() => {
+      isShowAddMediaModal.value = false
+      isShowModal.value = false
+      isShowMediaDetailModal.value = false
+    })
   }
 
   // 关闭媒体详情弹窗
   const closeMediaDetailModal = () => {
+    photoStore.resetCommentsPage()
     isShowAddMediaModal.value = false
     isShowModal.value = false
     isShowMediaDetailModal.value = false

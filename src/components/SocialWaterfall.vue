@@ -25,14 +25,14 @@
 
     <!-- 真实内容 -->
     <div v-else class="waterfall-columns" :style="{ gap: `${columnGap}px` }">
-      <div 
-        v-for="(column, columnIndex) in columns" 
-        :key="columnIndex" 
+      <div
+        v-for="(column, columnIndex) in columns"
+        :key="columnIndex"
         class="waterfall-column"
       >
-        <div 
-          v-for="item in column" 
-          :key="item.id" 
+        <div
+          v-for="item in column"
+          :key="item.id"
           class="waterfall-item"
           @click="handleItemClick(item)"
           :ref="(el) => setItemRef(item.id, el as HTMLElement | null)"
@@ -111,6 +111,7 @@
                   <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
                   <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
                 </svg>
+                  <span>{{ formatNumber(item.sharedCount) }}</span>
               </div>
             </div>
           </div>
@@ -151,6 +152,9 @@ import type { MediaItemType } from '@/types'
 import FanAvatar from '@/views/home/components/Fan-Avatar.vue'
 import { formatDate } from '@/utils'
 import { useSettingStore } from '@/store/setting'
+import { usePhotoStore } from '@/store/photo'
+import { storeToRefs } from 'pinia'
+const { commentsPage } = storeToRefs(usePhotoStore())
 interface Props {
   items: MediaItemType[]
   loading?: boolean
@@ -580,9 +584,8 @@ const onVideoError = (item: MediaItemType) => {
 
 // 处理各种交互
 const handleItemClick = (item: MediaItemType) => {
-  const settingStore = useSettingStore()
-  // 这里需要传入Id，稍后进行修改
-  settingStore.openMediaDetailModal()
+  useSettingStore().openMediaDetailModal(item.id,commentsPage.value)
+
 }
 
 const handleLike = (item: MediaItemType) => {
@@ -606,13 +609,6 @@ const formatNumber = (num: number): string => {
   }
   return num.toString()
 }
-
-// 格式化视频时长（已移除，不需要显示时间）
-// const formatDuration = (seconds: number): string => {
-//   const minutes = Math.floor(seconds / 60)
-//   const remainingSeconds = seconds % 60
-//   return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`
-// }
 
 // 滚动加载更多 - 优化检测，添加虚拟滚动
 const handleScroll = () => {

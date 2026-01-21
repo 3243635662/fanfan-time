@@ -168,6 +168,7 @@ export interface MediaItemType {
   publishTime: Date;
   likedCount: number;
   commentCount: number;
+  sharedCount: number;
   viewCount: number;
   videoUrl?: string;
   cover?: string;
@@ -201,3 +202,43 @@ export interface MediaListResponse {
 
   message: string;
 }
+
+// 媒体详情类型
+export interface MediaDetail {
+  id: number;
+  title: string;
+  content: string;
+  publishTime: Date;
+  type: number;// 1为图片，2为视频
+  category: number; // 分类
+  videoUrl?: string;
+  aspectRatio: number;
+  cover?: string;
+  likedCount: number;
+  commentCount: number;
+  sharedCount: number;
+  viewCount: number;
+  publisher: {
+    userId: number;
+    username: string;
+    avatar: string;
+    nickname?: string;
+  };
+  tags: string[];
+  imageUrls?: string[];
+  comments: {
+    list: {
+      id: number;
+      content: string;
+      publishTime: Date;
+      username: string;
+      avatar: string;
+      nickname?: string;
+    }[];
+    totalPage: number;
+    total: number;
+    page: number;
+    limit: number;
+  };
+}
+

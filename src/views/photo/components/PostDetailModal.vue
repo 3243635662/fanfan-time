@@ -1,17 +1,22 @@
 <template>
   <div class="modal-overlay" v-if="isShowModal" @click.self="settingStore.closeMediaDetailModal">
     <!-- 详情内容区域 -->
-    <div class="modal-content" v-if="isShowMediaDetailModal">
+    <div class="modal-content" v-if="isShowMediaDetailModal && currentMediaDetail">
       <div class="modal-left">
-        <img :src="post.image" alt="post" class="post-image" />
+        <a-carousel v-if="currentMediaDetail.type === 1 && currentMediaDetail.imageUrls?.length" :auto-play="false" indicator-type="dot" show-arrow="hover">
+          <a-carousel-item v-for="(url, index) in currentMediaDetail.imageUrls" :key="index">
+            <img :src="url" :alt="`post-${index}`" style="width: 100%; height: 100%; object-fit: cover;" />
+          </a-carousel-item>
+        </a-carousel>
+        <video v-else :src="currentMediaDetail.videoUrl" controls class="post-video" />
       </div>
 
       <div class="modal-right">
         <div class="modal-header">
           <div class="user-info">
-            <FanAvatar :imageUrl="post.author.avatar" class="avatar" />
+            <FanAvatar :imageUrl="currentMediaDetail.publisher.avatar" class="avatar" />
             <div class="user-details">
-              <h3>{{ post.author.username }}</h3>
+              <h3>{{ currentMediaDetail.publisher.nickname || currentMediaDetail.publisher.username }}</h3>
             </div>
           </div>
           <button class="close-btn" @click="settingStore.closeMediaDetailModal">
@@ -20,47 +25,77 @@
         </div>
 
         <div class="post-title">
-          <h2 ref="titleElement" :class="{ expanded: isTitleExpanded }">{{ post.title }}</h2>
+          <h2 ref="titleElement" :class="{ expanded: isTitleExpanded }">{{ currentMediaDetail.title }}</h2>
           <button v-if="isTitleOverflow" class="expand-btn" @click="toggleTitle">
             {{ isTitleExpanded ? '收起' : '展开' }}
           </button>
         </div>
 
         <div class="post-text">
-          <p>{{ post.content }}</p>
+          <p>{{ currentMediaDetail.content }}</p>
           <div class="hashtags">
-            <span v-for="tag in post.tags" :key="tag" class="tag">#{{ tag }}</span>
+            <span v-for="tag in currentMediaDetail.tags" :key="tag" class="tag" @click="handleTagClick(tag)">#{{ tag }}</span>
           </div>
         </div>
 
         <div class="post-actions">
           <div class="action-btn" @click="toggleLike">
             <AppIcon name="mdi:heart" :size="20" :color="isLiked ? '#ff2442' : '#666'" />
-            <span>{{ post.likes }}</span>
+            <span>{{ currentMediaDetail.likedCount }}</span>
           </div>
           <div class="action-btn">
-            <AppIcon name="mdi:comment-outline" :size="20" color="#666" />
-            <span>{{ post.comments }}</span>
+            <AppIcon name="mdi:eye-outline" :size="20" color="#666" />
+            <span>{{ currentMediaDetail.viewCount }}</span>
           </div>
           <div class="action-btn">
             <AppIcon name="mdi:share-variant-outline" :size="20" color="#666" />
-            <span>{{ post.shares }}</span>
+            <span>{{ currentMediaDetail.sharedCount }}</span>
           </div>
         </div>
 
         <div class="comments-section">
-          <h4>评论 ({{ post.comments }})</h4>
-          <div class="comments-list">
-            <div v-for="comment in post.commentsList" :key="comment.id" class="comment">
-              <img :src="comment.avatar" alt="comment-avatar" class="comment-avatar" />
-              <div class="comment-content">
-                <div class="comment-header">
-                  <span class="comment-author">{{ comment.author }}</span>
-                  <span class="comment-time">{{ comment.time }}</span>
+          <h4>评论 ({{ currentMediaDetail.commentCount }})</h4>
+          <div class="comments-container" ref="commentsContainerRef">
+            <div class="comments-list" ref="commentsListRef">
+              <div v-for="comment in currentMediaDetail.comments.list" :key="comment.id" class="comment">
+                <img :src="comment.avatar" alt="comment-avatar" class="comment-avatar" />
+                <div class="comment-content">
+                  <div class="comment-header">
+                    <span class="comment-author">{{ comment.nickname || comment.username }}</span>
+                    <span class="comment-time">{{ formatTime(comment.publishTime) }}</span>
+                  </div>
+                  <p>{{ comment.content }}</p>
                 </div>
-                <p>{{ comment.text }}</p>
               </div>
             </div>
+            <PullToLoadIndicator v-if="isLoadingMore || hasMore" :is-loading="isLoadingMore" type="bottom">
+              <template #icon>
+                <AppIcon name="mdi:chevron-down" :size="20" color="#165dff" />
+              </template>
+              <template #loading>
+                <AppIcon name="line-md:loading-alt-loop" :size="20" color="#165dff" />
+              </template>
+            </PullToLoadIndicator>
+            <div v-if="!hasMore && currentMediaDetail.comments.list.length > 0" class="no-more-comments">
+              —— 没有更多评论了 ——
+            </div>
+          </div>
+        </div>
+
+        <div class="comment-input-wrapper">
+          <div class="comment-input-container">
+            <FanAvatar :imageUrl="userInfo?.avatar" :size="32" class="comment-avatar" />
+            <a-input
+              v-model="newComment"
+              placeholder="写下你的评论..."
+              :max-length="200"
+              show-word-limit
+              class="comment-input"
+              @pressEnter="submitComment"
+            />
+            <a-button type="outline" size="small"  status="danger" @click="submitComment" :disabled="!newComment.trim()">
+              <AppIcon name="mdi:send" :size="16" />
+            </a-button>
           </div>
         </div>
       </div>
@@ -80,15 +115,16 @@
           </button>
         </div>
 
-        <a-tabs type="rounded" :default-active-key="currentTabs" lazy-load :animation="true" class="custom-tabs">
+        <a-tabs type="rounded" :default-active-key="currentTabs" lazy-load :animation="true" class="custom-tabs" @change="handleTabsChange">
           <a-tab-pane :key="TabsPane[0]?.key" :title="TabsPane[0]?.title">
             <div class="image-upload-content">
+              <div class="upload-wrapper">
               <a-upload
                 list-type="picture-card"
                 :file-list="fileList"
                 :show-upload-button="true"
-                :show-preview-button="false"
-                :custom-request="handleUpload"
+                :show-preview-button="true"
+                :custom-request="handleImageUpload"
                 @change="handleFileChange"
                 @exceed-limit="handleExceedLimit"
                 accept="image/*"
@@ -99,7 +135,7 @@
                   <span>上传图片</span>
                 </div>
               </a-upload>
-
+            </div>
               <div class="form-section">
                 <a-input
                   v-model="uploadForm.title"
@@ -151,11 +187,68 @@
             </div>
           </a-tab-pane>
 
-          <a-tab-pane :key="TabsPane[1]?.key" :title="TabsPane[1]?.title"> </a-tab-pane>
+          <a-tab-pane :key="TabsPane[1]?.key" :title="TabsPane[1]?.title">
+            <div class="video-upload-content">
+              <div class="upload-wrapper">
+                <a-upload draggable :limit="1" accept="video/*"
+                :custom-request="handleUploadVideo">
+                  
+                </a-upload>
+              </div>
+              <div class="form-section">
+                <a-input
+                  v-model="uploadForm.title"
+                  placeholder="添加标题..."
+                  :max-length="50"
+                  show-word-limit
+                  class="title-input"
+                />
+              </div>
+
+              <div class="form-section">
+                <a-textarea
+                  v-model="uploadForm.content"
+                  placeholder="添加描述..."
+                  :max-length="500"
+                  show-word-limit
+                  :rows="4"
+                  class="content-input"
+                />
+              </div>
+
+              <div class="form-section">
+                <div class="category-label">选择分类</div>
+                <div class="category-options">
+                  <div
+                    v-for="cat in categories"
+                    :key="cat.value"
+                    :class="['category-item', { active: uploadForm.category === cat.value }]"
+                    @click="handleCategoryChange(cat.value)"
+                  >
+                    {{ cat.label }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-section hashtags-section">
+                <div class="hashtags-label">添加标签</div>
+                <div class="hashtags-list">
+                  <span
+                    v-for="tag in availableTags"
+                    :key="tag"
+                    :class="['hashtag-item', { active: selectedTags.includes(tag) }]"
+                    @click="toggleTag(tag)"
+                  >
+                    #{{ tag }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </a-tab-pane>
         </a-tabs>
 
         <div class="upload-footer">
-          <a-button type="primary" :disabled="!canSubmit" :loading="uploading" class="publish-btn" @click="handlePublish">
+          <a-button type="primary" :disabled="canSubmit" :loading="uploading" class="publish-btn" @click="handlePublish">
             发布
           </a-button>
         </div>
@@ -164,19 +257,25 @@
   </div>
 </template>
 
+
 <script setup lang="ts">
 import { useSettingStore } from '@/store/setting'
+import { usePhotoStore } from '@/store/photo'
 import { storeToRefs } from 'pinia'
-import { ref, computed, watch } from 'vue'
+import { computed, ref, watch, nextTick, onUnmounted } from 'vue'
 import { Message } from '@arco-design/web-vue'
 import type { FileItem,RequestOption } from '@arco-design/web-vue'
 import AppIcon from '@/components/AppIcon.vue'
 import { useAuthStore } from '@/store/auth'
 import FanAvatar from '@/views/home/components/Fan-Avatar.vue'
+import PullToLoadIndicator from '@/views/home/components/PullToLoadIndicator.vue'
+import { usePullToLoad } from '@/composables/usePullToLoad'
+import { getMediaDetailAPI } from '@/api/photo'
 const { userInfo } = storeToRefs(useAuthStore())
 const settingStore = useSettingStore()
+const photoStore = usePhotoStore()
 const { isShowMediaDetailModal, isShowModal } = storeToRefs(settingStore)
-
+const { currentMediaDetail } = storeToRefs(photoStore)
 const currentTabs = ref('image')
 const imageHostingURL = 'https://api.xinyew.cn/api/360tc'
 
@@ -207,13 +306,17 @@ const availableTags = ['风景', '摄影', '自然', '旅行', '生活', '日常
 const selectedTags = ref<string[]>([])
 
 const canSubmit = computed(() => {
-  return imgUrlList.value.length > 0 && uploadForm.value.title.trim() !== '' && uploadForm.value.category !== null
+  return (imgUrlList.value.length > 0 && uploadForm.value.title.trim() !== '' && uploadForm.value.category !== null)
 })
 
 const isLiked = ref(false)
 const isTitleExpanded = ref(false)
 const isTitleOverflow = ref(false)
 const titleElement = ref<HTMLElement | null>(null)
+const commentsContainerRef = ref<HTMLElement | null>(null)
+const newComment = ref('')
+const isLoadingMore = ref(false)
+const hasMore = ref(true)
 
 const cleanUrl = (url: string): string => {
   if (!url) return ''
@@ -225,8 +328,8 @@ const cleanUrl = (url: string): string => {
   }
 }
 
-// 自定义上传
-const handleUpload = async (options: RequestOption) => {
+// 自定义图片上传
+const handleImageUpload = async (options: RequestOption) => {
   const { fileItem, onSuccess, onError, onProgress } = options || {}
   const rawFile: File | undefined = fileItem?.file
 
@@ -263,6 +366,7 @@ const handleUpload = async (options: RequestOption) => {
     }
 
     const cleaned = cleanUrl(uploadResult.data.url)
+    // 这里增加一个时间戳
     const finalUrl = cleaned.includes('?') ? `${cleaned}&t=${Date.now()}` : `${cleaned}?t=${Date.now()}`
 
     imgUrlList.value.push(finalUrl)
@@ -270,8 +374,8 @@ const handleUpload = async (options: RequestOption) => {
 
     if (fileItem) {
       fileItem.url = finalUrl
-      fileItem.status = 'done'
-      ;(fileItem as any).response = uploadResult
+      fileItem.status = 'done';
+      fileItem.response = uploadResult
     }
 
     onProgress?.(100)
@@ -284,10 +388,38 @@ const handleUpload = async (options: RequestOption) => {
   }
 }
 
-const handleFileChange = (nextList: FileItem[]) => {
-  const prevUrls = new Set((fileList.value.map((i:any) => i.url).filter(Boolean) as string[]) || [])
-  const nextUrls = new Set((nextList.map((i) => i.url).filter(Boolean) as string[]) || [])
+// 自定义视频上传
+const handleUploadVideo = async (options: RequestOption) => {
+  const { fileItem, onSuccess, onError, onProgress } = options || {}
+  const rawFile: File | undefined = fileItem?.file
+  if (!rawFile) {
+    onError?.(new Error('未获取到文件'))
+    return
+  }
 
+  if (!rawFile.type.startsWith('video/')) {
+    Message.error('请选择视频文件')
+    onError?.(new Error('请选择视频文件'))
+    return
+  }
+
+  if (rawFile.size > 50 * 1024 * 1024) {
+    Message.error('视频大小不能超过 50MB')
+    onError?.(new Error('视频大小不能超过 50MB'))
+    return
+  }
+
+
+}
+
+// 每次这个文件上传change事件,将imgUrls进行一个更新
+const handleFileChange = (nextList: FileItem[]) => {
+  // 旧的文件列表的Url数组
+  const prevUrls = new Set((fileList.value.map((i: FileItem) => i.url).filter(Boolean) as string[]) || [])
+  // 新的文件列表的Url数组
+  const nextUrls = new Set((nextList.map((i:FileItem) => i.url).filter(Boolean) as string[]) || [])
+
+  // 过滤
   for (const url of prevUrls) {
     if (!nextUrls.has(url)) {
       imgUrlList.value = imgUrlList.value.filter((u) => u !== url)
@@ -315,8 +447,55 @@ const toggleTag = (tag: string) => {
     Message.warning('最多选择5个标签')
   }
 }
+const handleTagClick = (tag: string) => {
+  // 做一个关闭弹窗，然后搜索框直接搜索tags
+console.log(tag);
+
+}
+
+// 上拉加载更多
+async function handleLoadMore() {
+  if (isLoadingMore.value || !hasMore.value || !currentMediaDetail.value?.id) return
+
+  isLoadingMore.value = true
+  const startTime = Date.now()
+  const minLoadingTime = 800 // 最小加载时间 800ms，让加载动画清晰可见
+
+  try {
+    const nextPage = currentMediaDetail.value.comments.page + 1
+    const res = await getMediaDetailAPI(currentMediaDetail.value.id, nextPage)
+
+    if (res.result && res.code === 0 && currentMediaDetail.value) {
+      currentMediaDetail.value.comments.list.push(...res.result.comments.list)
+      currentMediaDetail.value.comments.page = res.result.comments.page
+      currentMediaDetail.value.comments.total = res.result.comments.total
+      currentMediaDetail.value.comments.totalPage = res.result.comments.totalPage
+      photoStore.setCommentsPage(nextPage)
+      hasMore.value = res.result.comments.page < res.result.comments.totalPage
+
+      // 延时确保加载动画清晰可见
+      const elapsedTime = Date.now() - startTime
+      if (elapsedTime < minLoadingTime) {
+        await new Promise(resolve => setTimeout(resolve, minLoadingTime - elapsedTime))
+      }
+    } else {
+      Message.error('加载更多失败')
+    }
+  } catch {
+    Message.error('加载更多失败')
+  } finally {
+    isLoadingMore.value = false
+  }
+}
+
+// 提交评论（函数留着，用户自己写）
+const submitComment = () => {
+  // TODO: 实现提交评论逻辑
+  console.log('提交评论:', newComment.value)
+}
 
 const handlePublish = async () => {
+
   if (!canSubmit.value) return
 
   uploading.value = true
@@ -344,33 +523,28 @@ const handlePublish = async () => {
   }
 }
 
-const post = ref({
-  id: 1,
-  image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800',
-  title: '美丽的风景：探索大自然的壮丽景色，感受山川湖海的震撼力量',
-  content: '这是一张美丽的风景照片，记录了美好的瞬间。大自然的力量总是让人感到震撼和敬畏。',
-  likes: 128,
-  comments: 32,
-  shares: 15,
-  tags: ['风景', '摄影', '自然'],
-  author: {
-    username: 'fanfan',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=fanfan',
-  },
-  commentsList: [
-    {
-      id: 1,
-      author: 'user1',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=user1',
-      text: '太美了！请问这是在哪里拍的？',
-      time: '2小时前',
-    },
-  ],
-})
+
+// 切换标签时，重置内容页
+const handleTabsChange = () => {
+  uploadForm.value = { title: '', content: '', category: null }
+}
+
+const formatTime = (date: Date): string => {
+  const now = new Date()
+  const diff = now.getTime() - new Date(date).getTime()
+  const minutes = Math.floor(diff / 60000)
+  const hours = Math.floor(diff / 3600000)
+  const days = Math.floor(diff / 86400000)
+
+  if (minutes < 1) return '刚刚'
+  if (minutes < 60) return `${minutes}分钟前`
+  if (hours < 24) return `${hours}小时前`
+  if (days < 7) return `${days}天前`
+  return new Date(date).toLocaleDateString()
+}
 
 const toggleLike = () => {
   isLiked.value = !isLiked.value
-  post.value.likes += isLiked.value ? 1 : -1
 }
 
 const toggleTitle = () => {
@@ -387,16 +561,46 @@ const checkTitleOverflow = () => {
   }
 }
 
+// 下拉刷新功能
+const {
+  bindEvents,
+  unbindEvents
+} = usePullToLoad({
+  threshold: 60,
+  onLoadMore: handleLoadMore,
+  hasMore: hasMore,
+  isLoading: isLoadingMore.value
+})
+
 watch(isShowModal, (open) => {
   document.body.style.overflow = open ? 'hidden' : ''
 }, { immediate: true })
 
-watch(isShowMediaDetailModal, (newValue) => {
-  if (newValue) setTimeout(checkTitleOverflow, 100)
-  else isTitleExpanded.value = false
+watch(isShowMediaDetailModal, async (newValue) => {
+  if (newValue) {
+    setTimeout(checkTitleOverflow, 100)
+    photoStore.resetCommentsPage()
+    await nextTick()
+    if (commentsContainerRef.value) {
+      bindEvents(commentsContainerRef.value)
+    }
+  } else {
+    isTitleExpanded.value = false
+    unbindEvents()
+  }
 }, { immediate: true })
 
-watch(() => post.value.title, () => {
+watch(() => currentMediaDetail.value?.comments, (newVal) => {
+  if (newVal) {
+    hasMore.value = newVal.page < newVal.totalPage
+  }
+}, { immediate: true, deep: true })
+
+onUnmounted(() => {
+  unbindEvents()
+})
+
+watch(() => photoStore.currentMediaDetail?.title, () => {
   setTimeout(checkTitleOverflow, 0)
 }, { immediate: true })
 </script>
@@ -433,13 +637,53 @@ watch(() => post.value.title, () => {
 
 .modal-left {
   flex: 1;
-  background: $gray-8;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-}
+  min-height: 400px;
+  background: #000;
 
+  :deep(.arco-carousel) {
+    width: 100%;
+    height: 100%;
+  }
+
+
+
+
+  :deep(.arco-carousel-arrow-left),
+  :deep(.arco-carousel-arrow-right) {
+    width: 20px;
+    height: 20px;
+    background: rgba(0, 0, 0, 0.7);
+    border: 3px solid rgba(255, 255, 255, 0.6);
+    color: #fff;
+    font-size: 28px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    transition: all 0.3s ease;
+    opacity: 0;
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.9);
+      border-color: #fff;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.7);
+    }
+  }
+
+  :deep(.arco-carousel:hover .arco-carousel-arrow-left),
+  :deep(.arco-carousel:hover .arco-carousel-arrow-right) {
+    opacity: 1;
+  }
+
+  :deep(.arco-carousel-arrow-left) {
+    left: 20px;
+  }
+
+  :deep(.arco-carousel-arrow-right) {
+    right: 20px;
+  }
+}
 .modal-right {
   flex: 0 0 400px;
   display: flex;
@@ -490,6 +734,12 @@ watch(() => post.value.title, () => {
 }
 
 .post-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.post-video {
   width: 100%;
   height: 100%;
   object-fit: contain;
@@ -588,11 +838,20 @@ watch(() => post.value.title, () => {
 .comments-section {
   padding: $padding-16;
   flex: 1;
-  overflow-y: auto;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 
   h4 {
     margin: 0 0 15px 0;
     font-size: $font-size-16;
+    flex-shrink: 0;
+  }
+
+  .comments-container {
+    flex: 1;
+    overflow-y: auto;
+    position: relative;
   }
 
   .comments-list {
@@ -645,9 +904,86 @@ watch(() => post.value.title, () => {
   }
 }
 
+.comment-input-wrapper {
+  padding: $padding-16;
+  border-top: 1px solid $gray-2;
+  background: $gray-0;
+  flex-shrink: 0;
+
+  .comment-input-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .comment-avatar {
+    flex-shrink: 0;
+  }
+
+  .comment-input {
+    flex: 1;
+  }
+
+  :deep(.arco-input-wrapper) {
+    background: $gray-1;
+    border: 1px solid $gray-2;
+    border-radius: 20px;
+    transition: all 0.3s ease;
+
+    &:hover {
+      border-color: $gray-4;
+    }
+
+    &:focus-within {
+      border-color: #ff2442;
+      background: $gray-0;
+    }
+  }
+
+  :deep(.arco-input) {
+    background: transparent;
+    border: none;
+    padding: 8px 16px;
+  }
+}
+
+.no-more-comments {
+  text-align: center;
+  padding: 20px 0;
+  color: $gray-4;
+  font-size: $font-size-14;
+  user-select: none;
+}
+
 .dark-mode {
   .modal-content {
     background: $gray-8;
+  }
+
+  .modal-left {
+    background: $gray-9;
+  }
+
+  .post-carousel {
+    :deep(.arco-carousel-indicator) {
+      background: rgba(255, 255, 255, 0.3);
+
+      &.arco-carousel-indicator-active {
+        background: #ff2442;
+      }
+    }
+
+    :deep(.arco-carousel-arrow) {
+      background: rgba(255, 255, 255, 0.15);
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.25);
+      }
+    }
+  }
+
+  .carousel-item {
+    background: transparent;
   }
 
   .modal-header {
@@ -703,6 +1039,7 @@ watch(() => post.value.title, () => {
       color: $gray-4;
     }
   }
+
   .comments-section {
     h4 {
       color: $gray-0;
@@ -724,22 +1061,377 @@ watch(() => post.value.title, () => {
       }
     }
   }
+
+  .no-more-comments {
+    color: $gray-5;
+  }
+
+  .comment-input-wrapper {
+    border-top-color: $gray-6;
+    background: $gray-8;
+
+    :deep(.arco-input-wrapper) {
+      background: $gray-7;
+      border-color: $gray-6;
+
+      &:hover {
+        border-color: $gray-5;
+      }
+
+      &:focus-within {
+        border-color: #ff2442;
+        background: $gray-8;
+      }
+    }
+  }
 }
 
 @media (max-width: $mobile) {
+  .modal-overlay {
+    padding-top: 0;
+    align-items: flex-start;
+  }
+
+  .dark-mode {
+    .modal-content {
+      background: $gray-9;
+    }
+
+    .modal-left {
+      background: $gray-10;
+    }
+
+    .modal-right {
+      background: $gray-9;
+    }
+
+    .modal-header {
+      border-bottom-color: $gray-7;
+      background: $gray-8;
+
+      .user-details h3 {
+        color: $gray-0;
+      }
+
+      .close-btn {
+        color: $gray-3;
+
+        &:hover {
+          color: $gray-0;
+        }
+      }
+    }
+
+    .post-title {
+      border-bottom-color: $gray-7;
+      background: $gray-8;
+
+      h2 {
+        color: $gray-0;
+      }
+
+      .expand-btn {
+        color: $gray-3;
+        border-color: $gray-7;
+
+        &:hover {
+          background: $gray-7;
+          color: $gray-0;
+          border-color: $gray-5;
+        }
+      }
+    }
+
+    .post-text {
+      color: $gray-1;
+      border-bottom-color: $gray-7;
+      background: $gray-8;
+
+      .tag {
+        color: #ff2442;
+      }
+    }
+
+    .post-actions {
+      border-bottom-color: $gray-7;
+      background: $gray-8;
+
+      .action-btn span {
+        color: $gray-3;
+      }
+    }
+
+    .comments-section {
+      background: $gray-8;
+
+      h4 {
+        color: $gray-0;
+      }
+
+      .comment {
+        border-bottom-color: $gray-7;
+
+        .comment-author {
+          color: $gray-0;
+        }
+
+        .comment-time {
+          color: $gray-4;
+        }
+
+        p {
+          color: $gray-1;
+        }
+      }
+    }
+
+    .no-more-comments {
+      color: $gray-4;
+    }
+
+    .comment-input-wrapper {
+      border-top-color: $gray-7;
+      background: $gray-8;
+
+      :deep(.arco-input-wrapper) {
+        background: $gray-7;
+        border-color: $gray-6;
+
+        &:hover {
+          border-color: $gray-5;
+        }
+
+        &:focus-within {
+          border-color: #ff2442;
+          background: $gray-8;
+        }
+      }
+    }
+
+    :deep(.arco-carousel-indicator) {
+      background: rgba(255, 255, 255, 0.4);
+
+      &.arco-carousel-indicator-active {
+        background: #ff2442;
+      }
+    }
+
+    :deep(.arco-carousel-arrow-left),
+    :deep(.arco-carousel-arrow-right) {
+      background: rgba(0, 0, 0, 0.8);
+      border-color: rgba(255, 255, 255, 0.7);
+
+      &:hover {
+        background: rgba(0, 0, 0, 0.95);
+        border-color: #fff;
+      }
+    }
+  }
+
   .modal-content {
     flex-direction: column;
-    max-height: 90vh;
+    max-height: 100vh;
+    height: 100vh;
+    width: 100%;
+    max-width: 100%;
+    border-radius: 0;
+    overflow: hidden;
   }
 
   .modal-left {
     flex: 0 0 auto;
-    height: 50%;
+    height: 40vh;
+    min-height: 300px;
+    position: relative;
   }
 
   .modal-right {
     flex: 1;
     width: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-radius: 24px 24px 0 0;
+    margin-top: -24px;
+    position: relative;
+    z-index: 10;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+    max-height: 100vh;
+  }
+
+  .modal-header {
+    padding: $padding-12;
+    border-bottom: 1px solid $gray-2;
+    flex-shrink: 0;
+
+    .user-info {
+      gap: 10px;
+    }
+
+    .user-details h3 {
+      font-size: $font-size-14;
+    }
+
+    .avatar {
+      width: 36px;
+      height: 36px;
+    }
+
+    .close-btn {
+      padding: 4px;
+    }
+  }
+
+  .post-title {
+    padding: $padding-12;
+    flex-shrink: 0;
+
+    h2 {
+      font-size: $font-size-16;
+      line-height: 1.5;
+    }
+
+    .expand-btn {
+      margin-top: 6px;
+      padding: 2px 8px;
+      font-size: $font-size-12;
+    }
+  }
+
+  .post-text {
+    padding: $padding-12;
+    font-size: $font-size-14;
+    line-height: 1.6;
+    flex-shrink: 0;
+
+    .hashtags {
+      margin-top: 10px;
+    }
+
+    .tag {
+      font-size: $font-size-12;
+      padding: 4px 10px;
+    }
+  }
+
+  .post-actions {
+    padding: $padding-10;
+    gap: 0;
+    flex-shrink: 0;
+
+    .action-btn {
+      gap: 4px;
+
+      span {
+        font-size: $font-size-12;
+      }
+    }
+  }
+
+  .comments-section {
+    padding: $padding-12;
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    h4 {
+      font-size: $font-size-14;
+      margin-bottom: 12px;
+    }
+
+    .comment {
+      gap: 10px;
+      margin-bottom: 12px;
+      padding-bottom: 12px;
+
+      .comment-avatar {
+        width: 32px;
+        height: 32px;
+      }
+
+      .comment-author {
+        font-size: $font-size-13;
+      }
+
+      .comment-time {
+        font-size: $font-size-11;
+      }
+
+      p {
+        font-size: $font-size-13;
+        line-height: 1.5;
+      }
+    }
+  }
+
+  .comment-input-wrapper {
+    padding: $padding-10;
+    border-top: 1px solid $gray-2;
+    flex-shrink: 0;
+
+    .comment-input-container {
+      gap: 8px;
+    }
+
+    .comment-avatar {
+      width: 28px;
+      height: 28px;
+    }
+
+    :deep(.arco-input-wrapper) {
+      border-radius: 16px;
+    }
+
+    :deep(.arco-input) {
+      padding: 6px 12px;
+      font-size: $font-size-14;
+    }
+
+    :deep(.arco-btn) {
+      padding: 0 12px;
+      height: 32px;
+    }
+  }
+
+  :deep(.arco-carousel-arrow-left),
+  :deep(.arco-carousel-arrow-right) {
+    width: 44px;
+    height: 44px;
+    font-size: 20px;
+  }
+
+  :deep(.arco-carousel-arrow-left) {
+    left: 12px;
+  }
+
+  :deep(.arco-carousel-arrow-right) {
+    right: 12px;
+  }
+
+  :deep(.arco-carousel-indicator) {
+    width: 8px;
+    height: 8px;
+  }
+
+  :deep(.arco-carousel-indicator-active) {
+    width: 24px;
+    height: 8px;
+  }
+}
+
+@media (max-width: 768px) {
+  .modal-content {
+    max-width: 95%;
+  }
+
+  .modal-right {
+    flex: 0 0 350px;
+  }
+
+  .post-actions {
+    .action-btn {
+      gap: 6px;
+    }
   }
 }
 
@@ -841,47 +1533,54 @@ watch(() => post.value.title, () => {
       border: none;
     }
   }
-
+.video-upload-content {
+  padding: $padding-16;
+}
   .form-section {
     margin-bottom: $padding-16;
+
+    :deep(.arco-input-wrapper){
+      border: 1px solid #e5e5e5;
+      border-radius: 8px;
+      background-color: #f8f8f8;
+      transition: all 0.3s ease;
+      &:hover {
+        border-color: #ff2442;
+        background-color: #fff;
+      }
+      .arco-input {
+        font-size: $font-size-14;
+        padding: $padding-12;
+        color: #333;
+        &::placeholder {
+          color: #999;
+        }
+      }
+    }
+
+    :deep(.arco-textarea-wrapper){
+      border: 1px solid #e5e5e5;
+      border-radius: 8px;
+      background-color: #f8f8f8;
+      transition: all 0.3s ease;
+      &:hover {
+        border-color: #ff2442;
+        background-color: #fff;
+      }
+      .arco-textarea {
+        font-size: $font-size-14;
+        padding: $padding-12;
+        color: #333;
+        &::placeholder {
+          color: #999;
+        }
+      }
+    }
   }
+.upload-wrapper{
+  margin: 10px;
+}
 
-  .title-input {
-    font-size: $font-size-18;
-    font-weight: 600;
-    border: none;
-    padding: $padding-12;
-    background: $gray-1;
-    border-radius: $radius-8;
-
-    &::placeholder {
-      color: $gray-4;
-    }
-
-    &:focus,
-    &:hover {
-      background: $gray-1;
-    }
-  }
-
-  .content-input {
-    font-size: $font-size-14;
-    line-height: 1.6;
-    border: none;
-    padding: $padding-12;
-    background: $gray-1;
-    border-radius: $radius-8;
-    resize: none;
-
-    &::placeholder {
-      color: $gray-4;
-    }
-
-    &:focus,
-    &:hover {
-      background: $gray-1;
-    }
-  }
 
   .category-label {
     font-size: $font-size-14;
