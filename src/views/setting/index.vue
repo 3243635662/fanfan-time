@@ -336,22 +336,12 @@ const applyFontToGlobal = () => {
 const applyFontSizeToGlobal = () => {
   document.documentElement.style.setProperty("--font-size-base", `${fontSize.value}px`);
 };
-
-const applyThemeToGlobal = (isDarkMode: boolean) => {
-  document.body.classList.toggle("dark-mode", isDarkMode);
-  document.body.classList.toggle("light-mode", !isDarkMode);
-};
+;
 
 onMounted(() => {
   const storedFont = localStorage.getItem(`${APP_PREFIX}:${STORAGE_KEYS.PREFERRED_FONT}`);
   const storedFontSize = localStorage.getItem(`${APP_PREFIX}:${STORAGE_KEYS.PREFERRED_FONT_SIZE}`);
-  const storedIsDark = localStorage.getItem(`${APP_PREFIX}:${STORAGE_KEYS.IS_DARK_MODE}`);
 
-  if (storedIsDark !== null) {
-    const isDarkMode = storedIsDark === "true";
-    settingStore.isDark = isDarkMode;
-    applyThemeToGlobal(isDarkMode);
-  }
 
   if (storedFont) {
     currentFont.value = storedFont;

@@ -64,6 +64,7 @@ import type { CategoryOptionForPhoto, MediaItemType } from '@/types';
 import { ref, onMounted, computed } from 'vue';
 import { getPhotoListAPI } from '@/api/photo';
 import { $notification } from '@/hooks/useNotification';
+
 const mediaList = ref<MediaItemType[]>([])
 const isLoading = ref(true)
 const isError = ref(false)

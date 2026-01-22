@@ -1,5 +1,5 @@
 import request from '@/api/request'
-import type { APIResponse, CreateMediaDto, MediaDetail, MediaItemType, MediaListResponse } from '@/types'
+import type { APIResponse, CreateMediaDto, MediaDetail, MediaItemType, MediaListResponse, QiNiuTokenResponse } from '@/types'
 
 export const getPhotoListAPI = (
   page: number = 1,
@@ -32,5 +32,14 @@ export const getMediaDetailAPI = (id: number, page: number): Promise<APIResponse
 // 新增图片
 export const createImagesAPI = (data: CreateMediaDto): Promise<APIResponse<MediaItemType>> => {
   return request.post('fanfan-time-message/createImages', data)
+}
+
+// 获取七牛上传token
+export const getQiNiuTokenAPI = (data: { key?: string }): Promise<APIResponse<QiNiuTokenResponse>> => {
+  return request.post('fanfan-time-message/getQiNiuToken', data)
+}
+// 新增视频
+export const createVideoAPI = (data: CreateMediaDto): Promise<APIResponse<MediaItemType>> => {
+  return request.post('fanfan-time-message/createVideo', data)
 }
 

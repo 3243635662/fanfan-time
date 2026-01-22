@@ -138,6 +138,10 @@
         <a-tabs type="rounded" :default-active-key="currentTabs" lazy-load :animation="true" class="custom-tabs" @change="handleTabsChange">
           <a-tab-pane :key="TabsPane[0]?.key" :title="TabsPane[0]?.title">
             <div class="image-upload-content">
+              <div class="upload-tip">
+                <span class="tip-icon">ℹ️</span>
+                <span>使用360图床存储，请勿上传违法信息</span>
+              </div>
               <div class="upload-wrapper">
               <a-upload
                 list-type="picture-card"
@@ -145,7 +149,7 @@
                 :show-upload-button="true"
                 :show-preview-button="true"
                 :custom-request="handleImageUpload"
-                @change="handleFileChange"
+                @change="handleImageFileChange"
                 @exceed-limit="handleExceedLimit"
                 accept="image/*"
                 :limit="5"
@@ -209,9 +213,15 @@
 
           <a-tab-pane :key="TabsPane[1] && TabsPane[1].key" :title="TabsPane[1] && TabsPane[1].title">
             <div class="video-upload-content">
+              <div class="upload-tip">
+                <span class="tip-icon">ℹ️</span>
+                <span>使用七牛云对象存储保存视频，请勿上传违法信息</span>
+              </div>
               <div class="upload-wrapper">
                 <a-upload draggable :limit="1" accept="video/*" v-if="TabsPane[1]"
-                :custom-request="handleUploadVideo">
+                :custom-request="handleUploadVideo"
+                @change="handleVideoFileChange"
+                >
                 </a-upload>
               </div>
               <div class="form-section">
@@ -262,6 +272,7 @@
                   </span>
                 </div>
               </div>
+
             </div>
           </a-tab-pane>
         </a-tabs>
@@ -289,9 +300,9 @@ import { useAuthStore } from '@/store/auth'
 import FanAvatar from '@/views/home/components/Fan-Avatar.vue'
 import PullToLoadIndicator from '@/views/home/components/PullToLoadIndicator.vue'
 import { usePullToLoad } from '@/composables/usePullToLoad'
-import { createImagesAPI, getMediaDetailAPI } from '@/api/photo'
+import { createImagesAPI, createVideoAPI, getMediaDetailAPI } from '@/api/photo'
 import type { CreateMediaDto, MediaItemType } from '@/types'
-
+import { uploadToQiniu } from '@/utils/qiniuUpload'
 const emit = defineEmits<{
   (e: 'publish-success', media: MediaItemType): void
 }>()
@@ -308,9 +319,10 @@ const imageHostingURL = 'https://api.xinyew.cn/api/360tc'
 const fileList = ref<FileItem[]>([])
 // 图床返回的 URL 列表（用于后续入库）
 const imgUrlList = ref<string[]>([])
+// 视频文件（用于上传）
+const videoFile = ref<File>()
 // 视频URL（用于后续入库）
-const videoUrl = ref<string>('')
-
+const videoUrl = ref<string>()
 const uploading = ref(false)
 
 const TabsPane = [
@@ -332,9 +344,20 @@ const categories = [
 const availableTags = ['风景', '摄影', '自然', '旅行', '生活', '日常', '美好', '艺术']
 const selectedTags = ref<string[]>([])
 
+// 集成视频和图片上传的提交条件
 const canSubmit = computed(() => {
-  return (imgUrlList.value.length > 0 && uploadForm.value.title.trim() !== '' && uploadForm.value.category !== null)
-})
+  const hasMedia = currentTabs.value === 'image'
+    ? imgUrlList.value.length > 0
+    : !!videoUrl.value; // (如果是图片的话判断是否有图片URL，视频的话判断是否有视频URL)
+
+  const result = hasMedia &&
+  uploadForm.value.title.trim() !== '' &&
+  uploadForm.value.category !== null;
+
+
+
+  return result;
+});
 
 const isLiked = ref(false)
 const isTitleExpanded = ref(false)
@@ -428,10 +451,78 @@ const handleImageUpload = async (options: RequestOption) => {
 }
 
 const handleUploadVideo = async (options: RequestOption) => {
-    // 视频上传逻辑略
+  const { fileItem, onSuccess, onError, onProgress } = options;
+
+  const rawFile = fileItem?.file
+  if (!rawFile) {
+    onError?.(new Error('未获取到文件'))
+    return
+  }
+
+  if (!rawFile.type.startsWith('video/')) {
+    $notification.error({
+      title: '上传失败',
+      content: '请选择视频文件'
+    })
+    onError?.(new Error('请选择视频文件'))
+    return
+  }
+  if (rawFile.size > 50 * 1024 * 1024) {
+    $notification.error({
+      title: '上传失败',
+      content: '视频大小不能超过 50MB'
+    })
+    onError?.(new Error('视频大小不能超过 50MB'))
+    return
+  }
+
+  try {
+    if (fileItem) fileItem.status = 'uploading';
+    // 上传到七牛云
+    await uploadToQiniu({
+      file: rawFile,
+      onProgress: (percent) => {
+        onProgress?.(percent);
+      },
+      key: `videos/${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${rawFile.name.split('.').pop()}`,
+      onSuccess: (url) => {
+        videoUrl.value = url
+        if (fileItem) {
+          fileItem.url = url
+          fileItem.status = 'done';
+        }
+        onSuccess?.({ url });
+        onProgress?.(100)
+        $notification.success({
+          title: '上传成功',
+          content: '视频上传成功'
+        })
+      },
+      onError: (err) => {
+        if (fileItem) fileItem.status = 'error';
+        $notification.error({
+          title: '上传失败',
+          content: `视频上传失败: ${err.message}`
+        })
+        onError?.(err)
+      }
+    })
+  } catch (error) {
+    const err = error instanceof Error ? error : new Error('上传失败');
+    if (fileItem) fileItem.status = 'error';
+
+    $notification.error({
+      title: '上传失败',
+      content: err.message,
+    });
+
+    onError?.(err);
+  }
+
 }
 
-const handleFileChange = (nextList: FileItem[]) => {
+// 处理图片文件变化
+const handleImageFileChange = (nextList: FileItem[]) => {
 
   // 只在文件数量减少时才从 imgUrlList 中删除 URL
   if (nextList.length < fileList.value.length) {
@@ -446,6 +537,13 @@ const handleFileChange = (nextList: FileItem[]) => {
   }
   
   fileList.value = nextList
+}
+
+// 处理视频文件变化
+const handleVideoFileChange = (nextList: FileItem[]) => {
+  if (nextList.length > 0) {
+    videoFile.value = nextList[0].file
+  }
 }
 
 const handleExceedLimit = () => {
@@ -522,20 +620,25 @@ const submitComment = () => {
 }
 
 const handlePublish = async () => {
+  let res: any;
   if (!canSubmit.value) return
   uploading.value = true
-  console.log('发布表单:', uploadForm.value);
   const postData: CreateMediaDto = {
     title: uploadForm.value.title,
     content: uploadForm.value.content,
-    type: 1, // 1为图片，2为视频
-    videoUrl: '',
+    type: currentTabs.value === 'video' ? 2 : 1,
+    videoUrl: currentTabs.value === 'video' ? videoUrl.value : undefined,
     imageUrls: imgUrlList.value,
     category: uploadForm.value.category || 1,
     tags: selectedTags.value,
   }
   try {
-    const res = await createImagesAPI(postData)
+    if (currentTabs.value === 'image') {
+      res = await createImagesAPI(postData)
+    } else {
+      res = await createVideoAPI(postData)
+    }
+
     if (res.result && res.code === 0) {
       // 构造新的媒体项
       const newMedia: MediaItemType = {
@@ -549,7 +652,7 @@ const handlePublish = async () => {
         commentCount: 0,
         sharedCount: 0,
         viewCount: 0,
-        videoUrl: currentTabs.value === 'video' ? videoUrl.value : undefined,
+        videoUrl: currentTabs.value === 'video' ? res.result.videoUrl : undefined,
         cover: currentTabs.value === 'image' ? imgUrlList.value[0] : undefined,
         imageUrls: currentTabs.value === 'image' ? imgUrlList.value : undefined,
         aspectRatio: currentTabs.value === 'video' ? 16/9 : 1,
@@ -571,7 +674,8 @@ const handlePublish = async () => {
       uploadForm.value = { title: '', content: '', category: null }
       fileList.value = []
       imgUrlList.value = []
-      videoUrl.value = ''
+      videoFile.value = undefined
+      videoUrl.value = undefined
       selectedTags.value = []
       settingStore.closeMediaDetailModal()
     } else {
@@ -591,8 +695,13 @@ const handlePublish = async () => {
   }
 }
 
-const handleTabsChange = () => {
+const handleTabsChange = ( tabs: string ) => {
+  currentTabs.value = tabs
   uploadForm.value = { title: '', content: '', category: null }
+  fileList.value = []
+  imgUrlList.value = []
+  videoFile.value = undefined
+  videoUrl.value = undefined
 }
 
 const formatTime = (date: Date): string => {
@@ -1374,6 +1483,24 @@ watch(() => photoStore.currentMediaDetail?.title, () => {
 
   .image-upload-content, .video-upload-content {
     padding: $padding-16;
+    .upload-tip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, #e8f4ff 0%, #f0f7ff 100%);
+      border-radius: 8px;
+      border-left: 4px solid #1890ff;
+      .tip-icon {
+        font-size: 16px;
+      }
+      span:last-child {
+        font-size: 14px;
+        color: #1890ff;
+        font-weight: 500;
+      }
+    }
     .arco-upload-list {
       margin-bottom: $padding-16;
     }

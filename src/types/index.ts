@@ -242,7 +242,7 @@ export interface MediaDetail {
   };
 }
 
-// 提交图片请求参数
+// 提交图片或者视频请求参数
 export interface CreateMediaDto {
   title: string;
   content: string;
@@ -251,4 +251,11 @@ export interface CreateMediaDto {
   imageUrls?: string[];
   category: number; // 前端只会发1或2过来
   tags: string[];
+}
+
+// 七牛上传token响应
+// 七牛云上传token返回类型
+export interface QiNiuTokenResponse {
+  token: string;
+  domain: string;
 }

@@ -1,5 +1,6 @@
 <template>
-  <div class="social-waterfall" ref="containerRef">
+  <div class="social-waterfall-root">
+    <div class="social-waterfall" ref="containerRef">
     <!-- 骨架屏 -->
     <div v-if="showSkeleton" class="skeleton-container">
       <div 
@@ -143,6 +144,7 @@
       <span>没有更多内容了</span>
       <div class="no-more-line"></div>
     </div>
+    </div>
   </div>
 </template>
 
@@ -155,6 +157,7 @@ import { useSettingStore } from '@/store/setting'
 import { usePhotoStore } from '@/store/photo'
 import { storeToRefs } from 'pinia'
 const { commentsPage } = storeToRefs(usePhotoStore())
+const settingStore = useSettingStore()
 interface Props {
   items: MediaItemType[]
   loading?: boolean
@@ -397,6 +400,16 @@ const setVideoRef = (id: number, el: HTMLVideoElement | null) => {
   }
 }
 
+// 暂停所有视频
+const pauseAllVideos = () => {
+  videoRefs.value.forEach((video) => {
+    if (video) {
+      video.pause()
+    }
+  })
+  playingVideoId.value = null
+}
+
 // 切换视频播放状态 - 优化版本
 const toggleVideo = async (id: number) => {
   const video = videoRefs.value.get(id)
@@ -584,7 +597,7 @@ const onVideoError = (item: MediaItemType) => {
 
 // 处理各种交互
 const handleItemClick = (item: MediaItemType) => {
-  useSettingStore().openMediaDetailModal(item.id,commentsPage.value)
+  useSettingStore().openMediaDetailModal(item.id)
 
 }
 
@@ -688,6 +701,13 @@ watch([() => props.items, columnCount], () => {
   distributeItems()
 }, { deep: true })
 
+// 监听弹窗状态，打开时暂停所有视频
+watch(() => settingStore.isShowModal, (isOpen) => {
+  if (isOpen) {
+    pauseAllVideos()
+  }
+})
+
 onMounted(() => {
   // 优化：更智能的骨架屏隐藏策略
   if (props.items.length > 0) {
@@ -719,9 +739,18 @@ onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll)
   window.removeEventListener('resize', distributeItems)
 })
+
+// 暴露方法给父组件
+defineExpose({
+  pauseAllVideos
+})
 </script>
 
 <style scoped lang="scss">
+.social-waterfall-root {
+  width: 100%;
+}
+
 .social-waterfall {
   width: 100%;
   max-width: 1920px;
