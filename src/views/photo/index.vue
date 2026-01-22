@@ -52,7 +52,7 @@
       </a-tabs>
     </div>
 
-    <PostDetailModal />
+    <PostDetailModal @publish-success="handlePublishSuccess" />
   </div>
 </template>
 
@@ -354,6 +354,24 @@ const preloadCriticalResources = () => {
   
   // 延迟执行，不影响首屏渲染
   setTimeout(preloadVisibleImages, 500)
+}
+
+// 处理发布成功事件
+const handlePublishSuccess = (newMedia: MediaItemType) => {
+  // 将新发布的媒体添加到列表开头
+  mediaList.value.unshift(newMedia)
+  total.value += 1
+  
+  // 如果当前不在第一页，切换到第一页
+  if (page.value > 1) {
+    page.value = 1
+  }
+  
+  // 预加载新发布的图片
+  if (newMedia.type === 1) {
+    const img = new Image()
+    img.src = newMedia.cover || newMedia.imageUrls?.[0] || ''
+  }
 }
 
 // 组件挂载时加载数据

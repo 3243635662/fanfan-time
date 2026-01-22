@@ -1,5 +1,5 @@
 import request from '@/api/request'
-import type { APIResponse, MediaDetail, MediaListResponse } from '@/types'
+import type { APIResponse, CreateMediaDto, MediaDetail, MediaItemType, MediaListResponse } from '@/types'
 
 export const getPhotoListAPI = (
   page: number = 1,
@@ -27,5 +27,10 @@ export const getMediaDetailAPI = (id: number, page: number): Promise<APIResponse
   return request.get('fanfan-time-message/getMediaDetail', {
     params: { id, page }
   })
+}
+
+// 新增图片
+export const createImagesAPI = (data: CreateMediaDto): Promise<APIResponse<MediaItemType>> => {
+  return request.post('fanfan-time-message/createImages', data)
 }
 

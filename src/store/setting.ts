@@ -1,7 +1,11 @@
 import { defineStore } from "pinia";
-import {  ref, watch } from "vue";
+import { ref, watch } from "vue";
 import { usePhotoStore } from "./photo";
+import { useAuthStore } from "./auth";
+import { $notification } from "@/hooks/useNotification";
+import { router } from "@/router";
 const photoStore = usePhotoStore()
+const authStore = useAuthStore()
 export const useSettingStore = defineStore("setting", () => {
   // 是否夜间
   const isDark = ref(false);
@@ -56,7 +60,7 @@ export const useSettingStore = defineStore("setting", () => {
     isAddMode.value = false;
   };
   // 打开媒体详情弹窗
-  const openMediaDetailModal = (id: number, page: number) => {
+  const openMediaDetailModal = (id: number) => {
     photoStore.currentMediaId = id
 
     photoStore.getMediaDetail(id).then(() => {
@@ -77,11 +81,20 @@ export const useSettingStore = defineStore("setting", () => {
     isShowModal.value = false
     isShowMediaDetailModal.value = false
   }
-  // 打开添加媒体弹窗
+  // 打开添加媒体弹窗 (检查是否登录)
   const openAddMediaModal = () => {
-    isShowMediaDetailModal.value = false
-    isShowAddMediaModal.value = true
-    isShowModal.value = true
+    if (!authStore.isLogin) {
+      $notification.error({
+        title: "登录后才能添加媒体",
+        content: "请先登录账号",
+      });
+      router.push({ name: "login" })
+    }
+    else {
+      isShowMediaDetailModal.value = false
+      isShowAddMediaModal.value = true
+      isShowModal.value = true
+    }
   }
   // 关闭添加媒体弹窗
   const closeAddMediaModal = () => {

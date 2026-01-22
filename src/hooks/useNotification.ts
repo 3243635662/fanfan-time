@@ -3,7 +3,7 @@ import type { NotificationReturn, NotificationPosition } from '@arco-design/web-
 
 // 默认配置
 const DEFAULT_CONFIG = {
-  duration: 3000,
+  duration: 4000,
   closable: true,
   position: 'topRight' as const,
   showIcon: true,
@@ -85,9 +85,9 @@ export const useNotification = () => {
 
   // 简化的通知方法（只有标题和内容）
   const notify = (type: 'success' | 'error' | 'warning' | 'info', title: string, content?: string): NotificationReturn => {
-    const method = type === 'success' ? success : 
-                   type === 'error' ? error :
-                   type === 'warning' ? warning : info;
+    const method = type === 'success' ? success :
+      type === 'error' ? error :
+        type === 'warning' ? warning : info;
     return method({ title, content });
   };
 

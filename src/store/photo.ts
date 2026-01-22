@@ -34,6 +34,9 @@ export const usePhotoStore = defineStore("photo", () => {
   const resetCommentsPage = () => {
     commentsPage.value = 1
   }
+
+
+
   return {
     commentsPage,
     currentMediaId,
@@ -41,6 +44,6 @@ export const usePhotoStore = defineStore("photo", () => {
     getMediaDetail,
     addCommentsPage,
     setCommentsPage,
-    resetCommentsPage
+    resetCommentsPage,
   }
 })

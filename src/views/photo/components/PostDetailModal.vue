@@ -11,7 +11,7 @@
           <AppIcon name="mdi:close" :size="24" color="#fff" />
         </div>
       </div>
-      
+
       <div class="modal-left">
         <a-carousel v-if="currentMediaDetail.type === 1 && currentMediaDetail.imageUrls && currentMediaDetail.imageUrls.length" :auto-play="false" indicator-type="dot" show-arrow="hover">
           <a-carousel-item v-for="(url, index) in currentMediaDetail.imageUrls" :key="index">
@@ -119,7 +119,7 @@
           <button class="mobile-back-btn" @click="settingStore.closeMediaDetailModal">
             <AppIcon name="mdi:arrow-left" :size="24" color="#666" />
           </button>
-          <div class="mobile-publish-btn" @click="handlePublish" :class="{ disabled: !canSubmit }">
+          <div class="mobile-publish-btn" @click="canSubmit && handlePublish()" :class="{ disabled: !canSubmit }">
             <span>发布</span>
           </div>
         </div>
@@ -267,7 +267,7 @@
         </a-tabs>
 
         <div class="upload-footer" v-if="!isMobile">
-          <a-button type="primary" :disabled="canSubmit" :loading="uploading" class="publish-btn" @click="handlePublish">
+          <a-button type="primary" :disabled="!canSubmit" :loading="uploading" class="publish-btn" @click="handlePublish">
             发布
           </a-button>
         </div>
@@ -282,14 +282,19 @@ import { useSettingStore } from '@/store/setting'
 import { usePhotoStore } from '@/store/photo'
 import { storeToRefs } from 'pinia'
 import { computed, ref, watch, nextTick, onUnmounted } from 'vue'
-import { Message } from '@arco-design/web-vue'
+import { $notification } from '@/hooks/useNotification'
 import type { FileItem,RequestOption } from '@arco-design/web-vue'
 import AppIcon from '@/components/AppIcon.vue'
 import { useAuthStore } from '@/store/auth'
 import FanAvatar from '@/views/home/components/Fan-Avatar.vue'
 import PullToLoadIndicator from '@/views/home/components/PullToLoadIndicator.vue'
 import { usePullToLoad } from '@/composables/usePullToLoad'
-import { getMediaDetailAPI } from '@/api/photo'
+import { createImagesAPI, getMediaDetailAPI } from '@/api/photo'
+import type { CreateMediaDto, MediaItemType } from '@/types'
+
+const emit = defineEmits<{
+  (e: 'publish-success', media: MediaItemType): void
+}>()
 
 const { userInfo } = storeToRefs(useAuthStore())
 const settingStore = useSettingStore()
@@ -303,6 +308,8 @@ const imageHostingURL = 'https://api.xinyew.cn/api/360tc'
 const fileList = ref<FileItem[]>([])
 // 图床返回的 URL 列表（用于后续入库）
 const imgUrlList = ref<string[]>([])
+// 视频URL（用于后续入库）
+const videoUrl = ref<string>('')
 
 const uploading = ref(false)
 
@@ -366,12 +373,18 @@ const handleImageUpload = async (options: RequestOption) => {
     return
   }
   if (!rawFile.type.startsWith('image/')) {
-    Message.error('请选择图片文件')
+    $notification.error({
+      title: '上传失败',
+      content: '请选择图片文件'
+    })
     onError?.(new Error('请选择图片文件'))
     return
   }
   if (rawFile.size > 5 * 1024 * 1024) {
-    Message.error('图片大小不能超过 5MB')
+    $notification.error({
+      title: '上传失败',
+      content: '图片大小不能超过 5MB'
+    })
     onError?.(new Error('图片大小不能超过 5MB'))
     return
   }
@@ -406,7 +419,10 @@ const handleImageUpload = async (options: RequestOption) => {
   } catch (e) {
     const err = e instanceof Error ? e : new Error('上传失败')
     if (fileItem) fileItem.status = 'error'
-    Message.error(`图片上传失败: ${err.message}`)
+    $notification.error({
+      title: '上传失败',
+      content: `图片上传失败: ${err.message}`
+    })
     onError?.(err)
   }
 }
@@ -416,19 +432,27 @@ const handleUploadVideo = async (options: RequestOption) => {
 }
 
 const handleFileChange = (nextList: FileItem[]) => {
-  const prevUrls = new Set((fileList.value.map((i: FileItem) => i.url).filter(Boolean) as string[]) || [])
-  const nextUrls = new Set((nextList.map((i:FileItem) => i.url).filter(Boolean) as string[]) || [])
 
-  for (const url of prevUrls) {
-    if (!nextUrls.has(url)) {
-      imgUrlList.value = imgUrlList.value.filter((u) => u !== url)
+  // 只在文件数量减少时才从 imgUrlList 中删除 URL
+  if (nextList.length < fileList.value.length) {
+    const prevUrls = new Set((fileList.value.map((i: FileItem) => i.url).filter(Boolean) as string[]) || [])
+    const nextUrls = new Set((nextList.map((i:FileItem) => i.url).filter(Boolean) as string[]) || [])
+
+    for (const url of prevUrls) {
+      if (!nextUrls.has(url)) {
+        imgUrlList.value = imgUrlList.value.filter((u) => u !== url)
+      }
     }
   }
+  
   fileList.value = nextList
 }
 
 const handleExceedLimit = () => {
-  Message.warning('最多只能上传5张图片')
+  $notification.warning({
+    title: '提示',
+    content: '最多只能上传5张图片'
+  })
 }
 
 const handleCategoryChange = (category: number) => {
@@ -442,9 +466,13 @@ const toggleTag = (tag: string) => {
   } else if (selectedTags.value.length < 5) {
     selectedTags.value.push(tag)
   } else {
-    Message.warning('最多选择5个标签')
+    $notification.warning({
+      title: '提示',
+      content: '最多选择5个标签'
+    })
   }
 }
+// TODO： 点击标签添加到输入框 然后进行搜索
 const handleTagClick = (tag: string) => {
   console.log(tag);
 }
@@ -474,10 +502,16 @@ async function handleLoadMore() {
         await new Promise(resolve => setTimeout(resolve, minLoadingTime - elapsedTime))
       }
     } else {
-      Message.error('加载更多失败')
+      $notification.error({
+        title: '加载失败',
+        content: '加载更多失败'
+      })
     }
   } catch {
-    Message.error('加载更多失败')
+    $notification.error({
+      title: '加载失败',
+      content: '加载更多失败'
+    })
   } finally {
     isLoadingMore.value = false
   }
@@ -490,15 +524,68 @@ const submitComment = () => {
 const handlePublish = async () => {
   if (!canSubmit.value) return
   uploading.value = true
+  console.log('发布表单:', uploadForm.value);
+  const postData: CreateMediaDto = {
+    title: uploadForm.value.title,
+    content: uploadForm.value.content,
+    type: 1, // 1为图片，2为视频
+    videoUrl: '',
+    imageUrls: imgUrlList.value,
+    category: uploadForm.value.category || 1,
+    tags: selectedTags.value,
+  }
   try {
-    Message.success('发布成功！')
-    uploadForm.value = { title: '', content: '', category: null }
-    fileList.value = []
-    imgUrlList.value = []
-    selectedTags.value = []
-    settingStore.closeMediaDetailModal()
+    const res = await createImagesAPI(postData)
+    if (res.result && res.code === 0) {
+      // 构造新的媒体项
+      const newMedia: MediaItemType = {
+        id: res.result.id || Date.now(), // 使用服务器返回的ID或临时ID
+        type: currentTabs.value === 'image' ? 1 : 2,
+        category: uploadForm.value.category || 1,
+        title: uploadForm.value.title,
+        content: uploadForm.value.content,
+        publishTime: new Date(),
+        likedCount: 0,
+        commentCount: 0,
+        sharedCount: 0,
+        viewCount: 0,
+        videoUrl: currentTabs.value === 'video' ? videoUrl.value : undefined,
+        cover: currentTabs.value === 'image' ? imgUrlList.value[0] : undefined,
+        imageUrls: currentTabs.value === 'image' ? imgUrlList.value : undefined,
+        aspectRatio: currentTabs.value === 'video' ? 16/9 : 1,
+        publisher: {
+          userId: userInfo.value?.id || 0,
+          username: userInfo.value?.username || '',
+          avatar: userInfo.value?.avatar || '',
+          nickname: userInfo.value?.nickname
+        }
+      }
+      
+      // 触发事件通知父组件
+      emit('publish-success', newMedia)
+      
+      $notification.success({
+        title: '发布成功',
+        content: '发布成功！'
+      })
+      uploadForm.value = { title: '', content: '', category: null }
+      fileList.value = []
+      imgUrlList.value = []
+      videoUrl.value = ''
+      selectedTags.value = []
+      settingStore.closeMediaDetailModal()
+    } else {
+      $notification.error({
+        title: '发布失败',
+        content: res?.message || '发布失败，请重试'
+      })
+    }
   } catch (error) {
-    Message.error('发布失败，请重试')
+    console.error('发布失败:', error)
+    $notification.error({
+      title: '发布失败',
+      content: '发布失败，请重试'
+    })
   } finally {
     uploading.value = false
   }
@@ -962,14 +1049,14 @@ watch(() => photoStore.currentMediaDetail?.title, () => {
 .post-actions {
   display: flex;
   justify-content: space-around;
-  padding: $padding-16;
+  padding: 4px;
   border-bottom: 1px solid $gray-2;
   flex-shrink: 0;
   .action-btn {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 5px;
+    gap: 2px;
     cursor: pointer;
     transition: all 0.3s ease;
     &:hover {

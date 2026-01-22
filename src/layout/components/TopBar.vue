@@ -71,8 +71,12 @@ const items = [
 
 
 const add = () => {
-  console.log("Add clicked!");
-  settingStore.openAddMode()
+  if (router.currentRoute.value.name === 'home') {
+    settingStore.openAddMode()
+  }
+  else {
+    settingStore.openAddMediaModal()
+  }
 };
 </script>
 

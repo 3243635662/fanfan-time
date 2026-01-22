@@ -242,3 +242,13 @@ export interface MediaDetail {
   };
 }
 
+// 提交图片请求参数
+export interface CreateMediaDto {
+  title: string;
+  content: string;
+  type: number; // 1为图片，2为视频
+  videoUrl?: string;
+  imageUrls?: string[];
+  category: number; // 前端只会发1或2过来
+  tags: string[];
+}
