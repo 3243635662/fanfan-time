@@ -1,5 +1,5 @@
 import request from '@/api/request'
-import type { APIResponse, CreateMediaDto, MediaDetail, MediaItemType, MediaListResponse, QiNiuTokenResponse } from '@/types'
+import type { APIResponse, CreateMediaDto, LikeMediaResponse, MediaCommentsDto, MediaCommentsResponse, MediaDetail, MediaItemType, MediaListResponse, QiNiuTokenResponse, ShareMediaResponse, ViewMediaResponse } from '@/types'
 
 export const getPhotoListAPI = (
   page: number = 1,
@@ -43,3 +43,21 @@ export const createVideoAPI = (data: CreateMediaDto): Promise<APIResponse<MediaI
   return request.post('fanfan-time-message/createVideo', data)
 }
 
+// 提交媒体评论
+export const createMediaCommentsAPI = (data: MediaCommentsDto): Promise<APIResponse<MediaCommentsResponse>> => {
+  return request.post('fanfan-time-message/commentMedia', data)
+}
+
+// 媒体点赞
+export const likeMediaAPI = (data: { mediaId: number }): Promise<APIResponse<LikeMediaResponse>> => {
+  return request.post('fanfan-time-message/likeMedia', data)
+}
+// 分享
+export const shareMediaAPI = (data: { mediaId: number }): Promise<APIResponse<ShareMediaResponse>> => {
+  return request.post('fanfan-time-message/shareMedia', data)
+}
+
+// 浏览
+export const viewMediaAPI = (data: { mediaId: number }): Promise<APIResponse<ViewMediaResponse>> => {
+  return request.post('fanfan-time-message/viewMedia', data)
+}

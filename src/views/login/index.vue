@@ -75,22 +75,6 @@
         </a-form-item>
       </a-form>
 
-      <a-divider orientation="center" class="divider">
-        <span class="divider-text">其他方式</span>
-      </a-divider>
-
-      <div class="social-login">
-        <a-button class="social-button" shape="circle" size="large">
-          <AppIcon name="mdi:wechat" size="22" color="#07c160" />
-        </a-button>
-        <a-button class="social-button" shape="circle" size="large">
-          <AppIcon name="mdi:github" size="22" />
-        </a-button>
-        <a-button class="social-button" shape="circle" size="large">
-          <AppIcon name="mdi:google" size="22" color="#4285f4" />
-        </a-button>
-      </div>
-
       <div class="register-link">
         <span>还没有账号？</span>
         <router-link to="/register">立即注册</router-link>
@@ -100,7 +84,7 @@
       <div class="login-decoration">
         <video
           class="decoration-video"
-          src="https://yc.tuchung.cc/uploads/video_cc0283c76e8d449e9dd1f10993f246b5.mp4"
+          src="http://video.fanblog.top/72c9982e-6e66-4183-bba1-a5ccf3d84577.mp4"
           autoplay
           muted
           loop
@@ -382,34 +366,8 @@ onMounted(() => {
     }
   }
 
-  .divider {
-    margin: $padding-24 0;
-    width: 100%;
-    max-width: 360px;
-    transition: all var(--transition-duration) ease-in-out;
-
-    :deep(.arco-divider-text) {
-      font-size: $font-size-12;
-      padding: 0 $padding-16;
-      transition: all var(--transition-duration) ease-in-out;
-    }
-  }
-
-  .social-login {
-    display: flex;
-    justify-content: center;
-    gap: $length-20;
-    margin-bottom: $padding-24;
-
-    .social-button {
-      width: 48px;
-      height: 48px;
-      border: 1px solid;
-      transition: all var(--transition-duration) ease-in-out;
-    }
-  }
-
   .register-link {
+    padding-top:12px;
     font-size: $font-size-14;
     transition: color var(--transition-duration) ease-in-out;
 
@@ -626,13 +584,47 @@ onMounted(() => {
     flex-direction: column;
   }
 
+  .top-nav {
+    padding: 16px;
+    position: relative;
+    background: transparent;
+    backdrop-filter: none;
+
+    .home-button,
+    .theme-toggle {
+      color: rgba(0, 0, 0, 0.85);
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: $radius-8;
+      padding: 4px 12px;
+
+      &:hover {
+        color: rgba(0, 0, 0, 1);
+        background: rgba(255, 255, 255, 1);
+      }
+    }
+
+    .dark-mode & {
+      .home-button,
+      .theme-toggle {
+        color: rgba(255, 255, 255, 0.95);
+        background: rgba(0, 0, 0, 0.9);
+
+        &:hover {
+          color: rgba(255, 255, 255, 1);
+          background: rgba(0, 0, 0, 1);
+        }
+      }
+    }
+  }
+
   .login-container {
     max-width: none;
-    min-height: 60vh;
+    min-height: 50vh;
+    padding: $padding-16;
   }
 
   .login-decoration {
-    min-height: 40vh;
+    min-height: 50vh;
 
     .decoration-video {
       position: absolute;
@@ -646,8 +638,22 @@ onMounted(() => {
       object-fit: cover;
     }
 
-    .decoration-content h2 {
-      font-size: 1.8rem;
+    .decoration-content {
+      h2 {
+        font-size: 1.8rem;
+        margin-bottom: $padding-12;
+      }
+
+      .animated-subtitle {
+        .subtitle-line {
+          font-size: $font-size-14;
+          margin-bottom: $padding-16;
+        }
+      }
+
+      .floating-elements {
+        display: none;
+      }
     }
   }
 }

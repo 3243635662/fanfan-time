@@ -154,9 +154,7 @@ import type { MediaItemType } from '@/types'
 import FanAvatar from '@/views/home/components/Fan-Avatar.vue'
 import { formatDate } from '@/utils'
 import { useSettingStore } from '@/store/setting'
-import { usePhotoStore } from '@/store/photo'
-import { storeToRefs } from 'pinia'
-const { commentsPage } = storeToRefs(usePhotoStore())
+import { viewMediaAPI } from '@/api/photo'
 const settingStore = useSettingStore()
 interface Props {
   items: MediaItemType[]
@@ -598,7 +596,8 @@ const onVideoError = (item: MediaItemType) => {
 // 处理各种交互
 const handleItemClick = (item: MediaItemType) => {
   useSettingStore().openMediaDetailModal(item.id)
-
+  // 增加查看数
+  viewMediaAPI({ mediaId: item.id })
 }
 
 const handleLike = (item: MediaItemType) => {

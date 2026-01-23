@@ -89,22 +89,6 @@
         </a-form-item>
       </a-form>
 
-      <a-divider orientation="center" class="divider">
-        <span class="divider-text">其他注册方式</span>
-      </a-divider>
-
-      <div class="social-register">
-        <a-button class="social-button" shape="circle" size="large">
-          <AppIcon name="mdi:wechat" size="22" color="#07c160" />
-        </a-button>
-        <a-button class="social-button" shape="circle" size="large">
-          <AppIcon name="mdi:github" size="22" />
-        </a-button>
-        <a-button class="social-button" shape="circle" size="large">
-          <AppIcon name="mdi:google" size="22" color="#4285f4" />
-        </a-button>
-      </div>
-
       <div class="login-link">
         <span>已有账号？</span>
         <router-link to="/login">立即登录</router-link>
@@ -114,7 +98,7 @@
     <div class="register-decoration">
       <video 
         class="decoration-video"
-        src="https://yc.tuchung.cc/uploads/video_7e373d8bfd4641d3a00bf4092dee7224.mp4"
+        src="http://video.fanblog.top/e9c86615-d390-4931-adec-d320887df542.mp4"
         autoplay
         muted
         loop
@@ -416,36 +400,10 @@ const handleRegister = async () => {
     }
   }
 
-  .divider {
-    margin: $padding-20 0;
-    width: 100%;
-    max-width: 360px;
-    transition: all var(--transition-duration) ease-in-out;
-
-    :deep(.arco-divider-text) {
-      font-size: $font-size-12;
-      padding: 0 $padding-16;
-      transition: all var(--transition-duration) ease-in-out;
-    }
-  }
-
-  .social-register {
-    display: flex;
-    justify-content: center;
-    gap: $length-16;
-    margin-bottom: $padding-20;
-
-    .social-button {
-      width: 44px;
-      height: 44px;
-      border: 1px solid;
-      transition: all var(--transition-duration) ease-in-out;
-    }
-  }
-
   .login-link {
     font-size: $font-size-14;
     transition: color var(--transition-duration) ease-in-out;
+       padding-top:12px;
 
     a {
       font-weight: 600;
@@ -706,14 +664,47 @@ const handleRegister = async () => {
     flex-direction: column;
   }
 
+  .top-nav {
+    position: relative;
+    background: transparent;
+    backdrop-filter: none;
+
+    .home-button,
+    .theme-toggle {
+      color: rgba(0, 0, 0, 0.85);
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: $radius-8;
+      padding: 4px 12px;
+
+      &:hover {
+        color: rgba(0, 0, 0, 1);
+        background: rgba(255, 255, 255, 1);
+      }
+    }
+
+    .dark-mode & {
+      .home-button,
+      .theme-toggle {
+        color: rgba(255, 255, 255, 0.95);
+        background: rgba(0, 0, 0, 0.9);
+
+        &:hover {
+          color: rgba(255, 255, 255, 1);
+          background: rgba(0, 0, 0, 1);
+        }
+      }
+    }
+  }
+
   .register-container {
     max-width: none;
-    min-height: 60vh;
-    margin-top: 0; // 移动端不需要顶部间距
+    min-height: 50vh;
+    padding: $padding-16;
+    margin-top: 0;
   }
 
   .register-decoration {
-    min-height: 35vh;
+    min-height: 50vh;
 
     .decoration-video {
       position: absolute;
@@ -733,9 +724,11 @@ const handleRegister = async () => {
         margin-bottom: $padding-12;
       }
 
-      p {
-        font-size: $font-size-14;
-        margin-bottom: $padding-20;
+      .animated-subtitle {
+        .subtitle-line {
+          font-size: $font-size-14;
+          margin-bottom: $padding-16;
+        }
       }
 
       .features {
@@ -745,15 +738,19 @@ const handleRegister = async () => {
         .feature-item {
           padding: $padding-8;
           min-width: 70px;
-          
+
           :deep(.arco-icon) {
             font-size: 18px;
           }
-          
+
           span {
             font-size: $font-size-12;
           }
         }
+      }
+
+      .floating-elements {
+        display: none;
       }
     }
   }

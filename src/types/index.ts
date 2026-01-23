@@ -254,8 +254,37 @@ export interface CreateMediaDto {
 }
 
 // 七牛上传token响应
-// 七牛云上传token返回类型
 export interface QiNiuTokenResponse {
   token: string;
   domain: string;
+}
+
+export interface MediaCommentsDto {
+  mediaId: number;
+  content: string;
+}
+
+// 媒体评论返回的响应
+export interface MediaCommentsResponse {
+  id: number;
+  content: string;
+  publishTime: Date;
+  username: string;
+  avatar: string;
+}
+
+export interface LikeMediaResponse {
+  id: number;
+  likedCount: number;
+}
+// 分享响应
+export interface ShareMediaResponse {
+  id: number;
+  sharedCount: number;
+}
+
+// 浏览响应
+export interface ViewMediaResponse {
+  id: number;
+  viewCount: number;
 }

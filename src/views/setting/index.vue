@@ -199,7 +199,11 @@
               </a-link>
               <a-link href="https://fanblog.top" target="_blank">
                 <AppIcon name="mdi:web" size="18" />
-                官方网站
+                源站
+              </a-link>
+                <a-link href="https://gitee.com/Fan_Fan_Fan8" target="_blank">
+                <AppIcon name="simple-icons:gitee" size="18" />
+                Gitee
               </a-link>
             </div>
           </div>

@@ -52,18 +52,21 @@
       </a-tabs>
     </div>
 
-    <PostDetailModal @publish-success="handlePublishSuccess" />
+    <PostDetailModal @publish-success="handlePublishSuccess" @tag-click="handleTagClick" />
   </div>
 </template>
 
 <script setup lang="ts">
 import SkeletonList from '@/components/skeleton/SkeletonList.vue';
 import SocialWaterfall from '@/components/SocialWaterfall.vue';
-import PostDetailModal from './components/PostDetailModal.vue';
+import { defineAsyncComponent } from 'vue';
+const PostDetailModal = defineAsyncComponent(() => import('./components/PostDetailModal.vue'));
 import type { CategoryOptionForPhoto, MediaItemType } from '@/types';
 import { ref, onMounted, computed } from 'vue';
 import { getPhotoListAPI } from '@/api/photo';
 import { $notification } from '@/hooks/useNotification';
+import { useSettingStore } from '@/store/setting';
+import { likeMediaAPI, shareMediaAPI } from '@/api/photo';
 
 const mediaList = ref<MediaItemType[]>([])
 const isLoading = ref(true)
@@ -110,7 +113,7 @@ const loadPhotos = async (filterCategory: number = 0) => {
       // 使用缓存数据
       const response = cachedData.data
       if (response.code === 0 && response.result) {
-        processMediaList(response.result.list, filterCategory)
+        processMediaList(response.result.list)
         total.value = response.result.total
         totalPage.value = response.result.totalPage
       }
@@ -135,7 +138,7 @@ const loadPhotos = async (filterCategory: number = 0) => {
     })
     
     if (response.code === 0 && response.result) {
-      processMediaList(response.result.list, filterCategory)
+      processMediaList(response.result.list)
       total.value = response.result.total
       totalPage.value = response.result.totalPage
     } else {
@@ -153,8 +156,8 @@ const loadPhotos = async (filterCategory: number = 0) => {
   }
 }
 
-// 处理媒体列表数据 - 优化版本，添加尺寸预获取
-const processMediaList = (list: MediaItemType[], filterCategory: number) => {
+// 处理媒体列表数据
+const processMediaList = (list: MediaItemType[]) => {
   const processedList = list.map((item: MediaItemType) => {
     const processedItem: MediaItemType & { isLiked?: boolean; _aspectRatio?: number; _estimatedHeight?: number } = {
       ...item,
@@ -189,15 +192,15 @@ const imageDimensionsCache = new Map<number, { width: number; height: number }>(
 
 const preloadImageDimensions = (item: any) => {
   if (item.type !== 1) return
-  
+
   const imageUrl = item.cover || item.imageUrls?.[0]
   if (!imageUrl) return
-  
+
   // 检查缓存
   if (imageDimensionsCache.has(item.id)) {
     return
   }
-  
+
   const img = new Image()
   img.onload = () => {
     if (img.naturalWidth > 0 && img.naturalHeight > 0) {
@@ -211,50 +214,84 @@ const preloadImageDimensions = (item: any) => {
 }
 // 切换标签时的处理
 const handleTabChange = (key: string | number) => {
-  currentCategory.value = Number(key)
-  // 重置到第一页
-  page.value = 1
-  // 根据选中的分类获取对应的数据
-  loadPhotos(Number(key))
+
+  if (key === 3) {
+    type.value = 1
+    // 重置到第一页
+    page.value = 1
+    // 根据选中的分类获取对应的数据
+    loadPhotos(0)
+
+  }
+  else if (key === 4) {
+    type.value = 2
+    // 重置到第一页
+    page.value = 1
+    // 根据选中的分类获取对应的数据
+    loadPhotos(0)
+  }
+  else {
+    type.value = 0
+    currentCategory.value = Number(key)
+    // 重置到第一页
+    page.value = 1
+    // 根据选中的分类获取对应的数据
+    loadPhotos(Number(key))
+  }
 }
 
-// 处理点赞 - 静态模拟，不调用API
-const handleLike = (item: MediaItemType) => {
+const handleLike = async (item: MediaItemType) => {
   console.log('点赞:', item)
-  // 静态模拟点赞效果
-  const extendedItem = item as MediaItemType & { isLiked?: boolean }
-  extendedItem.isLiked = !extendedItem.isLiked
-  item.likedCount += extendedItem.isLiked ? 1 : -1
-  
-  // 显示提示
-  $notification.info({
-    title: '提示',
-    content: '点赞功能开发中，敬请期待'
+try {
+  const response = await likeMediaAPI({ mediaId: item.id })
+  if (response.code === 0 && response.result) {
+    item.likedCount = response.result.likedCount
+    ;(item as any).isLiked = true
+  }
+} catch (error) {
+  $notification.error({
+    title: '错误',
+    content: error instanceof Error ? error.message : '点赞失败，请稍后重试'
   })
 }
+}
 
-// 处理评论 - 静态提示
+// 处理评论 进入详情页
 const handleComment = (item: MediaItemType) => {
-  console.log('评论:', item)
-  // 跳转到详情页查看评论
-  $notification.info({
-    title: '提示',
-    content: '请进入详情页查看评论'
-  })
+useSettingStore().openMediaDetailModal(item.id)
 }
 
 // 处理分享 - 简化版本
-const handleShare = (item: MediaItemType) => {
-  console.log('分享:', item)
-  $notification.info({
-    title: '提示',
-    content: '分享功能开发中'
-  })
+const handleShare = async (item: MediaItemType) => {
+  try {
+    const response = await shareMediaAPI({ mediaId: item.id })
+    if (response.code === 0 && response.result) {
+      item.sharedCount = response.result.sharedCount
+    }
+    // 将视频或者图片链接复制到剪贴板
+    await navigator.clipboard.writeText(item.type === 1 ? item.imageUrls?.[0] || '' : item.videoUrl || '')
+    $notification.success({
+      title: '成功',
+      content: '链接已复制到剪贴板'
+    })
+  } catch (error) {
+    $notification.error({
+      title: '错误',
+      content: error instanceof Error ? error.message : '分享失败，请稍后重试'
+    })
+  }
 }
 
 const handleSearch = () => {
   page.value = 1
   loadPhotos(currentCategory.value)
+}
+
+const handleTagClick = (tag: string) => {
+  keyword.value = tag
+  page.value = 1
+  loadPhotos(currentCategory.value)
+  window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
 const clearSearch = () => {

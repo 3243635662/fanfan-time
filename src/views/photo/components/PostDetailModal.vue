@@ -59,7 +59,7 @@
             <AppIcon name="mdi:eye-outline" :size="isMobile ? 24 : 20" color="#666" />
             <span>{{ currentMediaDetail.viewCount }}</span>
           </div>
-          <div class="action-btn">
+          <div class="action-btn" @click="handleShare">
             <AppIcon name="mdi:share-variant-outline" :size="isMobile ? 24 : 20" color="#666" />
             <span>{{ currentMediaDetail.sharedCount }}</span>
           </div>
@@ -103,9 +103,9 @@
               :max-length="200"
               show-word-limit
               class="comment-input"
-              @pressEnter="submitComment"
+              @pressEnter="submitComment(currentMediaDetail.id)"
             />
-            <a-button type="outline" size="small"  status="danger" @click="submitComment" :disabled="!newComment.trim()">
+            <a-button type="outline" size="small"  status="danger" @click="submitComment(currentMediaDetail.id)" :disabled="!newComment.trim()">  
               <AppIcon name="mdi:send" :size="16" />
             </a-button>
           </div>
@@ -300,14 +300,16 @@ import { useAuthStore } from '@/store/auth'
 import FanAvatar from '@/views/home/components/Fan-Avatar.vue'
 import PullToLoadIndicator from '@/views/home/components/PullToLoadIndicator.vue'
 import { usePullToLoad } from '@/composables/usePullToLoad'
-import { createImagesAPI, createVideoAPI, getMediaDetailAPI } from '@/api/photo'
-import type { CreateMediaDto, MediaItemType } from '@/types'
+import { createImagesAPI, createVideoAPI, getMediaDetailAPI, createMediaCommentsAPI, likeMediaAPI } from '@/api/photo'
+import type { CreateMediaDto, MediaItemType,MediaCommentsDto } from '@/types'
 import { uploadToQiniu } from '@/utils/qiniuUpload'
+import { router } from '@/router'
+import { shareMediaAPI } from '@/api/photo'
 const emit = defineEmits<{
   (e: 'publish-success', media: MediaItemType): void
+  (e: 'tag-click', tag: string): void
 }>()
-
-const { userInfo } = storeToRefs(useAuthStore())
+const { userInfo,isLogin } = storeToRefs(useAuthStore())
 const settingStore = useSettingStore()
 const photoStore = usePhotoStore()
 const { isShowMediaDetailModal, isShowModal } = storeToRefs(settingStore)
@@ -570,9 +572,9 @@ const toggleTag = (tag: string) => {
     })
   }
 }
-// TODO： 点击标签添加到输入框 然后进行搜索
 const handleTagClick = (tag: string) => {
-  console.log(tag);
+  emit('tag-click', tag)
+  settingStore.closeMediaDetailModal()
 }
 
 // 上拉加载更多
@@ -615,8 +617,59 @@ async function handleLoadMore() {
   }
 }
 
-const submitComment = () => {
-  console.log('提交评论:', newComment.value)
+const submitComment = async (mediaId: number) => {
+  if (!newComment.value.trim()) return
+
+  if (!isLogin.value) {
+    $notification.warning({
+      title: '提示',
+      content: '请先登录'
+    })
+    settingStore.closeMediaDetailModal()
+    router.push('/login')
+    return
+  }
+  
+  const commentData: MediaCommentsDto = {
+    mediaId,
+    content: newComment.value
+  }
+
+  try {
+    const res = await createMediaCommentsAPI(commentData)
+
+    if (res.code === 0 && res.result) {
+      const newCommentItem = {
+        id: res.result.id,
+        content: res.result.content,
+        publishTime: res.result.publishTime,
+        username: res.result.username,
+        avatar: res.result.avatar || userInfo.value?.avatar || '',
+        nickname: userInfo.value?.nickname
+      }
+      console.log(newCommentItem);
+      if (currentMediaDetail.value) {
+        currentMediaDetail.value.comments.list.unshift(newCommentItem)
+        currentMediaDetail.value.commentCount++
+      }
+
+      newComment.value = ''
+      $notification.success({
+        title: '评论成功',
+        content: '评论发布成功'
+      })
+    } else {
+      $notification.error({
+        title: '评论失败',
+        content: res.message || '评论发布失败，请重试'
+      })
+    }
+  } catch {
+    $notification.error({
+      title: '评论失败',
+      content: '评论发布失败，请重试'
+    })
+  }
 }
 
 const handlePublish = async () => {
@@ -718,10 +771,53 @@ const formatTime = (date: Date): string => {
   return new Date(date).toLocaleDateString()
 }
 
-const toggleLike = () => {
-  isLiked.value = !isLiked.value
-}
+const toggleLike = async () => {
+  if (!currentMediaDetail.value) return
 
+  if (!isLogin.value) {
+    $notification.warning({
+      title: '提示',
+      content: '请先登录'
+    })
+    settingStore.closeMediaDetailModal()
+    router.push('/login')
+    return
+  }
+
+  try {
+    const response = await likeMediaAPI({ mediaId: currentMediaDetail.value.id })
+    if (response.code === 0 && response.result) {
+      isLiked.value = true
+      currentMediaDetail.value.likedCount = response.result.likedCount
+    }
+  } catch (error) {
+    $notification.error({
+      title: '错误',
+      content: error instanceof Error ? error.message : '点赞失败，请稍后重试'
+    })
+  }
+}
+const handleShare = async () => { 
+  if (!currentMediaDetail.value) return
+  try {
+    const response = await shareMediaAPI({ mediaId: currentMediaDetail.value.id })
+    if (response.code === 0 && response.result) {
+      currentMediaDetail.value.sharedCount = response.result.sharedCount
+    }
+    // 将视频或者图片链接复制到剪贴板
+    await navigator.clipboard.writeText(currentMediaDetail.value.type === 1 ? currentMediaDetail.value.imageUrls?.[0] || '' : currentMediaDetail.value.videoUrl || '')
+    $notification.success({
+      title: '成功',
+      content: '链接已复制到剪贴板'
+    })
+  } catch (error) {
+    $notification.error({
+      title: '错误',
+      content: error instanceof Error ? error.message : '分享失败，请稍后重试'
+    })
+  }
+
+}
 const toggleTitle = () => {
   isTitleExpanded.value = !isTitleExpanded.value
 }
@@ -753,6 +849,7 @@ watch(isShowModal, (open) => {
 
 watch(isShowMediaDetailModal, async (newValue) => {
   if (newValue) {
+    isLiked.value = false
     setTimeout(checkTitleOverflow, 100)
     photoStore.resetCommentsPage()
     await nextTick()
@@ -786,6 +883,8 @@ onUnmounted(() => {
 watch(() => photoStore.currentMediaDetail?.title, () => {
   setTimeout(checkTitleOverflow, 0)
 }, { immediate: true })
+
+
 </script>
 
 <style scoped lang="scss">
@@ -803,7 +902,7 @@ watch(() => photoStore.currentMediaDetail?.title, () => {
   justify-content: center;
   align-items: center;
   z-index: 2000;
-  padding-top: 50px;
+  padding-top: 8;
 }
 
 .modal-content {
@@ -1030,6 +1129,13 @@ watch(() => photoStore.currentMediaDetail?.title, () => {
     align-items: center;
     justify-content: center;
     gap: 4px;
+    h3 {
+      margin: 0;
+      background: linear-gradient(135deg, #ff8e8e 0%, #ff6b6b 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
   }
   .avatar {
       display: block;
@@ -1061,7 +1167,12 @@ watch(() => photoStore.currentMediaDetail?.title, () => {
     gap: 10px;
   }
   .user-details h3 {
+    margin: 0;
     font-size: $font-size-14;
+    background: linear-gradient(135deg, #ff8e8e 0%, #ff6b6b 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
   .avatar {
     width: 36px;
@@ -1679,7 +1790,8 @@ watch(() => photoStore.currentMediaDetail?.title, () => {
     .modal-header {
       border-bottom-color: $gray-6;
       .user-details h3 {
-        color: var(--color-text-primary, $gray-0);
+        background: linear-gradient(135deg, #ff8e8e 0%, #ff6b6b 100%);
+        -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
       }
@@ -1724,6 +1836,101 @@ watch(() => photoStore.currentMediaDetail?.title, () => {
   .mobile-input {
     background: $gray-8;
     border-top-color: $gray-6;
+  }
+  .mobile-header-layout {
+    .user-details h3 {
+      background: linear-gradient(135deg, #ff8e8e 0%, #ff6b6b 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+  }
+  .modal-upload {
+    .upload-container {
+      background: $gray-8;
+    }
+    .upload-header {
+      border-bottom-color: $gray-6;
+      .close-btn {
+        &:hover {
+          background: $gray-7;
+        }
+      }
+    }
+    .mobile-upload-header {
+      border-bottom-color: $gray-6;
+      background: $gray-8;
+      .mobile-back-btn {
+        background: $gray-7;
+        &:hover {
+          background: $gray-6;
+        }
+      }
+    }
+    .image-upload-content, .video-upload-content {
+      .upload-tip {
+        background: linear-gradient(135deg, rgba(24, 144, 255, 0.1) 0%, rgba(24, 144, 255, 0.05) 100%);
+        border-left-color: #1890ff;
+      }
+      .arco-upload-picture-card {
+        border-color: $gray-6;
+        background: $gray-7;
+        &:hover {
+          border-color: #ff2442;
+          background: rgba(#ff2442, 0.1);
+        }
+      }
+    }
+    .form-section {
+      :deep(.arco-input-wrapper), :deep(.arco-textarea-wrapper){
+        border-color: $gray-6;
+        background-color: $gray-7;
+        &:hover {
+          border-color: #ff2442;
+          background-color: $gray-8;
+        }
+        .arco-input, .arco-textarea {
+          color: $gray-0;
+          &::placeholder {
+            color: $gray-4;
+          }
+        }
+      }
+    }
+    .category-label, .hashtags-label {
+      color: $gray-0;
+    }
+    .category-item {
+      border-color: $gray-6;
+      color: $gray-3;
+      background: $gray-7;
+      &:hover {
+        border-color: #ff2442;
+        color: #ff2442;
+      }
+      &.active {
+        background: linear-gradient(135deg, #ff8e8e 0%, #ff6b6b 100%);
+        border-color: transparent;
+        color: $gray-0;
+      }
+    }
+    .hashtags-section {
+      .hashtag-item {
+        background: $gray-7;
+        color: $gray-3;
+        &:hover {
+          background: rgba(#ff2442, 0.1);
+          color: #ff2442;
+        }
+        &.active {
+          background: rgba(#ff2442, 0.15);
+          color: #ff2442;
+        }
+      }
+    }
+    .upload-footer {
+      border-top-color: $gray-6;
+    }
   }
 }
 
