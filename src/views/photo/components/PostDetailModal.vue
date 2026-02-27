@@ -1,7 +1,7 @@
 <template>
   <div class="modal-overlay" v-if="isShowModal" @click.self="settingStore.closeMediaDetailModal">
     <div 
-      class="modal-content" 
+      class="modal-content"
       ref="modalContentRef"
       :class="{'modal-fullscreen': isMobile}" 
       v-if="isShowMediaDetailModal && currentMediaDetail"
@@ -113,7 +113,12 @@
       </div>
     </div>
 
-    <div class="modal-upload" :class="{'modal-fullscreen': isMobile}" v-else>
+    <div 
+      class="modal-upload" 
+      :class="{'modal-fullscreen': isMobile}" 
+      v-else
+      ref="modalUploadRef"
+    >
       <div class="upload-container">
         <div class="mobile-upload-header" v-if="isMobile">
           <button class="mobile-back-btn" @click="settingStore.closeMediaDetailModal">
@@ -847,6 +852,7 @@ watch(isShowModal, (open) => {
   document.body.style.overflow = open ? 'hidden' : ''
 }, { immediate: true })
 
+// 监听详情 Modal 显示状态
 watch(isShowMediaDetailModal, async (newValue) => {
   if (newValue) {
     isLiked.value = false

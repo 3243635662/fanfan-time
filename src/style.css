@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply m-0 p-0 font-sans text-base leading-6 text-gray-900 bg-white transition-colors duration-300 ease-in-out;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body.dark {
+    @apply text-white bg-neutral-950;
+  }
+
+  * {
+    @apply transition-colors duration-300 ease-in-out;
+  }
+
+  .arco-btn,
+  .arco-input,
+  .arco-input-wrapper,
+  .arco-card,
+  .arco-link {
+    @apply transition-all duration-300 ease-in-out;
+  }
+
+  li {
+    @apply list-none;
+  }
+
+  img {
+    @apply m-0 p-0 block;
+  }
+
+  a {
+    @apply text-primary no-underline transition-colors duration-300 hover:text-blue-700 dark:hover:text-blue-300;
+  }
+
+  ::-webkit-scrollbar {
+    @apply w-2 h-2;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-gray-100 dark:bg-neutral-900;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gray-200 dark:bg-neutral-800 rounded hover:bg-gray-400 dark:hover:bg-neutral-700;
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-xl shadow-lg dark:shadow-neutral-900/50 transition-all duration-300;
+  }
+
+  .btn {
+    @apply rounded-lg transition-all duration-300;
+  }
+}

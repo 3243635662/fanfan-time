@@ -1,0 +1,17 @@
+antfu
+nuxt
+pinia
+pnpm
+slidev
+tsdown
+turborepo
+unocss
+vite
+vitepress
+vitest
+vue
+vue-best-practices
+vueuse-functions
+web-design-guidelines
+/ui-ux-pro-max
+tailwindcss

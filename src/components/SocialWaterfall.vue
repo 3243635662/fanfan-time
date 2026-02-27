@@ -74,7 +74,7 @@
                 @error="onVideoError(item)"
               />
               <!-- 视频封面 -->
-              <div class="video-cover">
+              <div class="video-cover" v-if="isVideoLoaded(item.id)">
                 <div class="video-play-icon" :class="{ 'playing': playingVideoId === item.id }">
                   <svg v-if="playingVideoId !== item.id" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M8 5v14l11-7z"/>

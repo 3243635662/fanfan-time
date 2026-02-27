@@ -101,11 +101,11 @@
       <div class="detail-stats">
         <div class="stat-item like-item" :class="{ liked: isLiked }" @click="handleLike">
           <div class="like-button-container">
-            <AppIcon name="mdi:heart" :size="26" :color="isLiked ? '#ff4757' : '#999'"
-              :style="{ transition: 'all 0.3s ease', transform: isLiked ? 'scale(1.2)' : 'scale(1)' }" />
-            <div class="heart-particles" ref="heartParticles"></div>
+            <div class="heart-icon-wrapper" :class="{ 'is-liked': isLiked }">
+              <AppIcon name="mdi:heart" :size="26" />
+            </div>
           </div>
-          <span>{{ messageDetail.likedCount || 0 }}</span>
+          <span class="like-count">{{ messageDetail.likedCount || 0 }}</span>
         </div>
         <div class="stat-item">
           <AppIcon name="mdi:message-text" :size="26" color="#666" />
@@ -278,49 +278,6 @@ const isRefreshing = ref(false)
 const isLoadingMore = ref(false)
 const hasMore = ref(true)
 
-// 点赞特效相关
-const heartParticles = ref<HTMLElement>()
-
-// 创建心形粒子特效
-const createHeartParticles = () => {
-  if (!heartParticles.value) return
-
-  const particleCount = 12
-  const colors = ['#ff6b6b', '#ff8787', '#ffa8a8', '#ffc9c9', '#ffe3e3']
-
-  for (let i = 0; i < particleCount; i++) {
-    const particle = document.createElement('div')
-    particle.className = 'heart-particle'
-
-    const angle = (i / particleCount) * Math.PI * 2
-    const distance = 30 + Math.random() * 20
-    const duration = 0.6 + Math.random() * 0.4
-    const delay = Math.random() * 0.1
-    const size = 8 + Math.random() * 8
-    const color = colors[Math.floor(Math.random() * colors.length)]
-
-    particle.style.cssText = `
-      position: absolute;
-      width: ${size}px;
-      height: ${size}px;
-      background: ${color};
-      border-radius: 50%;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
-      pointer-events: none;
-      animation: particle-explode ${duration}s ease-out ${delay}s forwards;
-      box-shadow: 0 0 ${size}px ${color};
-    `
-
-    heartParticles.value.appendChild(particle)
-
-    setTimeout(() => {
-      particle.remove()
-    }, (duration + delay) * 1000)
-  }
-}
-
 // 下拉刷新功能
 const {
   bindEvents,
@@ -455,7 +412,6 @@ const handleLike = () => {
   if (!props.messageDetail) return
   if (isLiked.value) return
   isLiked.value = true
-  createHeartParticles()
   emit('like', props.messageDetail.id)
 }
 
@@ -621,27 +577,54 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 32px;
+  height: 32px;
 }
 
-.heart-particles {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 0;
-  height: 0;
-  pointer-events: none;
+.heart-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  transition: color 0.2s ease;
+  transform-origin: center center;
+
+  &.is-liked {
+    color: #ff4757;
+    animation: heart-bounce 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
 }
 
-@keyframes particle-explode {
+@keyframes heart-bounce {
   0% {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
+    transform: scale(1);
+  }
+
+  30% {
+    transform: scale(0.6);
+  }
+
+  60% {
+    transform: scale(1.3);
   }
 
   100% {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0);
+    transform: scale(1);
+  }
+}
+
+.like-item {
+  transition: all 0.2s ease;
+
+  &:active {
+    transform: scale(0.95);
+  }
+
+  &.liked {
+    .like-count {
+      color: #ff4757;
+      font-weight: 600;
+    }
   }
 }
 
