@@ -28,7 +28,3 @@ dist-ssr
 .trae
 .shared
 .env
-.env.development.local
-.env.test.local
-.env.production.local
-.env.local
