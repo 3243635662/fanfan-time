@@ -662,49 +662,45 @@ const handleRegister = async () => {
 @media (max-width: $tablet) {
   .register-page {
     flex-direction: column;
+    min-height: auto;
+    height: auto;
+    overflow-y: auto;
   }
 
   .top-nav {
-    position: relative;
-    background: transparent;
-    backdrop-filter: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(8px);
 
     .home-button,
     .theme-toggle {
-      color: rgba(0, 0, 0, 0.85);
-      background: rgba(255, 255, 255, 0.9);
+      color: rgba(255, 255, 255, 0.95);
+      background: rgba(255, 255, 255, 0.15);
       border-radius: $radius-8;
       padding: 4px 12px;
 
       &:hover {
-        color: rgba(0, 0, 0, 1);
-        background: rgba(255, 255, 255, 1);
-      }
-    }
-
-    .dark-mode & {
-      .home-button,
-      .theme-toggle {
-        color: rgba(255, 255, 255, 0.95);
-        background: rgba(0, 0, 0, 0.9);
-
-        &:hover {
-          color: rgba(255, 255, 255, 1);
-          background: rgba(0, 0, 0, 1);
-        }
+        color: $gray-0;
+        background: rgba(255, 255, 255, 0.25);
       }
     }
   }
 
   .register-container {
     max-width: none;
-    min-height: 50vh;
-    padding: $padding-16;
+    min-height: auto;
+    padding: 80px $padding-16 $padding-16;
     margin-top: 0;
+    flex: none;
   }
 
   .register-decoration {
-    min-height: 50vh;
+    min-height: 35vh;
+    flex: none;
+    position: relative;
 
     .decoration-video {
       position: absolute;
@@ -720,20 +716,21 @@ const handleRegister = async () => {
 
     .decoration-content {
       h2 {
-        font-size: 1.6rem;
-        margin-bottom: $padding-12;
+        font-size: 1.4rem;
+        margin-bottom: $padding-8;
       }
 
       .animated-subtitle {
         .subtitle-line {
           font-size: $font-size-14;
-          margin-bottom: $padding-16;
+          margin-bottom: $padding-8;
         }
       }
 
       .features {
         flex-wrap: wrap;
         gap: $padding-8;
+        margin-top: $padding-12;
 
         .feature-item {
           padding: $padding-8;

@@ -37,8 +37,8 @@
         <p class="subtitle">登录fan时光，记录美好时刻</p>
       </div>
 
-      <a-form :model="formData" layout="vertical" @submit="handleLogin" class="login-form">
-        <a-form-item field="username" :rules="usernameRules" :validate-trigger="['blur', 'change']">
+      <a-form ref="formRef" :model="formData" layout="vertical" @submit="handleLoginClick" class="login-form">
+        <a-form-item field="username" :rules="usernameRules" :validate-trigger="['blur', 'change', 'submit']">
           <a-input v-model="formData.username" placeholder="用户名" size="large" allow-clear>
             <template #prefix>
               <AppIcon name="mdi:user-outline" size="18" />
@@ -46,7 +46,7 @@
           </a-input>
         </a-form-item>
 
-        <a-form-item field="password" :rules="passwordRules" :validate-trigger="['blur', 'change']">
+        <a-form-item field="password" :rules="passwordRules" :validate-trigger="['blur', 'input', 'submit', 'change']">
           <a-input-password v-model="formData.password" placeholder="密码" size="large" allow-clear>
             <template #prefix>
               <AppIcon name="mdi:lock-outline" size="18" />
@@ -74,6 +74,8 @@
           </a-button>
         </a-form-item>
       </a-form>
+
+
 
       <div class="register-link">
         <span>还没有账号？</span>
@@ -117,11 +119,19 @@
           </div>
         </div>
       </div>
+      <CloudeflareTrust
+      ref="turnstileRef"
+      :sitekey="siteKey"
+      @success="handleTurnstileSuccess"
+      @error="handleTurnstileError"
+      @expired="handleTurnstileExpired"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { reactive, onMounted } from "vue";
+import CloudeflareTrust from "@/components/CloudeflareTrust.vue";
+import { reactive, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/store/auth";
 import { useSettingStore } from "@/store/setting";
@@ -129,6 +139,8 @@ import { storeToRefs } from "pinia";
 import { $notification } from "@/hooks/useNotification";
 import AppIcon from "@/components/AppIcon.vue";
 import { useRoute } from 'vue-router';
+import type { FormInstance } from '@arco-design/web-vue';
+
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
@@ -138,6 +150,10 @@ const { isLoading } = storeToRefs(authStore);
 const toggleDarkMode = () => {
   settingStore.toggleDarkMode();
 };
+const turnstileRef = ref<InstanceType<typeof CloudeflareTrust> | null>(null);
+const turnstileToken = ref('');
+const siteKey = import.meta.env.VITE_GLOB_SITE_KEY;
+const formRef = ref<FormInstance | null>(null);
 
 const formData = reactive({
   username: "",
@@ -192,7 +208,45 @@ const handleLogin = async () => {
     });
   }
 };
+const handleLoginClick = async () => {
+  // 先进行表单校验
+  const errors = await formRef.value?.validate();
+  if (errors) {
+    // 表单校验失败，不打开 Turnstile
+    return;
+  }
+  // 表单校验通过，显示 Turnstile 模态框
+  turnstileRef.value?.show();
+};
 
+/**
+ * Turnstile 验证成功回调
+ */
+const handleTurnstileSuccess = (token: string) => {
+  turnstileToken.value = token;
+  console.log('Turnstile 验证成功，token:', token);
+  // 验证成功后立即登录
+  handleLogin();
+};
+
+/**
+ * Turnstile 验证错误回调
+ */
+const handleTurnstileError = (code: string) => {
+  console.error('Turnstile 验证错误:', code);
+  $notification.error({
+    title: '人机验证失败',
+    content: '请重试',
+  });
+};
+
+/**
+ * Turnstile token 过期回调
+ */
+const handleTurnstileExpired = () => {
+  turnstileToken.value = '';
+  console.warn('Turnstile token 已过期');
+};
 // 组件挂载时初始化认证状态
 onMounted(() => {
   authStore.initAuth();
@@ -582,49 +636,44 @@ onMounted(() => {
 @media (max-width: $tablet) {
   .login-page {
     flex-direction: column;
+    max-height: none;
+    height: auto;
+    overflow-y: auto;
   }
 
   .top-nav {
-    padding: 16px;
-    position: relative;
-    background: transparent;
-    backdrop-filter: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(8px);
 
     .home-button,
     .theme-toggle {
-      color: rgba(0, 0, 0, 0.85);
-      background: rgba(255, 255, 255, 0.9);
+      color: rgba(255, 255, 255, 0.95);
+      background: rgba(255, 255, 255, 0.15);
       border-radius: $radius-8;
       padding: 4px 12px;
 
       &:hover {
-        color: rgba(0, 0, 0, 1);
-        background: rgba(255, 255, 255, 1);
-      }
-    }
-
-    .dark-mode & {
-      .home-button,
-      .theme-toggle {
-        color: rgba(255, 255, 255, 0.95);
-        background: rgba(0, 0, 0, 0.9);
-
-        &:hover {
-          color: rgba(255, 255, 255, 1);
-          background: rgba(0, 0, 0, 1);
-        }
+        color: $gray-0;
+        background: rgba(255, 255, 255, 0.25);
       }
     }
   }
 
   .login-container {
     max-width: none;
-    min-height: 50vh;
-    padding: $padding-16;
+    min-height: auto;
+    padding: 80px $padding-16 $padding-16;
+    flex: none;
   }
 
   .login-decoration {
-    min-height: 50vh;
+    min-height: 40vh;
+    flex: none;
+    position: relative;
 
     .decoration-video {
       position: absolute;
@@ -640,14 +689,14 @@ onMounted(() => {
 
     .decoration-content {
       h2 {
-        font-size: 1.8rem;
+        font-size: 1.5rem;
         margin-bottom: $padding-12;
       }
 
       .animated-subtitle {
         .subtitle-line {
           font-size: $font-size-14;
-          margin-bottom: $padding-16;
+          margin-bottom: $padding-8;
         }
       }
 
