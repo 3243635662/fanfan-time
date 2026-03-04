@@ -45,7 +45,7 @@
             <div v-for="color in backgroundColorOptions" :key="color" class="color-option"
               :class="{ active: addMessageForm.backgroundColor === color }" :style="{ backgroundColor: color }"
               @click="addMessageForm.backgroundColor = color">
-              <AppIcon v-if="addMessageForm.backgroundColor === color" name="mdi:check" :size="16" color="#fff" />
+              <AppIcon v-if="addMessageForm.backgroundColor === color" name="mdi:check" :size="16" color="#6F644E" />
             </div>
           </div>
         </div>
@@ -495,13 +495,15 @@ onUnmounted(() => {
   border-radius: 2px;
 }
 
-/* 原有样式保持不变 */
 .drawer-title {
   font-size: 18px;
   font-weight: 600;
   color: #333;
 }
 
+.dark-mode .drawer-title {
+  color: #fff;
+}
 .detail-container {
   padding: 0;
 }
@@ -533,6 +535,9 @@ onUnmounted(() => {
   font-weight: 600;
   color: #333;
   margin-bottom: 4px;
+}
+.dark-mode .username {
+  color: #fff;
 }
 
 .time {
@@ -659,7 +664,9 @@ onUnmounted(() => {
   color: #333;
   font-weight: 600;
 }
-
+.dark-mode .comments-title {
+  color: #fff;
+}
 .add-comment {
   margin-top: 24px;
   padding-top: 24px;
@@ -758,7 +765,9 @@ onUnmounted(() => {
   color: #1f2937;
   letter-spacing: 0.01em;
 }
-
+.dark-mode .label-text {
+  color: #fff;
+}
 .label-required {
   color: #ef4444;
   font-size: 14px;
@@ -800,9 +809,12 @@ onUnmounted(() => {
   resize: none;
   position: relative;
   z-index: 1;
+}
 
+// 覆盖 Arco Design textarea placeholder 颜色
+:deep(.arco-textarea) {
   &::placeholder {
-    color: rgba(0, 0, 0, 0.4);
+    color: rgba(128, 128, 128, 0.8) !important;
   }
 }
 

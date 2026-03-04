@@ -4,7 +4,7 @@ import { usePhotoStore } from "./photo";
 import { useAuthStore } from "./auth";
 import { $notification } from "@/hooks/useNotification";
 import { router } from "@/router";
-import { markedAndPushNewState, ModalAndDrawer_STATE_KEY } from "@/utils/history";
+import { markedAndPushNewState } from "@/utils/history";
 
 // 是否已经 push 了状态
 let isPushedState = false

@@ -113,9 +113,9 @@
       </div>
     </div>
 
-    <div 
-      class="modal-upload" 
-      :class="{'modal-fullscreen': isMobile}" 
+    <div
+      class="modal-upload"
+      :class="{'modal-fullscreen': isMobile}"
       v-else
       ref="modalUploadRef"
     >
@@ -135,9 +135,6 @@
               <FanAvatar :imageUrl="userInfo?.avatar || ''" class="avatar" />
             </div>
           </div>
-          <button class="close-btn" @click="settingStore.closeMediaDetailModal">
-            <AppIcon name="mdi:close" :size="24" color="#666" />
-          </button>
         </div>
 
         <a-tabs type="rounded" :default-active-key="currentTabs" lazy-load :animation="true" class="custom-tabs" @change="handleTabsChange">
@@ -1717,7 +1714,14 @@ watch(() => photoStore.currentMediaDetail?.title, () => {
       transition: all 0.3s ease;
       background: $gray-1;
       color: $gray-6;
-      &:hover {
+      // 只在支持悬停的设备上应用 hover 样式
+      @media (hover: hover) {
+        &:hover {
+          background: rgba(#ff2442, 0.1);
+          color: #ff2442;
+        }
+      }
+      &:active {
         background: rgba(#ff2442, 0.1);
         color: #ff2442;
       }
@@ -1924,7 +1928,14 @@ watch(() => photoStore.currentMediaDetail?.title, () => {
       .hashtag-item {
         background: $gray-7;
         color: $gray-3;
-        &:hover {
+        // 只在支持悬停的设备上应用 hover 样式
+        @media (hover: hover) {
+          &:hover {
+            background: rgba(#ff2442, 0.1);
+            color: #ff2442;
+          }
+        }
+        &:active {
           background: rgba(#ff2442, 0.1);
           color: #ff2442;
         }

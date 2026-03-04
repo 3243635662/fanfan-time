@@ -103,6 +103,8 @@
             <div class="setting-section account-info-section">
               <h3>账户信息</h3>
               <div class="account-info">
+
+<!-- 账户头像上传 -->
                 <a-upload accept="image/*" :show-file-list="false" :auto-upload="false" @change="onAvatarSelect">
                   <template #upload-button>
                     <div class="avatar-upload-wrapper" :style="{ cursor: isUploading ? 'wait' : 'pointer' }">
@@ -123,6 +125,8 @@
                     </div>
                   </template>
                 </a-upload>
+
+                
                 <div class="avatar-upload-tip">
                   <div>
                     <AppIcon name="mdi:information-outline" size="12" />
@@ -225,7 +229,7 @@ import { STORAGE_KEYS, APP_PREFIX } from "@/utils/constants";
 import { formatTime } from "@/utils";
 import type { FileItem } from '@arco-design/web-vue';
 
-// 京东图床API配置
+// 306图床API配置
 const imageHostingURL = 'https://api.xinyew.cn/api/360tc';
 
 const newDockTitle = ref("");
@@ -255,7 +259,7 @@ const cleanUrl = (url: string): string => {
   }
 };
 
-// 头像上传处理 - 使用京东图床接口
+// 头像上传处理 - 使用360图床接口
  const onAvatarSelect = async (fileList: FileItem[]) => {
   const file = fileList[0];
   if (!file || !file.file) return;
