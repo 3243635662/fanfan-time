@@ -98,7 +98,7 @@ export interface UserInfo {
 
 // 登录请求参数
 export interface LoginParams {
-  username: string;
+  account: string;
   password: string;
   remember?: boolean; // 记住我
 }
@@ -108,6 +108,7 @@ export interface RegisterData {
   username: string;
   email: string;
   password: string;
+  emailCode: string;
 }
 
 // 登录响应
@@ -287,4 +288,24 @@ export interface ShareMediaResponse {
 export interface ViewMediaResponse {
   id: number;
   viewCount: number;
+}
+
+// Cloudflare turnstile 验证响应
+export interface CloudflareTurnstileResponse {
+  success: boolean;
+  'error-codes': string[];
+  challenge_ts?: string;
+  hostname?: string;
+  action?: string;
+  cdata?: string;
+  metadata?: {
+    ephemeral_id?: string;
+  };
+}
+
+// 发送邮箱验证码响应
+export interface SendEmailCodeResponse {
+  code: 0 | 1;
+  message: string;
+  result: null;
 }

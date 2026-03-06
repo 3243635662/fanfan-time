@@ -38,8 +38,8 @@
       </div>
 
       <a-form ref="formRef" :model="formData" layout="vertical" @submit="handleLoginClick" class="login-form">
-        <a-form-item field="username" :rules="usernameRules" :validate-trigger="['blur', 'change', 'submit']">
-          <a-input v-model="formData.username" placeholder="用户名" size="large" allow-clear>
+        <a-form-item field="account" :rules="accountRules" :validate-trigger="['blur', 'change', 'submit']">
+          <a-input v-model="formData.account" placeholder="用户名或者邮箱" size="large" allow-clear>
             <template #prefix>
               <AppIcon name="mdi:user-outline" size="18" />
             </template>
@@ -140,6 +140,7 @@ import { $notification } from "@/hooks/useNotification";
 import AppIcon from "@/components/AppIcon.vue";
 import { useRoute } from 'vue-router';
 import type { FormInstance } from '@arco-design/web-vue';
+import { verifyTurnstileTokenAPI } from "@/api/auth";
 
 const route = useRoute();
 const router = useRouter();
@@ -156,14 +157,14 @@ const siteKey = import.meta.env.VITE_GLOB_SITE_KEY;
 const formRef = ref<FormInstance | null>(null);
 
 const formData = reactive({
-  username: "",
+  account: "",
   password: "",
   remember: false,
 });
 
-const usernameRules = [
-  { required: true, message: "请输入用户名" },
-  { minLength: 3, message: "用户名至少需要3个字符" },
+const accountRules = [
+  { required: true, message: "请输入用户名或者邮箱" },
+  { minLength: 3, message: "用户名或者邮箱至少需要3个字符" },
 ];
 
 const passwordRules = [
@@ -172,17 +173,17 @@ const passwordRules = [
 ];
 
 const handleLogin = async () => {
-  if (!formData.username || !formData.password) {
+  if (!formData.account || !formData.password) {
     $notification.warning({
       title: '登录失败',
-      content: '请填写用户名和密码',
+      content: '请填写用户名或者邮箱和密码',
     });
     return;
   }
 
   try {
     const result = await authStore.login({
-      username: formData.username,
+      account: formData.account,
       password: formData.password,
       remember: formData.remember,
     });
@@ -222,11 +223,36 @@ const handleLoginClick = async () => {
 /**
  * Turnstile 验证成功回调
  */
-const handleTurnstileSuccess = (token: string) => {
+const handleTurnstileSuccess = async (token: string) => {
   turnstileToken.value = token;
   console.log('Turnstile 验证成功，token:', token);
-  // 验证成功后立即登录
-  handleLogin();
+
+  try {
+    // 调用后端验证 API 验证 token
+    const verifyResult = await verifyTurnstileTokenAPI(token);
+
+    if (verifyResult.result.success) {
+      // 后端验证通过，关闭弹窗并执行登录
+      turnstileRef.value?.hide();
+      handleLogin();
+    } else {
+      // 后端验证失败
+      $notification.error({
+        title: '人机验证失败',
+        content: '验证未通过，请重试',
+      });
+      // 重置 Turnstile
+      turnstileRef.value?.reset();
+    }
+  } catch (error) {
+    console.error('人机验证请求失败:', error);
+    $notification.error({
+      title: '验证请求失败',
+      content: '网络错误，请重试',
+    });
+    // 重置 Turnstile
+    turnstileRef.value?.reset();
+  }
 };
 
 /**
@@ -255,7 +281,7 @@ onMounted(() => {
     router.push({ name: 'home' });
   }
   // 如果路由带了参数，直接填进表单
-  if (route.query.username) formData.username = route.query.username as string;
+  if (route.query.username) formData.account = route.query.username as string;
   if (route.query.password) formData.password = route.query.password as string;
 });
 
@@ -279,7 +305,7 @@ onMounted(() => {
   top: 0;
   left: 0;
   right: 0;
-  height: 60px;
+  height: 30px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -352,43 +378,8 @@ onMounted(() => {
       margin-bottom: 0;
     }
 
-    :deep(.arco-input),
     :deep(.arco-input-wrapper) {
       border-radius: $radius-8;
-      transition: all var(--transition-duration) ease-in-out;
-      
-      &::placeholder {
-        transition: color var(--transition-duration) ease-in-out;
-      }
-      
-      &:hover {
-        :deep(.arco-input-prefix) {
-          transition: color var(--transition-duration) ease-in-out;
-        }
-      }
-      
-      &:focus-within {
-        :deep(.arco-input-prefix) {
-          transition: color var(--transition-duration) ease-in-out;
-        }
-      }
-      
-      :deep(.arco-input-prefix) {
-        transition: color var(--transition-duration) ease-in-out;
-      }
-      
-      :deep(.arco-input-suffix) {
-        transition: color var(--transition-duration) ease-in-out;
-      }
-    }
-    
-    // 错误状态
-    :deep(.arco-input-wrapper.arco-input-error),
-    :deep(.arco-form-item-error) {
-      :deep(.arco-input),
-      :deep(.arco-input-wrapper) {
-        transition: all var(--transition-duration) ease-in-out;
-      }
     }
 
     :deep(.arco-btn-primary) {

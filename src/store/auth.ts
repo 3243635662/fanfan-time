@@ -28,7 +28,7 @@ export const useAuthStore = defineStore("auth", () => {
     isLoading.value = true;
     try {
       const res = await loginAPI({
-        username: params.username,
+        account: params.account,
         password: params.password,
       })
 

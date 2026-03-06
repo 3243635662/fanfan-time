@@ -32,7 +32,7 @@
         <p class="subtitle">加入fan时光，开启精彩旅程</p>
       </div>
 
-      <a-form :model="formData" layout="vertical" @submit="handleRegister" class="register-form">
+      <a-form ref="formRef" :model="formData" layout="vertical" @submit="handleRegister" class="register-form">
         <a-form-item field="username" :rules="usernameRules" :validate-trigger="['blur', 'change']">
           <a-input v-model="formData.username" placeholder="用户名" size="large" allow-clear>
             <template #prefix>
@@ -65,7 +65,20 @@
           </a-input-password>
         </a-form-item>
 
-        <a-form-item>
+
+        <a-form-item field="emailCode" :rules="emailCodeRules" :validate-trigger="['blur', 'change']">
+          <a-input-search
+            v-model="formData.emailCode"
+            :style="{width:'360px'}"
+            placeholder="请输入邮箱验证码"
+            :button-text="isSentEmailCode ? `${countdown}s后可重发` : '发送'"
+            search-button
+            @search="sendEmailCode"
+          />
+        </a-form-item>
+
+
+        <a-form-item field="agreeTerms" :rules="agreeTermsRules" :validate-trigger="['change']">
           <a-checkbox v-model="formData.agreeTerms">
             我已阅读并同意
           </a-checkbox>
@@ -82,7 +95,6 @@
             :loading="isLoading"
             long
             class="register-button"
-            :disabled="!formData.agreeTerms"
           >
             注册
           </a-button>
@@ -148,32 +160,49 @@
         </div>
       </div>
     </div>
+    <CloudeflareTrust
+      ref="turnstileRef"
+      :sitekey="siteKey"
+      @success="handleTurnstileSuccess"
+      @error="handleTurnstileError"
+      @expired="handleTurnstileExpired"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { reactive } from "vue";
+import { reactive, ref, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/store/auth";
 import { useSettingStore } from "@/store/setting";
 import { storeToRefs } from "pinia";
 import AppIcon from "@/components/AppIcon.vue";
+import CloudeflareTrust from "@/components/CloudeflareTrust.vue";
 import { $notification } from "@/hooks/useNotification";
+import type { FormInstance } from "@arco-design/web-vue";
+import { sendEmailCodeAPI } from "@/api/auth";
 
 const router = useRouter();
 const authStore = useAuthStore();
 const settingStore = useSettingStore();
 const { isDark } = storeToRefs(settingStore);
 const { isLoading } = storeToRefs(authStore);
+const formRef = ref<FormInstance | null>(null);
+const turnstileRef = ref<InstanceType<typeof CloudeflareTrust> | null>(null);
+const turnstileToken = ref('');
+const siteKey = import.meta.env.VITE_GLOB_SITE_KEY;
 const toggleDarkMode = () => {
   settingStore.toggleDarkMode();
 };
-
+const isSentEmailCode = ref(false);
+const countdown = ref(60);
+const countdownTimer = ref<ReturnType<typeof setInterval> | null>(null);
 const formData = reactive({
   username: "",
   email: "",
   password: "",
   confirmPassword: "",
+  emailCode: "",
   agreeTerms: false,
 });
 
@@ -205,19 +234,121 @@ const confirmPasswordRules = [
   },
 ];
 
-const handleRegister = async () => {
-  if (!formData.agreeTerms) {
+const emailCodeRules = [
+  { required: true, message: "请输入邮箱验证码" },
+  { minLength: 6, maxLength: 6, message: "邮箱验证码必须是6个字符" },
+];
+
+const agreeTermsRules = [
+  {
+    validator: (value: boolean, callback: (error?: string) => void) => {
+      if (!value) {
+        callback("请先同意服务条款和隐私政策");
+      }
+    },
+  },
+];
+
+// 开始验证码倒计时（防刷）
+const startCountdown = () => {
+  countdown.value = 60;
+  isSentEmailCode.value = true;
+  
+  if (countdownTimer.value) {
+    clearInterval(countdownTimer.value);
+  }
+  
+  countdownTimer.value = setInterval(() => {
+    countdown.value--;
+    if (countdown.value <= 0) {
+      isSentEmailCode.value = false;
+      if (countdownTimer.value) {
+        clearInterval(countdownTimer.value);
+        countdownTimer.value = null;
+      }
+    }
+  }, 1000);
+};
+
+
+// 发送邮箱验证码
+const sendEmailCode = async () => {
+  if (isSentEmailCode.value) {
     $notification.warning({
       title: "警告",
-      content: "请先同意服务条款和隐私政策",
+      content: `请等待${countdown.value}秒后再发送邮箱验证码`,
     });
     return;
   }
+  if (!formData.email) {
+    $notification.warning({
+      title: "警告",
+      content: "请先输入邮箱地址",
+    });
+    return;
+  }
+  if (!formData.agreeTerms) {
+      $notification.warning({
+        title: "警告",
+        content: "请先同意服务条款和隐私政策",
+      });
+      return;
+    }
 
+  // 发送邮箱验证码
+
+  try {
+    const res=await sendEmailCodeAPI(formData.email);
+    if (res.code === 0) {
+      $notification.success({
+        title: "成功",
+        content: "邮箱验证码已发送",
+      });
+      startCountdown();
+    }
+      else {
+        $notification.error({
+          title: "错误",
+          content: res.message || "发送邮箱验证码失败",
+        });
+      }
+    }
+   catch  {
+    $notification.error({
+      title: "错误",
+      content: "发送邮箱验证码失败",
+    });
+  }
+}
+
+const handleRegister = async () => {
+  // 先进行表单校验
+  const errors = await formRef.value?.validate();
+  if (errors) {
+    // 表单校验失败，不提交注册
+    return;
+  }
+
+  // 表单校验通过，显示 Turnstile 人机验证
+  turnstileRef.value?.show();
+};
+
+/**
+ * Turnstile 验证成功回调
+ */
+const handleTurnstileSuccess = async (token: string) => {
+  turnstileToken.value = token;
+
+  // 关闭人机验证弹窗
+  turnstileRef.value?.hide();
+
+  // 人机验证成功，执行注册
   const result = await authStore.register({
     username: formData.username,
     email: formData.email,
     password: formData.password,
+    emailCode: formData.emailCode,
+    
   });
 
   if (result.success) {
@@ -225,7 +356,7 @@ const handleRegister = async () => {
       title: "成功",
       content: result.message || "注册成功",
     });
-// 注册成功之后立即将账号密码传递到登录页
+    // 注册成功之后立即将账号密码传递到登录页
     router.push({
       name: "login",
       query: {
@@ -240,6 +371,33 @@ const handleRegister = async () => {
     });
   }
 };
+
+/**
+ * Turnstile 验证错误回调
+ */
+const handleTurnstileError = (code: string) => {
+  console.error('Turnstile 验证错误:', code);
+  $notification.error({
+    title: '人机验证失败',
+    content: '请重试',
+  });
+};
+
+/**
+ * Turnstile token 过期回调
+ */
+const handleTurnstileExpired = () => {
+  turnstileToken.value = '';
+  console.warn('Turnstile token 已过期');
+};
+
+// 组件卸载时清理定时器
+onUnmounted(() => {
+  if (countdownTimer.value) {
+    clearInterval(countdownTimer.value);
+    countdownTimer.value = null;
+  }
+});
 </script>
 
 <style scoped lang="scss">
@@ -263,7 +421,7 @@ const handleRegister = async () => {
   top: 0;
   left: 0;
   right: 0;
-  height: 60px;
+  height: 30px;
   display: flex;
   justify-content: space-between;
   align-items: center;

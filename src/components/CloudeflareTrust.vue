@@ -14,7 +14,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue';
+import { ref, onUnmounted, watch, nextTick } from 'vue';
 import { $notification } from '@/hooks/useNotification';
 
 // 声明 全局的 window.turnstile 类型
@@ -174,10 +174,7 @@ watch(
   },
 );
 
-onMounted(() => {
-  // 不再自动初始化，等待 show() 被调用
-  // SDK 加载检查在 show() 方法中处理
-});
+
 
 onUnmounted(() => {
   if (widgetId && window.turnstile) {
