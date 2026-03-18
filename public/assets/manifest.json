@@ -1,0 +1,79 @@
+{
+  "bundles": [
+    {
+      "name": "default",
+      "assets": [
+        {
+          "alias": [
+            "font/清韵文楷.ttf",
+            "font/清韵文楷",
+            "清韵文楷.ttf",
+            "清韵文楷"
+          ],
+          "src": [
+            "font/清韵文楷.ttf"
+          ],
+          "data": {
+            "tags": {}
+          }
+        },
+        {
+          "alias": [
+            "images/beian.png",
+            "images/beian",
+            "beian.png",
+            "beian"
+          ],
+          "src": [
+            "images/beian.png"
+          ],
+          "data": {
+            "tags": {}
+          }
+        },
+        {
+          "alias": [
+            "images/karina1.webp",
+            "images/karina1",
+            "karina1.webp",
+            "karina1"
+          ],
+          "src": [
+            "images/karina1.webp"
+          ],
+          "data": {
+            "tags": {}
+          }
+        },
+        {
+          "alias": [
+            "images/karina2.webp",
+            "images/karina2",
+            "karina2.webp",
+            "karina2"
+          ],
+          "src": [
+            "images/karina2.webp"
+          ],
+          "data": {
+            "tags": {}
+          }
+        },
+        {
+          "alias": [
+            "images/vue.jpg",
+            "images/vue",
+            "vue.jpg",
+            "vue"
+          ],
+          "src": [
+            "images/vue.jpg"
+          ],
+          "data": {
+            "tags": {}
+          }
+        }
+      ]
+    }
+  ]
+}

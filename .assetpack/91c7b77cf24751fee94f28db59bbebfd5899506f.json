@@ -1,0 +1,139 @@
+{
+    "assets": {
+        "D:/nest/fanfan-time/src/assets": {
+            "isFolder": true,
+            "metaData": {},
+            "inheritedMetaData": {},
+            "transformData": {},
+            "stats": {
+                "date": 1773751881662,
+                "duration": 1.3494000000064261,
+                "success": true
+            }
+        },
+        "D:/nest/fanfan-time/src/assets/font": {
+            "isFolder": true,
+            "parent": "D:/nest/fanfan-time/src/assets",
+            "metaData": {},
+            "inheritedMetaData": {},
+            "transformData": {},
+            "stats": {
+                "date": 1773750945924,
+                "duration": 27.58330000000001,
+                "success": true
+            }
+        },
+        "D:/nest/fanfan-time/src/assets/font/清韵文楷.ttf": {
+            "isFolder": false,
+            "parent": "D:/nest/fanfan-time/src/assets/font",
+            "metaData": {},
+            "inheritedMetaData": {},
+            "transformData": {},
+            "stats": {
+                "date": 1773750945924,
+                "duration": 29.420599999999922,
+                "success": true
+            },
+            "hash": "7809SA"
+        },
+        "D:/nest/fanfan-time/public/assets/font/清韵文楷.ttf": {
+            "isFolder": false,
+            "transformParent": "D:/nest/fanfan-time/src/assets/font/清韵文楷.ttf",
+            "metaData": {},
+            "inheritedMetaData": {},
+            "transformData": {}
+        },
+        "D:/nest/fanfan-time/src/assets/images": {
+            "isFolder": true,
+            "parent": "D:/nest/fanfan-time/src/assets",
+            "metaData": {},
+            "inheritedMetaData": {},
+            "transformData": {},
+            "stats": {
+                "date": 1773751881662,
+                "duration": 1.3548000000009779,
+                "success": true
+            }
+        },
+        "D:/nest/fanfan-time/src/assets/images/beian.png": {
+            "isFolder": false,
+            "parent": "D:/nest/fanfan-time/src/assets/images",
+            "metaData": {},
+            "inheritedMetaData": {},
+            "transformData": {},
+            "stats": {
+                "date": 1773750945939,
+                "duration": 14.480499999999893,
+                "success": true
+            },
+            "hash": "-KrVAw"
+        },
+        "D:/nest/fanfan-time/public/assets/images/beian.png": {
+            "isFolder": false,
+            "transformParent": "D:/nest/fanfan-time/src/assets/images/beian.png",
+            "metaData": {},
+            "inheritedMetaData": {},
+            "transformData": {}
+        },
+        "D:/nest/fanfan-time/src/assets/images/karina1.webp": {
+            "isFolder": false,
+            "parent": "D:/nest/fanfan-time/src/assets/images",
+            "metaData": {},
+            "inheritedMetaData": {},
+            "transformData": {},
+            "stats": {
+                "date": 1773751876098,
+                "duration": 1.9077000000106636,
+                "success": true
+            },
+            "hash": "3PAK0g"
+        },
+        "D:/nest/fanfan-time/public/assets/images/karina1.webp": {
+            "isFolder": false,
+            "transformParent": "D:/nest/fanfan-time/src/assets/images/karina1.webp",
+            "metaData": {},
+            "inheritedMetaData": {},
+            "transformData": {}
+        },
+        "D:/nest/fanfan-time/src/assets/images/karina2.webp": {
+            "isFolder": false,
+            "parent": "D:/nest/fanfan-time/src/assets/images",
+            "metaData": {},
+            "inheritedMetaData": {},
+            "transformData": {},
+            "stats": {
+                "date": 1773751881662,
+                "duration": 1.3637999999918975,
+                "success": true
+            },
+            "hash": "6DcKOQ"
+        },
+        "D:/nest/fanfan-time/public/assets/images/karina2.webp": {
+            "isFolder": false,
+            "transformParent": "D:/nest/fanfan-time/src/assets/images/karina2.webp",
+            "metaData": {},
+            "inheritedMetaData": {},
+            "transformData": {}
+        },
+        "D:/nest/fanfan-time/src/assets/images/vue.jpg": {
+            "isFolder": false,
+            "parent": "D:/nest/fanfan-time/src/assets/images",
+            "metaData": {},
+            "inheritedMetaData": {},
+            "transformData": {},
+            "stats": {
+                "date": 1773750945952,
+                "duration": 1.8068000000000666,
+                "success": true
+            },
+            "hash": "b6Tikg"
+        },
+        "D:/nest/fanfan-time/public/assets/images/vue.jpg": {
+            "isFolder": false,
+            "transformParent": "D:/nest/fanfan-time/src/assets/images/vue.jpg",
+            "metaData": {},
+            "inheritedMetaData": {},
+            "transformData": {}
+        }
+    }
+}

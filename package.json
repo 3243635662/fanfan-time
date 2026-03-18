@@ -12,6 +12,7 @@
 		"@iconify/vue": "^5.0.0",
 		"motion-v": "^1.7.4",
 		"pinia": "^3.0.4",
+		"pixi.js": "^8.17.1",
 		"qiniu-js": "^3.4.3",
 		"sass": "^1.96.0",
 		"vue": "^3.5.24",
@@ -20,7 +21,9 @@
 	"devDependencies": {
 		"@arco-design/web-vue": "^2.57.0",
 		"@arco-plugins/vite-vue": "^1.4.6",
+		"@assetpack/core": "^1.7.0",
 		"@eslint/js": "^9.39.2",
+		"@pixi/devtools": "^2.0.1",
 		"@types/node": "^24.10.1",
 		"@typescript-eslint/eslint-plugin": "^8.49.0",
 		"@typescript-eslint/parser": "^8.49.0",

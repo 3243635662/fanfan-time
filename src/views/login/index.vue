@@ -225,7 +225,6 @@ const handleLoginClick = async () => {
  */
 const handleTurnstileSuccess = async (token: string) => {
   turnstileToken.value = token;
-  console.log('Turnstile 验证成功，token:', token);
 
   try {
     // 调用后端验证 API 验证 token

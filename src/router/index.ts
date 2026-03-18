@@ -9,10 +9,10 @@ const routes: RouteRecordRaw[] = [
     component: () => import("@/layout/index.vue"),
     meta: { title: "首页" },
     children: [
-      { path: "/home",   name: "home",   component: () => import("@/views/home/index.vue"),   meta: { title: "时光广场" } },
-      { path: "/photo",  name: "photo",  component: () => import("@/views/photo/index.vue"),  meta: { title: "相册" } },
-      { path: "/setting",name: "setting",component: () => import("@/views/setting/index.vue"),meta: { title: "设置" } },
-      { path: "/404",    name: "404",    component: () => import("@/views/404/index.vue"),    meta: { title: "页面不存在" } },
+      { path: "/home", name: "home", component: () => import("@/views/home/index.vue"), meta: { title: "时光广场" } },
+      { path: "/photo", name: "photo", component: () => import("@/views/photo/index.vue"), meta: { title: "相册" } },
+      { path: "/setting", name: "setting", component: () => import("@/views/setting/index.vue"), meta: { title: "设置" } },
+      { path: "/404", name: "404", component: () => import("@/views/404/index.vue"), meta: { title: "页面不存在" } },
     ],
   },
   {
@@ -27,6 +27,8 @@ const routes: RouteRecordRaw[] = [
     component: () => import("@/views/register/index.vue"),
     meta: { title: "注册 · fan时光" },
   },
+  { path: "/canvas", name: "canvas", component: () => import("@/views/canvas/index.vue"), meta: { title: "画布" } },
+  { path: "/canvas3", name: "canvas3", component: () => import("@/views/canvas/3.vue"), meta: { title: "画布3" } },
   { path: "/:pathMatch(.*)*", redirect: "/404" },
 ];
 
